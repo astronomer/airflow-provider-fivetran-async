@@ -34,7 +34,7 @@ class FivetranHookAsync(FivetranHook):
         method, endpoint = endpoint_info
 
         if not self.fivetran_conn:
-            self.fivetran_conn = await sync_to_async(self.get_connection)(self.fivetran_conn_id)
+            self.fivetran_conn = await sync_to_async(self.get_connection)(self.conn_id)
         auth = (self.fivetran_conn.login, self.fivetran_conn.password)
         url = f"{self.api_protocol}://{self.api_host}/{endpoint}"
         headers = {"User-Agent": self.api_user_agent}
@@ -57,7 +57,7 @@ class FivetranHookAsync(FivetranHook):
                         url,
                         data=json if method in ("POST", "PATCH") else None,
                         params=json if method == "GET" else None,
-                        auth=auth,
+                        auth=aiohttp.BasicAuth(login=auth[0], password=auth[1]),
                         headers=headers,
                     )
                     response.raise_for_status()
@@ -120,23 +120,23 @@ class FivetranHookAsync(FivetranHook):
             )
 
         sync_state = connector_details["status"]["sync_state"]
-        self.log.info(
-            "Connector {connector_id}: sync_state = {sync_state}",
-            extra={"connector_id": connector_id, "sync_state": sync_state},
-        )
+        self.log.info(f'Connector "{connector_id}": sync_state = {sync_state}')
 
         # Check if sync started by FivetranOperator has finished
         # indicated by new 'succeeded_at' timestamp
         if current_completed_at > previous_completed_at:
             self.log.info(
-                "Connector {connector_id}: succeeded_at: {succeded_at}",
-                extra={"connector_id": connector_id, "succeded_at": succeeded_at.to_iso8601_string()},
+                'Connector "{}": succeeded_at: {}'.format(
+                    connector_id, succeeded_at.to_iso8601_string()
+                )
             )
-            return True
+            job_status = "success"
+            return job_status
         else:
-            return False
+            job_status = "pending"
+            return job_status
 
-    async def get_last_sync_async(self, connector_id):
+    async def get_last_sync_async(self, connector_id, xcom=""):
         """
         Get the last time Fivetran connector completed a sync.
             Used with FivetranSensor to monitor sync completion status.
@@ -144,6 +144,10 @@ class FivetranHookAsync(FivetranHook):
         :param connector_id: Fivetran connector_id, found in connector settings
             page in the Fivetran user interface.
         :type connector_id: str
+        :param xcom: Timestamp as string pull from FivetranOperator via XCOM
+        :type xcom: str
+        :return: Timestamp of last completed sync
+        :rtype: Pendulum.DateTime
         """
         if xcom:
             last_sync = self._parse_timestamp(xcom)
