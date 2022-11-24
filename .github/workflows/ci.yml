@@ -46,6 +46,7 @@ jobs:
         path: ~/.cache/pip
         key: ${{ hashFiles('setup.cfg') }}
     - run: pip3 install -U pip wheel build twine
+    - run: python3 -m build
     - run: twine check dist/*
     - run: twine upload dist/*
     env:
