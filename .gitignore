@@ -16,19 +16,6 @@ __pycache__/
 .idea
 venv
 
-# Dev Logs
-dev/logs/
-dev/connections.yaml
-dev/dags/
-
-# Integration Tests
-.circleci/integration-tests/astronomer-providers
-.circleci/integration-tests/packages.txt
-.circleci/integration-tests/requirements.txt
-.circleci/integration-tests/pyproject.toml
-.circleci/integration-tests/setup.cfg
-.circleci/integration-tests/example_*
-
 # OSX
 .DS_Store
 
@@ -39,20 +26,7 @@ dev/dags/
 venv*
 ENV/
 
-# Sphinx documentation
-docs/_build/
-docs/rtd-deprecation/_build/
-docs/_doctrees/
-docs/_inventory_cache/
-docs/*/_api/
-docs/_api/
-
 # test reports
 test-report/
 coverage.xml
 
-# Mypy Cache
-.mypy_cache
-
-# Lineage server dumps
-dumps
