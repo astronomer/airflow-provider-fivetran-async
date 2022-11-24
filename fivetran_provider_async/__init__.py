@@ -1,3 +1,6 @@
+__version__ = "1.0.0a2"
+
+
 def get_provider_info():
     return {
         "package-name": "airflow-provider-fivetran-async",
@@ -5,5 +8,5 @@ def get_provider_info():
         "description": "A Fivetran Async provider for Apache Airflow.",
         "hook-class-names": ["fivetran_provider_async.hooks.fivetran.FivetranHookAsync"],
         "extra-links": ["fivetran_provider.operators.fivetran.RegistryLink"],
-        "versions": ["1.0.1"],
+        "versions": [__version__],
     }
