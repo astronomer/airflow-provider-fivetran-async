@@ -28,7 +28,7 @@ with dag:
         fivetran_conn_id="fivetran_default",
         connector_id="{{ var.value.connector_id }}",
         poke_interval=5,
-        xcom="{{ task_instance.xcom_pull('fivetran-operator', key='return_value') }}",
+        xcom="{{ task_instance.xcom_pull('fivetran-task', key='return_value') }}",
     )
 
     fivetran_sync_start >> fivetran_sync_wait

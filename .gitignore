@@ -1,0 +1,32 @@
+*.egg-info
+dist/
+build/
+_build/
+__pycache__/
+*.pyc
+.tox/
+*~
+.cache
+.coverage
+.eggs
+.python-version
+.pytest_cache/
+.vscode/
+.autoenv*
+.idea
+venv
+
+# OSX
+.DS_Store
+
+.pypirc
+
+# virtualenv
+.venv*
+venv*
+ENV/
+
+# test reports
+test-report/
+coverage.xml
+
