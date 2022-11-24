@@ -43,9 +43,8 @@ If used in this way,
 `FivetranSensorAsync` requires that you specify the `connector_id` of the sync job to start. You can find `connector_id` in the Settings page of the connector you configured in the [Fivetran dashboard](https://fivetran.com/dashboard/connectors).
 
 Import into your DAG via:
-```
+```python
 from fivetran_provider_async.sensors.fivetran import FivetranSensorAsync
-```
 
 ## Examples
 
