@@ -1,6 +1,6 @@
 # Fivetran Async Provider for Apache Airflow
 
-This package provides an async sensor, and hook that integrates [Fivetran](https://fivetran.com) into Apache Airflow. 
+This package provides an async sensor, and hook that integrates [Fivetran](https://fivetran.com) into Apache Airflow.
 `FivetranSensorAsync` allows you to monitor a Fivetran sync job for completion before running downstream processes.
 Since an async sensor frees up worker slot while polling is happening on the trigger, it consumes less resources when compared to traditional "sync" sensors.
 
@@ -31,20 +31,21 @@ The sensor assumes the `Conn Id` is set to `fivetran`, however if you are managi
 
 ### [Fivetran Sensor Async](https://github.com/astronomer/airflow-provider-fivetran-async/tree/main/fivetran_provider_async/hooks/fivetran.py)
 
-`FivetranSensorAsync` monitors a Fivetran sync job for completion. 
-Monitoring with `FivetranSensorAsync` allows you to trigger downstream processes only when the Fivetran sync jobs have completed, ensuring data consistency. 
+`FivetranSensorAsync` monitors a Fivetran sync job for completion.
+Monitoring with `FivetranSensorAsync` allows you to trigger downstream processes only when the Fivetran sync jobs have completed, ensuring data consistency.
 
 
 
 You can use multiple instances of `FivetranSensorAsync` to monitor multiple Fivetran connectors.
 
-If used in this way, 
+If used in this way,
 
 `FivetranSensorAsync` requires that you specify the `connector_id` of the sync job to start. You can find `connector_id` in the Settings page of the connector you configured in the [Fivetran dashboard](https://fivetran.com/dashboard/connectors).
 
 Import into your DAG via:
 ```python
 from fivetran_provider_async.sensors.fivetran import FivetranSensorAsync
+```
 
 ## Examples
 

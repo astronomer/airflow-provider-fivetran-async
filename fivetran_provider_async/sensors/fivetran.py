@@ -3,6 +3,7 @@ from typing import Any, Dict, Optional
 from airflow.exceptions import AirflowException
 from airflow.utils.context import Context
 from fivetran_provider.sensors.fivetran import FivetranSensor
+
 from fivetran_provider_async.triggers.fivetran import FivetranTrigger
 
 
@@ -58,5 +59,5 @@ class FivetranSensorAsync(FivetranSensor):
                 raise AirflowException(msg)
             if "status" in event and event["status"] == "success":
                 self.log.info(
-                   event["message"],
+                    event["message"],
                 )

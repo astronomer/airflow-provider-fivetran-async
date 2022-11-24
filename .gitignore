@@ -29,4 +29,3 @@ ENV/
 # test reports
 test-report/
 coverage.xml
-
