@@ -5,8 +5,6 @@ from airflow.exceptions import AirflowException, TaskDeferred
 
 from fivetran_provider_async.sensors.fivetran import (
     FivetranSensorAsync,
-)
-from fivetran_provider_async.sensors.fivetran import (
     FivetranTrigger,
 )
 
@@ -34,9 +32,7 @@ def test_fivetran_sensor_async():
     )
     with pytest.raises(TaskDeferred) as exc:
         task.execute(context)
-    assert isinstance(
-        exc.value.trigger, FivetranTrigger
-    ), "Trigger is not a FivetranTrigger"
+    assert isinstance(exc.value.trigger, FivetranTrigger), "Trigger is not a FivetranTrigger"
 
 
 def test_fivetran_sensor_async_execute_failure(context):
@@ -48,7 +44,9 @@ def test_fivetran_sensor_async_execute_failure(context):
         poke_interval=5,
     )
     with pytest.raises(AirflowException) as exc:
-        task.execute_complete(context=None, event={"status": "error", "message": "Fivetran connector sync failure"})
+        task.execute_complete(
+            context=None, event={"status": "error", "message": "Fivetran connector sync failure"}
+        )
     assert str(exc.value) == "error: Fivetran connector sync failure"
 
 
@@ -61,5 +59,7 @@ def test_fivetran_sensor_async_execute_complete():
         poke_interval=5,
     )
     with mock.patch.object(task.log, "info") as mock_log_info:
-        task.execute_complete(context=None, event={"status": "success", "message": "Fivetran connector finished syncing"})
+        task.execute_complete(
+            context=None, event={"status": "success", "message": "Fivetran connector finished syncing"}
+        )
     mock_log_info.assert_called_with("Fivetran connector finished syncing")

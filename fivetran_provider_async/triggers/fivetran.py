@@ -3,6 +3,7 @@ from typing import Any, AsyncIterator, Dict, Tuple
 
 import pendulum
 from airflow.triggers.base import BaseTrigger, TriggerEvent
+
 from fivetran_provider_async.hooks.fivetran import FivetranHookAsync
 
 
@@ -22,14 +23,14 @@ class FivetranTrigger(BaseTrigger):
     """
 
     def __init__(
-            self,
-            task_id: str,
-            polling_period_seconds: float,
-            connector_id: str,
-            fivetran_conn_id: str,
-            previous_completed_at: pendulum.DateTime,
-            xcom: str = "",
-            poll_interval: float = 4.0,
+        self,
+        task_id: str,
+        polling_period_seconds: float,
+        connector_id: str,
+        fivetran_conn_id: str,
+        previous_completed_at: pendulum.DateTime,
+        xcom: str = "",
+        poll_interval: float = 4.0,
     ):
         super().__init__()
         self.task_id = task_id
@@ -67,8 +68,10 @@ class FivetranTrigger(BaseTrigger):
                 res = await hook.get_sync_status_async(self.connector_id, self.previous_completed_at)
                 if res == "success":
                     self.previous_completed_at = await hook.get_last_sync_async(self.connector_id)
-                    msg = "Fivetran connector %s finished syncing at %s" % (self.connector_id,
-                                                                             self.previous_completed_at)
+                    msg = "Fivetran connector %s finished syncing at %s" % (
+                        self.connector_id,
+                        self.previous_completed_at,
+                    )
                     yield TriggerEvent({"status": "success", "message": msg})
                 elif res == "pending":
                     self.log.info("sync is still running...")

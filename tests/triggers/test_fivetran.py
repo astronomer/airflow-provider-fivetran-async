@@ -1,15 +1,17 @@
-from fivetran_provider_async.triggers.fivetran import FivetranTrigger
-import pytest
-from unittest import mock
-import pendulum
 import asyncio
-from airflow.triggers.base import TriggerEvent
+from unittest import mock
+
+import pendulum
+import pytest
 from airflow.exceptions import AirflowException
+from airflow.triggers.base import TriggerEvent
+
+from fivetran_provider_async.triggers.fivetran import FivetranTrigger
 
 TASK_ID = "fivetran_sync_task"
 POLLING_PERIOD_SECONDS = 4
-CONNECTOR_ID = 'interchangeable_revenge'
-FIVETRAN_CONN_ID = 'conn_fivetran'
+CONNECTOR_ID = "interchangeable_revenge"
+FIVETRAN_CONN_ID = "conn_fivetran"
 PREV_COMPLETED_AT = pendulum.datetime(2021, 3, 23, 21, 55)
 MOCK_FIVETRAN_RESPONSE_PAYLOAD = {
     "code": "Success",
@@ -31,7 +33,7 @@ MOCK_FIVETRAN_RESPONSE_PAYLOAD = {
             "update_state": "on_schedule",
             "is_historical_sync": False,
             "tasks": [],
-            "warnings": []
+            "warnings": [],
         },
         "config": {
             "latest_version": "1",
@@ -39,9 +41,9 @@ MOCK_FIVETRAN_RESPONSE_PAYLOAD = {
             "named_range": "fivetran_test_range",
             "authorization_method": "User OAuth",
             "service_version": "1",
-            "last_synced_changes__utc_": "2021-03-23 20:54"
-        }
-    }
+            "last_synced_changes__utc_": "2021-03-23 20:54",
+        },
+    },
 }
 
 
@@ -55,14 +57,14 @@ def test_fivetran_trigger_serialization():
         polling_period_seconds=POLLING_PERIOD_SECONDS,
         connector_id=CONNECTOR_ID,
         fivetran_conn_id=FIVETRAN_CONN_ID,
-        previous_completed_at=PREV_COMPLETED_AT
+        previous_completed_at=PREV_COMPLETED_AT,
     )
     classpath, kwargs = trigger.serialize()
     assert classpath == "fivetran_provider_async.triggers.fivetran.FivetranTrigger"
     assert kwargs == {
-        "connector_id": 'interchangeable_revenge',
-        'fivetran_conn_id': 'conn_fivetran',
-        'poll_interval': 4.0,
+        "connector_id": "interchangeable_revenge",
+        "fivetran_conn_id": "conn_fivetran",
+        "poll_interval": 4.0,
         "polling_period_seconds": 4,
         "previous_completed_at": PREV_COMPLETED_AT,
         "task_id": "fivetran_sync_task",
@@ -81,16 +83,19 @@ async def test_fivetran_trigger_completed(mock_api_call_async_response, mock_get
         polling_period_seconds=POLLING_PERIOD_SECONDS,
         connector_id=CONNECTOR_ID,
         fivetran_conn_id=FIVETRAN_CONN_ID,
-        previous_completed_at=PREV_COMPLETED_AT
+        previous_completed_at=PREV_COMPLETED_AT,
     )
     generator = trigger.run()
     actual_response = await generator.asend(None)
     SUCCEEDED_AT = pendulum.parse(MOCK_FIVETRAN_RESPONSE_PAYLOAD["data"]["succeeded_at"])
     assert (
-            TriggerEvent({"status": "success", "message": f"Fivetran connector {CONNECTOR_ID} finished "
-                                                          f"syncing at {SUCCEEDED_AT}"}
-                         )
-            == actual_response
+        TriggerEvent(
+            {
+                "status": "success",
+                "message": f"Fivetran connector {CONNECTOR_ID} finished " f"syncing at {SUCCEEDED_AT}",
+            }
+        )
+        == actual_response
     )
 
 
@@ -98,7 +103,7 @@ async def test_fivetran_trigger_completed(mock_api_call_async_response, mock_get
 @mock.patch("fivetran_provider_async.hooks.fivetran.FivetranHookAsync.get_sync_status_async")
 @mock.patch("fivetran_provider_async.hooks.fivetran.FivetranHookAsync._do_api_call_async")
 async def test_fivetran_trigger_pending(mock_api_call_async_response, mock_get_sync_status_async):
-    """Tests that event is not returned by the FivetranTrigger when sync is still in pending state """
+    """Tests that event is not returned by the FivetranTrigger when sync is still in pending state"""
     mock_get_sync_status_async.return_value = "pending"
     mock_api_call_async_response.return_value = MOCK_FIVETRAN_RESPONSE_PAYLOAD
     trigger = FivetranTrigger(
@@ -106,7 +111,7 @@ async def test_fivetran_trigger_pending(mock_api_call_async_response, mock_get_s
         polling_period_seconds=POLLING_PERIOD_SECONDS,
         connector_id=CONNECTOR_ID,
         fivetran_conn_id=FIVETRAN_CONN_ID,
-        previous_completed_at=PREV_COMPLETED_AT
+        previous_completed_at=PREV_COMPLETED_AT,
     )
     task = asyncio.create_task(trigger.run().__anext__())
     await asyncio.sleep(0.5)
@@ -126,15 +131,11 @@ async def test_fivetran_trigger_failed(mock_api_call_async_response, mock_get_sy
         polling_period_seconds=POLLING_PERIOD_SECONDS,
         connector_id=CONNECTOR_ID,
         fivetran_conn_id=FIVETRAN_CONN_ID,
-        previous_completed_at=PREV_COMPLETED_AT
+        previous_completed_at=PREV_COMPLETED_AT,
     )
     generator = trigger.run()
     actual_response = await generator.asend(None)
-    assert (
-            TriggerEvent({"status": "error", "message": "error"}
-                         )
-            == actual_response
-    )
+    assert TriggerEvent({"status": "error", "message": "error"}) == actual_response
 
 
 @pytest.mark.asyncio
@@ -149,12 +150,8 @@ async def test_fivetran_trigger_exception(mock_api_call_async_response, mock_get
         polling_period_seconds=POLLING_PERIOD_SECONDS,
         connector_id=CONNECTOR_ID,
         fivetran_conn_id=FIVETRAN_CONN_ID,
-        previous_completed_at=PREV_COMPLETED_AT
+        previous_completed_at=PREV_COMPLETED_AT,
     )
     generator = trigger.run()
     actual_response = await generator.asend(None)
-    assert (
-            TriggerEvent({"status": "error", "message": "fivetran unavailable"}
-                         )
-            == actual_response
-    )
+    assert TriggerEvent({"status": "error", "message": "fivetran unavailable"}) == actual_response

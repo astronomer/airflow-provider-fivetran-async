@@ -120,15 +120,13 @@ class FivetranHookAsync(FivetranHook):
             )
 
         sync_state = connector_details["status"]["sync_state"]
-        self.log.info(f'Connector "{connector_id}": sync_state = {sync_state}')
+        self.log.info('Connector "%s": sync_state = "%s"', connector_id, sync_state)
 
         # Check if sync started by airflow has finished
         # indicated by new 'succeeded_at' timestamp
         if current_completed_at > previous_completed_at:
             self.log.info(
-                'Connector "{}": succeeded_at: {}'.format(
-                    connector_id, succeeded_at.to_iso8601_string()
-                )
+                'Connector "%s": succeeded_at = "%s"', connector_id, succeeded_at.to_iso8601_string()
             )
             job_status = "success"
             return job_status
