@@ -122,7 +122,7 @@ class FivetranHookAsync(FivetranHook):
         sync_state = connector_details["status"]["sync_state"]
         self.log.info(f'Connector "{connector_id}": sync_state = {sync_state}')
 
-        # Check if sync started by FivetranOperator has finished
+        # Check if sync started by airflow has finished
         # indicated by new 'succeeded_at' timestamp
         if current_completed_at > previous_completed_at:
             self.log.info(
@@ -139,7 +139,7 @@ class FivetranHookAsync(FivetranHook):
     async def get_last_sync_async(self, connector_id, xcom=""):
         """
         Get the last time Fivetran connector completed a sync.
-            Used with FivetranSensor to monitor sync completion status.
+        Used with FivetranSensorAsync to monitor sync completion status.
 
         :param connector_id: Fivetran connector_id, found in connector settings
             page in the Fivetran user interface.

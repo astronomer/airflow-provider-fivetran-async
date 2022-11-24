@@ -24,7 +24,7 @@ def context():
 
 
 def test_fivetran_sensor_async():
-    """Asserts that a task is deferred and a FivetranSensorTrigger will be fired
+    """Asserts that a task is deferred and a FivetranTrigger will be fired
     when the FivetranSensorAsync is executed."""
     task = FivetranSensorAsync(
         task_id=TASK_ID,

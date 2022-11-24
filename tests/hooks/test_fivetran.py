@@ -45,6 +45,7 @@ MOCK_FIVETRAN_RESPONSE_PAYLOAD = {
 @pytest.mark.asyncio
 @mock.patch("fivetran_provider_async.hooks.fivetran.FivetranHookAsync._do_api_call_async")
 async def test_fivetran_hook_get_connector_async(mock_api_call_async_response):
+    """Tests that the get_connector_async method fetches the details of a connector"""
     hook = FivetranHookAsync(fivetran_conn_id='conn_fivetran')
     mock_api_call_async_response.return_value = MOCK_FIVETRAN_RESPONSE_PAYLOAD
     result = await hook.get_connector_async(connector_id='interchangeable_revenge')
@@ -54,6 +55,7 @@ async def test_fivetran_hook_get_connector_async(mock_api_call_async_response):
 @pytest.mark.asyncio
 @mock.patch("fivetran_provider_async.hooks.fivetran.FivetranHookAsync._do_api_call_async")
 async def test_fivetran_hook_get_connector_async_error(mock_api_call_async_response):
+    """Tests that the get_connector_async method raises exception when connector_id is not specified"""
     hook = FivetranHookAsync(fivetran_conn_id='conn_fivetran')
     mock_api_call_async_response.return_value = MOCK_FIVETRAN_RESPONSE_PAYLOAD
     with pytest.raises(ValueError) as exc:
@@ -78,11 +80,12 @@ async def test_fivetran_hook_get_connector_async_error(mock_api_call_async_respo
 @mock.patch("fivetran_provider_async.hooks.fivetran.FivetranHookAsync._do_api_call_async")
 async def test_fivetran_hook_get_sync_status_async(mock_api_call_async_response, mock_previous_completed_at,
                                                    expected_result):
+    """Tests that get_sync_status_async method return success or pending depending on whether
+    current_completed_at > previous_completed_at"""
     hook = FivetranHookAsync(fivetran_conn_id='conn_fivetran')
     mock_api_call_async_response.return_value = MOCK_FIVETRAN_RESPONSE_PAYLOAD
     result = await hook.get_sync_status_async(connector_id='interchangeable_revenge',
                                               previous_completed_at=mock_previous_completed_at)
-    print(expected_result)
     assert result == expected_result
 
 
@@ -90,7 +93,7 @@ async def test_fivetran_hook_get_sync_status_async(mock_api_call_async_response,
 @mock.patch("fivetran_provider_async.hooks.fivetran.FivetranHookAsync._do_api_call_async")
 async def test_fivetran_hook_get_sync_status_async_exception(mock_api_call_async_response
                                                              ):
-    # failed_at > previous_completed_at
+    """Tests that get_sync_status_async method raises exception  when failed_at > previous_completed_at """
     mock_previous_completed_at = pendulum.datetime(2021, 3, 21, 21, 55)
     hook = FivetranHookAsync(fivetran_conn_id='conn_fivetran')
     mock_api_call_async_response.return_value = MOCK_FIVETRAN_RESPONSE_PAYLOAD
@@ -104,6 +107,8 @@ async def test_fivetran_hook_get_sync_status_async_exception(mock_api_call_async
 @pytest.mark.asyncio
 @mock.patch("fivetran_provider_async.hooks.fivetran.FivetranHookAsync._do_api_call_async")
 async def test_fivetran_hook_get_last_sync_async_no_xcom(mock_api_call_async_response):
+    """Tests that the get_last_sync_async method returns the last time Fivetran connector
+    completed a sync"""
     hook = FivetranHookAsync(fivetran_conn_id='conn_fivetran')
     mock_api_call_async_response.return_value = MOCK_FIVETRAN_RESPONSE_PAYLOAD
     result = await hook.get_last_sync_async(connector_id='interchangeable_revenge')
@@ -113,6 +118,8 @@ async def test_fivetran_hook_get_last_sync_async_no_xcom(mock_api_call_async_res
 @pytest.mark.asyncio
 @mock.patch("fivetran_provider_async.hooks.fivetran.FivetranHookAsync._do_api_call_async")
 async def test_fivetran_hook_get_last_sync_async_with_xcom(mock_api_call_async_response):
+    """Tests that the get_last_sync_async method returns the last time Fivetran connector
+    completed a sync when xcom is passed"""
     XCOM = "2021-03-22T20:55:12.670390Z"
     hook = FivetranHookAsync(fivetran_conn_id='conn_fivetran')
     mock_api_call_async_response.return_value = MOCK_FIVETRAN_RESPONSE_PAYLOAD
@@ -124,6 +131,8 @@ async def test_fivetran_hook_get_last_sync_async_with_xcom(mock_api_call_async_r
 @mock.patch('fivetran_provider_async.hooks.fivetran.aiohttp.ClientSession')
 @mock.patch("fivetran_provider_async.hooks.fivetran.FivetranHookAsync.get_connection")
 async def test_do_api_call_async_get_method_with_success(mock_get_connection, mock_session):
+    """Tests that _do_api_call_async method returns correct response when GET request
+    is successful"""
     async def mock_fun(arg1, arg2, arg3, arg4):
         return {"status": "success"}
 
@@ -145,6 +154,8 @@ async def test_do_api_call_async_get_method_with_success(mock_get_connection, mo
 @mock.patch('fivetran_provider_async.hooks.fivetran.aiohttp.ClientSession')
 @mock.patch("fivetran_provider_async.hooks.fivetran.FivetranHookAsync.get_connection")
 async def test_do_api_call_async_patch_method_with_success(mock_get_connection, mock_session):
+    """Tests that _do_api_call_async method returns correct response when PATCH request
+    is successful"""
     async def mock_fun(arg1, arg2, arg3, arg4):
         return {"status": "success"}
 
@@ -166,6 +177,8 @@ async def test_do_api_call_async_patch_method_with_success(mock_get_connection, 
 @mock.patch('fivetran_provider_async.hooks.fivetran.aiohttp.ClientSession')
 @mock.patch("fivetran_provider_async.hooks.fivetran.FivetranHookAsync.get_connection")
 async def test_do_api_call_async_post_method_with_success(mock_get_connection, mock_session):
+    """Tests that _do_api_call_async method returns correct response when POST request
+    is successful"""
     async def mock_fun(arg1, arg2, arg3, arg4):
         return {"status": "success"}
 
@@ -187,6 +200,7 @@ async def test_do_api_call_async_post_method_with_success(mock_get_connection, m
 @mock.patch('fivetran_provider_async.hooks.fivetran.aiohttp.ClientSession')
 @mock.patch("fivetran_provider_async.hooks.fivetran.FivetranHookAsync.get_connection")
 async def test_do_api_call_async_unexpected_method_error(mock_get_connection, mock_session):
+    """Tests that _do_api_call_async method raises exception when a wrong request is sent"""
     hook = FivetranHookAsync(fivetran_conn_id='conn_fivetran')
 
     hook.fivetran_conn = mock_get_connection
@@ -201,6 +215,7 @@ async def test_do_api_call_async_unexpected_method_error(mock_get_connection, mo
 @mock.patch('fivetran_provider_async.hooks.fivetran.aiohttp.ClientSession')
 @mock.patch("fivetran_provider_async.hooks.fivetran.FivetranHookAsync.get_connection")
 async def test_do_api_call_async_with_non_retryable_client_response_error(mock_get_connection, mock_session):
+    """Tests that _do_api_call_async method returns expected response for a non retryable error"""
     mock_session.return_value.__aenter__.return_value.patch.return_value.json.side_effect = (
         ClientResponseError(
             request_info=RequestInfo(url="example.com", method="PATCH", headers=multidict.CIMultiDict()),
@@ -224,6 +239,7 @@ async def test_do_api_call_async_with_non_retryable_client_response_error(mock_g
 @mock.patch('fivetran_provider_async.hooks.fivetran.aiohttp.ClientSession')
 @mock.patch("fivetran_provider_async.hooks.fivetran.FivetranHookAsync.get_connection")
 async def test_do_api_call_async_with_retryable_client_response_error(mock_get_connection, mock_session):
+    """Tests that _do_api_call_async method raises exception for a retryable error"""
     mock_session.return_value.__aenter__.return_value.patch.return_value.json.side_effect = (
         ClientResponseError(
             request_info=RequestInfo(url="example.com", method="PATCH", headers=multidict.CIMultiDict()),
