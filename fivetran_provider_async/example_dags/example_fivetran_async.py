@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from airflow import DAG
 from fivetran_provider.operators.fivetran import FivetranOperator
 
+from fivetran_provider_async.operators.fivetran import FivetranOperatorAsync
 from fivetran_provider_async.sensors.fivetran import FivetranSensorAsync
 
 default_args = {
@@ -18,18 +19,24 @@ dag = DAG(
 )
 
 with dag:
-    fivetran_sync_start = FivetranOperator(
-        task_id="fivetran-task",
-        fivetran_conn_id="fivetran_default",
-        connector_id="{{ var.value.connector_id }}",
+    fivetran_async_op = FivetranOperatorAsync(
+        task_id="fivetran_async_op",
+        fivetran_conn_id="fivetran_abc",
+        connector_id="bronzing_largely",
     )
 
-    fivetran_sync_wait = FivetranSensorAsync(
-        task_id="fivetran-sensor",
-        fivetran_conn_id="fivetran_default",
-        connector_id="{{ var.value.connector_id }}",
+    fivetran_sync_op = FivetranOperator(
+        task_id="fivetran_sync_op",
+        fivetran_conn_id="fivetran_abc",
+        connector_id="bronzing_largely",
+    )
+
+    fivetran_async_sensor = FivetranSensorAsync(
+        task_id="fivetran_async_sensor",
+        fivetran_conn_id="fivetran_abc",
+        connector_id="bronzing_largely",
         poke_interval=5,
-        xcom="{{ task_instance.xcom_pull('fivetran-task', key='return_value') }}",
+        xcom="{{ task_instance.xcom_pull('fivetran_sync_op', key='return_value') }}",
     )
 
-    fivetran_sync_start >> fivetran_sync_wait
+    fivetran_async_op >> fivetran_sync_op >> fivetran_async_sensor

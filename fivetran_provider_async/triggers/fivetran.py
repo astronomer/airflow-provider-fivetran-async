@@ -28,7 +28,7 @@ class FivetranTrigger(BaseTrigger):
         polling_period_seconds: float,
         connector_id: str,
         fivetran_conn_id: str,
-        previous_completed_at: pendulum.DateTime,
+        previous_completed_at: pendulum.DateTime = None,
         xcom: str = "",
         poll_interval: float = 4.0,
     ):
@@ -51,6 +51,7 @@ class FivetranTrigger(BaseTrigger):
                 "connector_id": self.connector_id,
                 "fivetran_conn_id": self.fivetran_conn_id,
                 "previous_completed_at": self.previous_completed_at,
+                "xcom": self.xcom,
                 "poll_interval": self.poll_interval,
             },
         )
@@ -63,7 +64,7 @@ class FivetranTrigger(BaseTrigger):
         try:
             hook = FivetranHookAsync(fivetran_conn_id=self.fivetran_conn_id)
             if self.previous_completed_at is None:
-                self.previous_completed_at = await hook.get_last_sync_async(self.connector_id)
+                self.previous_completed_at = await hook.get_last_sync_async(self.connector_id, self.xcom)
             while True:
                 res = await hook.get_sync_status_async(self.connector_id, self.previous_completed_at)
                 if res == "success":
@@ -72,7 +73,13 @@ class FivetranTrigger(BaseTrigger):
                         self.connector_id,
                         self.previous_completed_at,
                     )
-                    yield TriggerEvent({"status": "success", "message": msg})
+                    yield TriggerEvent(
+                        {
+                            "status": "success",
+                            "message": msg,
+                            "return_value": self.previous_completed_at.to_iso8601_string(),
+                        }
+                    )
                 elif res == "pending":
                     self.log.info("sync is still running...")
                     self.log.info("sleeping for %s seconds.", self.polling_period_seconds)

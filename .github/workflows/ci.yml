@@ -7,7 +7,7 @@ on:
   release:
     types: [ 'created' ]
 
-# This allows a subsequent queued workflow run to interrupt and cancel previous runs
+# This allows a subsequently queued workflow run to interrupt and cancel previous runs
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true

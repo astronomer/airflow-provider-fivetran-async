@@ -67,6 +67,7 @@ def test_fivetran_trigger_serialization():
         "poll_interval": 4.0,
         "polling_period_seconds": 4,
         "previous_completed_at": PREV_COMPLETED_AT,
+        "xcom": "",
         "task_id": "fivetran_sync_task",
     }
 
@@ -93,6 +94,7 @@ async def test_fivetran_trigger_completed(mock_api_call_async_response, mock_get
             {
                 "status": "success",
                 "message": f"Fivetran connector {CONNECTOR_ID} finished " f"syncing at {SUCCEEDED_AT}",
+                "return_value": MOCK_FIVETRAN_RESPONSE_PAYLOAD["data"]["succeeded_at"],
             }
         )
         == actual_response
