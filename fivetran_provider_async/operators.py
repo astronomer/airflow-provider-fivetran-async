@@ -2,47 +2,40 @@ from typing import Any, Dict, Optional
 
 from airflow.exceptions import AirflowException
 from airflow.utils.context import Context
-from fivetran_provider.sensors.fivetran import FivetranSensor
+from fivetran_provider.operators.fivetran import FivetranOperator
 
-from fivetran_provider_async.triggers.fivetran import FivetranTrigger
+from fivetran_provider_async.triggers import FivetranTrigger
 
 
-class FivetranSensorAsync(FivetranSensor):
+class FivetranOperatorAsync(FivetranOperator):
     """
-    `FivetranSensorAsync` asynchronously monitors a Fivetran sync job for completion.
-    Monitoring with `FivetranSensorAsync` allows you to trigger downstream processes only
-    when the Fivetran sync jobs have completed, ensuring data consistency. You can
-    use multiple instances of `FivetranSensorAsync` to monitor multiple Fivetran
-    connectors. `FivetranSensorAsync` requires that you specify the `connector_id` of the sync
-    job to start. You can find `connector_id` in the Settings page of the connector you configured in the
-    `Fivetran dashboard <https://fivetran.com/dashboard/connectors>`_.
-
+    `FivetranOperatorAsync` submits a Fivetran sync job , and polls for its status on the
+    airflow trigger.`FivetranOperatorAsync` requires that you specify the `connector_id` of
+    the sync job to start. You can find `connector_id` in the Settings page of the connector
+    you configured in the `Fivetran dashboard <https://fivetran.com/dashboard/connectors>`_.
 
     :param fivetran_conn_id: `Conn ID` of the Connection to be used to configure
         the hook.
-    :type fivetran_conn_id: str
     :param connector_id: ID of the Fivetran connector to sync, found on the
         Connector settings page in the Fivetran Dashboard.
-    :type connector_id: str
     :param poke_interval: Time in seconds that the job should wait in
         between each tries
-    :type poke_interval: int
-    :param fivetran_retry_limit: # of retries when encountering API errors
-    :type fivetran_retry_limit: Optional[int]
-    :param fivetran_retry_delay: Time to wait before retrying API request
-    :type fivetran_retry_delay: int
     """
 
     def execute(self, context: Dict[str, Any]) -> None:
-        """Check for the target_status and defers using the trigger"""
+        """Start the sync using synchronous hook"""
+        hook = self._get_hook()
+        hook.prep_connector(self.connector_id, self.schedule_type)
+        hook.start_fivetran_sync(self.connector_id)
+
+        # Defer and poll the sync status on the Triggerer
         self.defer(
             timeout=self.execution_timeout,
             trigger=FivetranTrigger(
                 task_id=self.task_id,
                 fivetran_conn_id=self.fivetran_conn_id,
                 connector_id=self.connector_id,
-                previous_completed_at=self.previous_completed_at,
-                polling_period_seconds=self.poke_interval,
+                poke_interval=self.poll_frequency,
             ),
             method_name="execute_complete",
         )
@@ -61,3 +54,4 @@ class FivetranSensorAsync(FivetranSensor):
                 self.log.info(
                     event["message"],
                 )
+                return event["return_value"]

@@ -3,10 +3,8 @@ from unittest import mock
 import pytest
 from airflow.exceptions import AirflowException, TaskDeferred
 
-from fivetran_provider_async.sensors.fivetran import (
-    FivetranSensorAsync,
-    FivetranTrigger,
-)
+from fivetran_provider_async.sensors import FivetranSensorAsync
+from fivetran_provider_async.triggers import FivetranTrigger
 
 TASK_ID = "fivetran_sensor_check"
 POLLING_PERIOD_SECONDS = 1.0
