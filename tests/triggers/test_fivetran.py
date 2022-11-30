@@ -9,7 +9,7 @@ from airflow.triggers.base import TriggerEvent
 from fivetran_provider_async.triggers import FivetranTrigger
 
 TASK_ID = "fivetran_sync_task"
-POLLING_PERIOD_SECONDS = 4
+POKE_INTERVAL = 4
 CONNECTOR_ID = "interchangeable_revenge"
 FIVETRAN_CONN_ID = "conn_fivetran"
 PREV_COMPLETED_AT = pendulum.datetime(2021, 3, 23, 21, 55)
@@ -54,7 +54,7 @@ def test_fivetran_trigger_serialization():
     """
     trigger = FivetranTrigger(
         task_id=TASK_ID,
-        polling_period_seconds=POLLING_PERIOD_SECONDS,
+        poke_interval=POKE_INTERVAL,
         connector_id=CONNECTOR_ID,
         fivetran_conn_id=FIVETRAN_CONN_ID,
         previous_completed_at=PREV_COMPLETED_AT,
@@ -64,8 +64,7 @@ def test_fivetran_trigger_serialization():
     assert kwargs == {
         "connector_id": "interchangeable_revenge",
         "fivetran_conn_id": "conn_fivetran",
-        "poll_interval": 4.0,
-        "polling_period_seconds": 4,
+        "poke_interval": 4.0,
         "previous_completed_at": PREV_COMPLETED_AT,
         "xcom": "",
         "task_id": "fivetran_sync_task",
@@ -81,7 +80,7 @@ async def test_fivetran_trigger_completed(mock_api_call_async_response, mock_get
     mock_api_call_async_response.return_value = MOCK_FIVETRAN_RESPONSE_PAYLOAD
     trigger = FivetranTrigger(
         task_id=TASK_ID,
-        polling_period_seconds=POLLING_PERIOD_SECONDS,
+        poke_interval=POKE_INTERVAL,
         connector_id=CONNECTOR_ID,
         fivetran_conn_id=FIVETRAN_CONN_ID,
         previous_completed_at=PREV_COMPLETED_AT,
@@ -110,7 +109,7 @@ async def test_fivetran_trigger_pending(mock_api_call_async_response, mock_get_s
     mock_api_call_async_response.return_value = MOCK_FIVETRAN_RESPONSE_PAYLOAD
     trigger = FivetranTrigger(
         task_id=TASK_ID,
-        polling_period_seconds=POLLING_PERIOD_SECONDS,
+        poke_interval=POKE_INTERVAL,
         connector_id=CONNECTOR_ID,
         fivetran_conn_id=FIVETRAN_CONN_ID,
         previous_completed_at=PREV_COMPLETED_AT,
@@ -130,7 +129,7 @@ async def test_fivetran_trigger_failed(mock_api_call_async_response, mock_get_sy
     mock_api_call_async_response.return_value = MOCK_FIVETRAN_RESPONSE_PAYLOAD
     trigger = FivetranTrigger(
         task_id=TASK_ID,
-        polling_period_seconds=POLLING_PERIOD_SECONDS,
+        poke_interval=POKE_INTERVAL,
         connector_id=CONNECTOR_ID,
         fivetran_conn_id=FIVETRAN_CONN_ID,
         previous_completed_at=PREV_COMPLETED_AT,
@@ -149,7 +148,7 @@ async def test_fivetran_trigger_exception(mock_api_call_async_response, mock_get
     mock_api_call_async_response.return_value = MOCK_FIVETRAN_RESPONSE_PAYLOAD
     trigger = FivetranTrigger(
         task_id=TASK_ID,
-        polling_period_seconds=POLLING_PERIOD_SECONDS,
+        poke_interval=POKE_INTERVAL,
         connector_id=CONNECTOR_ID,
         fivetran_conn_id=FIVETRAN_CONN_ID,
         previous_completed_at=PREV_COMPLETED_AT,
