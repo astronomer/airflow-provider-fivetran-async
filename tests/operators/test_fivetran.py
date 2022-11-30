@@ -5,7 +5,7 @@ import pytest
 import requests_mock
 from airflow.exceptions import AirflowException, TaskDeferred
 
-from fivetran_provider_async.operators.fivetran import FivetranOperatorAsync
+from fivetran_provider_async.operators import FivetranOperatorAsync
 
 
 @pytest.fixture

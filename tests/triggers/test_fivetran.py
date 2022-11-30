@@ -6,7 +6,7 @@ import pytest
 from airflow.exceptions import AirflowException
 from airflow.triggers.base import TriggerEvent
 
-from fivetran_provider_async.triggers.fivetran import FivetranTrigger
+from fivetran_provider_async.triggers import FivetranTrigger
 
 TASK_ID = "fivetran_sync_task"
 POLLING_PERIOD_SECONDS = 4
@@ -60,7 +60,7 @@ def test_fivetran_trigger_serialization():
         previous_completed_at=PREV_COMPLETED_AT,
     )
     classpath, kwargs = trigger.serialize()
-    assert classpath == "fivetran_provider_async.triggers.fivetran.FivetranTrigger"
+    assert classpath == "fivetran_provider_async.triggers.FivetranTrigger"
     assert kwargs == {
         "connector_id": "interchangeable_revenge",
         "fivetran_conn_id": "conn_fivetran",
@@ -73,8 +73,8 @@ def test_fivetran_trigger_serialization():
 
 
 @pytest.mark.asyncio
-@mock.patch("fivetran_provider_async.hooks.fivetran.FivetranHookAsync.get_sync_status_async")
-@mock.patch("fivetran_provider_async.hooks.fivetran.FivetranHookAsync._do_api_call_async")
+@mock.patch("fivetran_provider_async.hooks.FivetranHookAsync.get_sync_status_async")
+@mock.patch("fivetran_provider_async.hooks.FivetranHookAsync._do_api_call_async")
 async def test_fivetran_trigger_completed(mock_api_call_async_response, mock_get_sync_status_async):
     """Tests if success event is returned by the FivetranTrigger"""
     mock_get_sync_status_async.return_value = "success"
@@ -102,8 +102,8 @@ async def test_fivetran_trigger_completed(mock_api_call_async_response, mock_get
 
 
 @pytest.mark.asyncio
-@mock.patch("fivetran_provider_async.hooks.fivetran.FivetranHookAsync.get_sync_status_async")
-@mock.patch("fivetran_provider_async.hooks.fivetran.FivetranHookAsync._do_api_call_async")
+@mock.patch("fivetran_provider_async.hooks.FivetranHookAsync.get_sync_status_async")
+@mock.patch("fivetran_provider_async.hooks.FivetranHookAsync._do_api_call_async")
 async def test_fivetran_trigger_pending(mock_api_call_async_response, mock_get_sync_status_async):
     """Tests that event is not returned by the FivetranTrigger when sync is still in pending state"""
     mock_get_sync_status_async.return_value = "pending"
@@ -122,8 +122,8 @@ async def test_fivetran_trigger_pending(mock_api_call_async_response, mock_get_s
 
 
 @pytest.mark.asyncio
-@mock.patch("fivetran_provider_async.hooks.fivetran.FivetranHookAsync.get_sync_status_async")
-@mock.patch("fivetran_provider_async.hooks.fivetran.FivetranHookAsync._do_api_call_async")
+@mock.patch("fivetran_provider_async.hooks.FivetranHookAsync.get_sync_status_async")
+@mock.patch("fivetran_provider_async.hooks.FivetranHookAsync._do_api_call_async")
 async def test_fivetran_trigger_failed(mock_api_call_async_response, mock_get_sync_status_async):
     """Tests if error event is returned by the FivetranTrigger in case of sync error"""
     mock_get_sync_status_async.return_value = "error"
@@ -141,8 +141,8 @@ async def test_fivetran_trigger_failed(mock_api_call_async_response, mock_get_sy
 
 
 @pytest.mark.asyncio
-@mock.patch("fivetran_provider_async.hooks.fivetran.FivetranHookAsync.get_sync_status_async")
-@mock.patch("fivetran_provider_async.hooks.fivetran.FivetranHookAsync._do_api_call_async")
+@mock.patch("fivetran_provider_async.hooks.FivetranHookAsync.get_sync_status_async")
+@mock.patch("fivetran_provider_async.hooks.FivetranHookAsync._do_api_call_async")
 async def test_fivetran_trigger_exception(mock_api_call_async_response, mock_get_sync_status_async):
     """Tests if error event is returned by the FivetranTrigger in case of exception"""
     mock_get_sync_status_async.side_effect = AirflowException("fivetran unavailable")

@@ -4,7 +4,7 @@ from airflow.exceptions import AirflowException
 from airflow.utils.context import Context
 from fivetran_provider.sensors.fivetran import FivetranSensor
 
-from fivetran_provider_async.triggers.fivetran import FivetranTrigger
+from fivetran_provider_async.triggers import FivetranTrigger
 
 
 class FivetranSensorAsync(FivetranSensor):
@@ -20,17 +20,12 @@ class FivetranSensorAsync(FivetranSensor):
 
     :param fivetran_conn_id: `Conn ID` of the Connection to be used to configure
         the hook.
-    :type fivetran_conn_id: str
     :param connector_id: ID of the Fivetran connector to sync, found on the
         Connector settings page in the Fivetran Dashboard.
-    :type connector_id: str
     :param poke_interval: Time in seconds that the job should wait in
         between each tries
-    :type poke_interval: int
     :param fivetran_retry_limit: # of retries when encountering API errors
-    :type fivetran_retry_limit: Optional[int]
     :param fivetran_retry_delay: Time to wait before retrying API request
-    :type fivetran_retry_delay: int
     """
 
     def execute(self, context: Dict[str, Any]) -> None:
@@ -43,7 +38,7 @@ class FivetranSensorAsync(FivetranSensor):
                 connector_id=self.connector_id,
                 previous_completed_at=self.previous_completed_at,
                 xcom=self.xcom,
-                polling_period_seconds=self.poke_interval,
+                poke_interval=self.poke_interval,
             ),
             method_name="execute_complete",
         )

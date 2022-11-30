@@ -4,7 +4,7 @@ from airflow.exceptions import AirflowException
 from airflow.utils.context import Context
 from fivetran_provider.operators.fivetran import FivetranOperator
 
-from fivetran_provider_async.triggers.fivetran import FivetranTrigger
+from fivetran_provider_async.triggers import FivetranTrigger
 
 
 class FivetranOperatorAsync(FivetranOperator):
@@ -16,17 +16,10 @@ class FivetranOperatorAsync(FivetranOperator):
 
     :param fivetran_conn_id: `Conn ID` of the Connection to be used to configure
         the hook.
-    :type fivetran_conn_id: str
     :param connector_id: ID of the Fivetran connector to sync, found on the
         Connector settings page in the Fivetran Dashboard.
-    :type connector_id: str
     :param poke_interval: Time in seconds that the job should wait in
         between each tries
-    :type poke_interval: int
-    :param fivetran_retry_limit: # of retries when encountering API errors
-    :type fivetran_retry_limit: Optional[int]
-    :param fivetran_retry_delay: Time to wait before retrying API request
-    :type fivetran_retry_delay: int
     """
 
     def execute(self, context: Dict[str, Any]) -> None:
@@ -35,14 +28,14 @@ class FivetranOperatorAsync(FivetranOperator):
         hook.prep_connector(self.connector_id, self.schedule_type)
         hook.start_fivetran_sync(self.connector_id)
 
-        """Defer and poll the sync status on the Trigger"""
+        # Defer and poll the sync status on the Triggerer
         self.defer(
             timeout=self.execution_timeout,
             trigger=FivetranTrigger(
                 task_id=self.task_id,
                 fivetran_conn_id=self.fivetran_conn_id,
                 connector_id=self.connector_id,
-                polling_period_seconds=self.poll_frequency,
+                poke_interval=self.poll_frequency,
             ),
             method_name="execute_complete",
         )
