@@ -22,17 +22,17 @@ dag = DAG(
 with dag:
     fivetran_async_op = FivetranOperatorAsync(
         task_id="fivetran_async_op",
-        connector_id="bronzing_largely",
+        connector_id="{{ var.value.connector_id }}",
     )
 
     fivetran_sync_op = FivetranOperator(
         task_id="fivetran_sync_op",
-        connector_id="bronzing_largely",
+        connector_id="{{ var.value.connector_id }}",
     )
 
     fivetran_async_sensor = FivetranSensorAsync(
         task_id="fivetran_async_sensor",
-        connector_id="bronzing_largely",
+        connector_id="{{ var.value.connector_id }}",
         poke_interval=5,
         xcom="{{ task_instance.xcom_pull('fivetran_sync_op', key='return_value') }}",
     )
