@@ -88,7 +88,6 @@ MOCK_FIVETRAN_SCHEMA_RESPONSE_PAYLOAD = {
 }
 
 
-
 @mock.patch.dict("os.environ", AIRFLOW_CONN_CONN_FIVETRAN="http://API_KEY:API_SECRET@")
 class TestFivetranHook(unittest.TestCase):
     @requests_mock.mock()
