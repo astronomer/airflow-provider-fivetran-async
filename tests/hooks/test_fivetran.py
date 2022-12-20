@@ -43,6 +43,40 @@ MOCK_FIVETRAN_RESPONSE_PAYLOAD = {
     },
 }
 
+MOCK_FIVETRAN_SCHEMA_RESPONSE_PAYLOAD = {
+    "code": "Success",
+    "data": {
+        "enable_new_by_default": True,
+        "schema_change_handling": "ALLOW_ALL",
+        "schemas": {
+            "google_sheets.fivetran_google_sheets_spotify": {
+                "name_in_destination": "google_sheets.fivetran_google_sheets_spotify",
+                "enabled": True,
+                "tables": {
+                    "table_1": {
+                        "name_in_destination": "table_1",
+                        "enabled": True,
+                        "sync_mode": "SOFT_DELETE",
+                        "enabled_patch_settings": {"allowed": True},
+                        "columns": {
+                            "column_1_": {
+                                "name_in_destination": "column_1",
+                                "enabled": True,
+                                "hashed": False,
+                                "enabled_patch_settings": {
+                                    "allowed": False,
+                                    "reason_code": "SYSTEM_COLUMN",
+                                    "reason": "The column does not support exclusion as it is a Primary Key",
+                                },
+                            }
+                        },
+                    }
+                },
+            }
+        },
+    },
+}
+
 
 @pytest.mark.asyncio
 @mock.patch("fivetran_provider_async.hooks.FivetranHookAsync._do_api_call_async")
@@ -64,6 +98,14 @@ async def test_fivetran_hook_get_connector_async_error(mock_api_call_async_respo
         await hook.get_connector_async(connector_id="")
     assert str(exc.value) == "No value specified for connector_id"
 
+@pytest.mark.asyncio
+@mock.patch("fivetran_provider_async.hooks.FivetranHookAsync._do_api_call_async")
+async def test_get_connector_schemas_async_success(mock_api_call_async_response):
+    """Tests that the get_connector_schemas_async method fetches teh details of a connector's schema"""
+    hook = FivetranHookAsync(fivetran_conn_id="conn_fivetran")
+    mock_api_call_async_response.return_value = MOCK_FIVETRAN_SCHEMA_RESPONSE_PAYLOAD
+    result = await hook.get_connector_schemas_async(connector_id="interchangeable_revenge")
+    assert result["schemas"]["google_sheets.fivetran_google_sheets_spotify"]["enabled"]
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(

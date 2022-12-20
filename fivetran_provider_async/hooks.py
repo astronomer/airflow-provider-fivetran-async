@@ -92,6 +92,22 @@ class FivetranHookAsync(FivetranHook):
         resp = await self._do_api_call_async(("GET", endpoint))
         return resp["data"]
 
+    async def get_connector_schemas_async(self, connector_id):
+        """
+        Fetches schema information of the connector asynchronously.
+
+        :param connector_id: Fivetran connector_id, found in connector settings
+            page in the Fivetran user interface.
+        :type connector_id: str
+        :return: connector details
+        :rtype: Dict
+        """
+        if connector_id == "":
+            raise ValueError("No value specified for connector_id")
+        endpoint = self.api_path_connectors + connector_id + "/schemas"
+        resp = await self._do_api_call_async(("GET", endpoint))
+        return resp["data"]
+
     async def get_sync_status_async(self, connector_id, previous_completed_at):
         """
         For sensor, return True if connector's 'succeeded_at' field has updated.
