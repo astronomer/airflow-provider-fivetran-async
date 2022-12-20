@@ -166,12 +166,12 @@ class TestFivetranHook(unittest.TestCase):
         )
 
         facets = operator.get_openlineage_facets_on_complete(None)
-        assert facets.inputs[0].facets["dataSource"].name == "fivetran"
+        assert facets.inputs[0].namespace == "fivetran"
         assert facets.inputs[0].name == "https://docs.google.com/spreadsheets/d/.../edit#gid=..."
-        field = facets.outputs[0].facets["schema"].fields[0]
-        assert field.name == "column_1"
-        assert field.type == ""
-        assert field.description is None
+        schema_field = facets.outputs[0].facets["SchemaDatasetFacet"][0]
+        assert schema_field.name == "column_1"
+        assert schema_field.type == ""
+        assert schema_field.description is None
 
     @requests_mock.mock()
     def test_fivetran_operator_get_fields(self, m):
@@ -186,10 +186,11 @@ class TestFivetranHook(unittest.TestCase):
             connector_id="interchangeable_revenge",
         )
 
-        fields = operator._get_fields(
+        schema_facet = operator._get_fields(
             MOCK_FIVETRAN_SCHEMA_RESPONSE_PAYLOAD["data"]["schemas"][
                 "google_sheets.fivetran_google_sheets_spotify"
             ]["tables"]["table_1"]
         )
 
-        assert fields[0].name == "column_1"
+        assert schema_facet.fields[0].name == "column_1"
+        assert schema_facet.fields[0].type == ""
