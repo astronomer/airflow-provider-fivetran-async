@@ -4,8 +4,12 @@ from airflow.exceptions import AirflowException
 from airflow.utils.context import Context
 from fivetran_provider.operators.fivetran import FivetranOperator
 from openlineage.airflow.extractors.base import BaseExtractor, OperatorLineage
+from openlineage.client.facet import (
+    DataSourceDatasetFacet,
+    SchemaDatasetFacet,
+    SchemaField,
+)
 from openlineage.client.run import Dataset
-from openlineage.client.facet import DataSourceDatasetFacet, SchemaDatasetFacet, SchemaField
 
 from fivetran_provider_async.triggers import FivetranTrigger
 
@@ -61,20 +65,22 @@ class FivetranOperatorAsync(FivetranOperator):
 
     def _get_fields(self, table) -> Optional[SchemaField]:
         if table.get("columns"):
-            return SchemaDatasetFacet(fields=[
-                SchemaField(
-                    name=col["name_in_destination"],
-                    type="",
-                )
-                for col in table["columns"].values()
-            ])
+            return SchemaDatasetFacet(
+                fields=[
+                    SchemaField(
+                        name=col["name_in_destination"],
+                        type="",
+                    )
+                    for col in table["columns"].values()
+                ]
+            )
         return None
 
     def _get_input_name(self, config, service) -> str:
         if service == "gcs":
             return f"{config['bucket']}/{config['prefix']}{config['pattern']}"
         elif service == "google_sheets":
-            return config['sheet_id']
+            return config["sheet_id"]
         else:
             raise ValueError(f"Service: {service} not supported by extractor.")
 
@@ -101,34 +107,25 @@ class FivetranOperatorAsync(FivetranOperator):
 
             # Assumes a Fivetran config will only ever have one source.
             inputs.append(
-                Dataset(
-                    namespace=namespace,
-                    name=input_name,
-                    facets={"DataSourceDatasetFacet": source}
-                )
+                Dataset(namespace=namespace, name=input_name, facets={"DataSourceDatasetFacet": source})
             )
 
             # Assumes a Fivetran sync can have multiple outputs.
-            outputs.extend([
-                Dataset(
-                    namespace="fivetran",
-                    name=table["name_in_destination"],
-                    facets={
-                        "SchemaDatasetFacet": self._get_fields(table),
-                        "DataSourceDatasetFacet": source
-                    }
-                    
-                )
-                for table in schema["tables"].values()
-            ])
+            outputs.extend(
+                [
+                    Dataset(
+                        namespace="fivetran",
+                        name=table["name_in_destination"],
+                        facets={
+                            "SchemaDatasetFacet": self._get_fields(table),
+                            "DataSourceDatasetFacet": source,
+                        },
+                    )
+                    for table in schema["tables"].values()
+                ]
+            )
 
         job_facets = {}
         run_facets = {}
 
-        return OperatorLineage(
-            inputs=inputs,
-            outputs=outputs,
-            job_facets=job_facets,
-            run_facets=run_facets
-        )
-
+        return OperatorLineage(inputs=inputs, outputs=outputs, job_facets=job_facets, run_facets=run_facets)

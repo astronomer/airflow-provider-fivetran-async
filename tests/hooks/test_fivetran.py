@@ -98,6 +98,7 @@ async def test_fivetran_hook_get_connector_async_error(mock_api_call_async_respo
         await hook.get_connector_async(connector_id="")
     assert str(exc.value) == "No value specified for connector_id"
 
+
 @pytest.mark.asyncio
 @mock.patch("fivetran_provider_async.hooks.FivetranHookAsync._do_api_call_async")
 async def test_get_connector_schemas_async_success(mock_api_call_async_response):
@@ -106,6 +107,7 @@ async def test_get_connector_schemas_async_success(mock_api_call_async_response)
     mock_api_call_async_response.return_value = MOCK_FIVETRAN_SCHEMA_RESPONSE_PAYLOAD
     result = await hook.get_connector_schemas_async(connector_id="interchangeable_revenge")
     assert result["schemas"]["google_sheets.fivetran_google_sheets_spotify"]["enabled"]
+
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
