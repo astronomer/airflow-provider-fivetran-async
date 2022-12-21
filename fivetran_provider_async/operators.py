@@ -1,3 +1,4 @@
+import os
 from typing import Any, Dict, Optional
 
 from airflow.exceptions import AirflowException
@@ -95,7 +96,7 @@ class FivetranOperatorAsync(FivetranOperator):
         schema_resp = hook.get_connector_schemas(self.connector_id)
         config = connector_resp["config"]
         input_name = self._get_input_name(config, connector_resp["service"])
-        namespace = "fivetran"
+        namespace = os.environ.get("OPENLINEAGE_NAMESPACE") or "fivetran"
         inputs = []
         outputs = []
 
@@ -114,7 +115,7 @@ class FivetranOperatorAsync(FivetranOperator):
             outputs.extend(
                 [
                     Dataset(
-                        namespace="fivetran",
+                        namespace=namespace,
                         name=table["name_in_destination"],
                         facets={
                             "SchemaDatasetFacet": self._get_fields(table),
