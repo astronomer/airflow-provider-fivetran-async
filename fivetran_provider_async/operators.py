@@ -1,18 +1,13 @@
-import os
 from typing import Any, Dict, Optional
 
 from airflow.exceptions import AirflowException
 from airflow.utils.context import Context
 from fivetran_provider.operators.fivetran import FivetranOperator
-from openlineage.airflow.extractors.base import BaseExtractor, OperatorLineage
-from openlineage.client.facet import (
-    DataSourceDatasetFacet,
-    SchemaDatasetFacet,
-    SchemaField,
-)
-from openlineage.client.run import Dataset
+from openlineage.airflow.extractors.base import OperatorLineage
+from openlineage.client.facet import DocumentationJobFacet, ErrorMessageRunFacet
 
 from fivetran_provider_async.triggers import FivetranTrigger
+from fivetran_provider_async.utils.operator_utils import get_dataset
 
 
 class FivetranOperatorAsync(FivetranOperator):
@@ -64,69 +59,60 @@ class FivetranOperatorAsync(FivetranOperator):
                 )
                 return event["return_value"]
 
-    def _get_fields(self, table) -> Optional[SchemaField]:
-        if table.get("columns"):
-            return SchemaDatasetFacet(
-                fields=[
-                    SchemaField(
-                        name=col["name_in_destination"],
-                        type="",
-                    )
-                    for col in table["columns"].values()
-                ]
-            )
-        return None
-
-    def _get_input_name(self, config, service) -> str:
-        if service == "gcs":
-            return f"{config['bucket']}/{config['prefix']}{config['pattern']}"
-        elif service == "google_sheets":
-            return config["sheet_id"]
-        else:
-            raise ValueError(f"Service: {service} not supported by extractor.")
-
-    def get_openlineage_facets_on_complete(self, task_instance) -> OperatorLineage:
+    def get_openlineage_facets_on_start(self) -> OperatorLineage:
         """
         Default extractor method that OpenLineage will call on execute completion.
         """
         # Should likely use the sync hook here to ensure that OpenLineage data is
         # returned before the timeout.
         hook = self._get_hook()
-        connector_resp = hook.get_connector(self.connector_id)
-        schema_resp = hook.get_connector_schemas(self.connector_id)
-        config = connector_resp["config"]
-        input_name = self._get_input_name(config, connector_resp["service"])
-        namespace = os.environ.get("OPENLINEAGE_NAMESPACE") or "fivetran"
-        inputs = []
-        outputs = []
+        connector_response = hook.get_connector(self.connector_id)
+        groups_response = hook.get_groups(connector_response["group_id"])
+        destinations_response = hook.get_destinations(connector_response["group_id"])
+        schema_response = hook.get_connector_schemas(self.connector_id)
+        table_response = hook.get_metadata(self.connector_id, "tables")
+        column_response = hook.get_metadata(self.connector_id, "columns")
 
-        for schema in schema_resp["schemas"].values():
-            source = DataSourceDatasetFacet(
-                name="fivetran",
-                uri=BaseExtractor.get_connection_uri(hook.fivetran_conn),
+        for schema in schema_response["schemas"].values():
+
+            inputs = get_dataset(
+                config=connector_response["config"],
+                service=connector_response["service"],
+                table_response=table_response,
+                column_response=column_response,
+                schema=schema,
+                connector_id=self.connector_id,
+                loc="source",
             )
 
-            # Assumes a Fivetran config will only ever have one source.
-            inputs.append(
-                Dataset(namespace=namespace, name=input_name, facets={"DataSourceDatasetFacet": source})
+            outputs = get_dataset(
+                config=destinations_response["config"],
+                service=destinations_response["service"],
+                table_response=table_response,
+                column_response=column_response,
+                schema=schema,
+                connector_id=self.connector_id,
+                loc="destination",
             )
 
-            # Assumes a Fivetran sync can have multiple outputs.
-            outputs.extend(
-                [
-                    Dataset(
-                        namespace=namespace,
-                        name=table["name_in_destination"],
-                        facets={
-                            "SchemaDatasetFacet": self._get_fields(table),
-                            "DataSourceDatasetFacet": source,
-                        },
-                    )
-                    for table in schema["tables"].values()
-                ]
+        job_facets = {
+            "documentation": DocumentationJobFacet(
+                description=f"""
+                Fivetran run for service: {connector_response['service']}\n
+                Group Name: {groups_response["name"]}\n
+                Connector ID: {self.connector_id}
+                """
             )
+        }
 
-        job_facets = {}
-        run_facets = {}
+        run_facets = {
+            "errorMessage": ErrorMessageRunFacet(
+                message=f"Job failed at: {connector_response['failed_at']}",
+                programmingLanguage="Fivetran"
+            )
+        }
 
         return OperatorLineage(inputs=inputs, outputs=outputs, job_facets=job_facets, run_facets=run_facets)
+
+    def get_openlineage_facets_on_complete(self, task_instance) -> OperatorLineage:
+        return self.get_openlineage_facets_on_start()
