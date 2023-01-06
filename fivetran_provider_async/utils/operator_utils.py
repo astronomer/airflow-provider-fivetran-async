@@ -7,6 +7,7 @@ from openlineage.client.facet import (
 )
 from openlineage.client.run import Dataset
 
+
 def _get_table_id(table_src, table, tables, loc) -> str:
     """
     Finds a table ID for the given table names
@@ -33,6 +34,7 @@ def _get_table_id(table_src, table, tables, loc) -> str:
         if t[f"name_in_{loc}"] == table_name:
             return t["id"]
 
+
 def _get_fields(table_id, columns, loc) -> SchemaDatasetFacet:
     """
     Creates the SchemaDatasetFacet and necessary SchemaField objects.
@@ -46,13 +48,15 @@ def _get_fields(table_id, columns, loc) -> SchemaDatasetFacet:
     """
     return SchemaDatasetFacet(
         fields=[
-                SchemaField(
-                    name=col[f"name_in_{loc}"],
-                    type=col[f"type_in_{loc}"],
-                )
-                for col in columns["items"] if col["parent_id"] == table_id
-            ]
-        )
+            SchemaField(
+                name=col[f"name_in_{loc}"],
+                type=col[f"type_in_{loc}"],
+            )
+            for col in columns["items"]
+            if col["parent_id"] == table_id
+        ]
+    )
+
 
 def _get_openlineage_name(config, service, schema, table) -> str:
     """
@@ -71,15 +75,16 @@ def _get_openlineage_name(config, service, schema, table) -> str:
     :type table: str
     """
     if service == "gcs":
-        pattern = config['pattern'].replace('\\', '')
+        pattern = config["pattern"].replace("\\", "")
         return f"{config['prefix']}{pattern}"
     elif service == "google_sheets":
-        return config['sheet_id']
+        return config["sheet_id"]
     elif service == "snowflake":
         return f"{config['database']}.{schema['name_in_destination']}.{table}"
     else:
         # defaulting to just returning the schema name in destination for now.
-        return schema['name_in_destination']
+        return schema["name_in_destination"]
+
 
 def _get_openlineage_namespace(config, service, connector_id) -> str:
     """
@@ -103,6 +108,7 @@ def _get_openlineage_namespace(config, service, connector_id) -> str:
         # defaulting to this for now... better than throwing a ValueError I guess. Should really only be used when there isn't an OpenLineage spec in Naming.md.
         return f"fivetran://{connector_id}"
 
+
 def get_dataset(
     config,
     service,
@@ -117,21 +123,22 @@ def get_dataset(
     for table_name, table in schema["tables"].items():
         name = _get_openlineage_name(config, service, schema, table["name_in_destination"])
         namespace = _get_openlineage_namespace(config, service, connector_id)
-        uri = f"{namespace}/{name}" 
+        uri = f"{namespace}/{name}"
 
         datasets.extend(
-                [
-                    Dataset(
-                        namespace=namespace,
-                        name=name,
-                        facets={
-                            "SchemaDatasetFacet": _get_fields(
-                                table_id=_get_table_id(table_name, table, table_response, loc),columns=column_response,
-                                loc=loc
-                            ),
-                            "DataSourceDatasetFacet": DataSourceDatasetFacet(name=name, uri=uri)
-                        }
-                    )
-                ]
-            )
+            [
+                Dataset(
+                    namespace=namespace,
+                    name=name,
+                    facets={
+                        "SchemaDatasetFacet": _get_fields(
+                            table_id=_get_table_id(table_name, table, table_response, loc),
+                            columns=column_response,
+                            loc=loc,
+                        ),
+                        "DataSourceDatasetFacet": DataSourceDatasetFacet(name=name, uri=uri),
+                    },
+                )
+            ]
+        )
     return datasets

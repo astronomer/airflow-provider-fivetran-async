@@ -97,17 +97,11 @@ MOCK_FIVETRAN_DESTINATIONS_RESPONSE_PAYLOAD = {
         "region": "GCP_US_EAST4",
         "time_zone_offset": "-8",
         "setup_status": "connected",
-        "config": {
-            "sheet_id": "google_sheets.fivetran_google_sheets_spotify"
-        }
-    }
+        "config": {"sheet_id": "google_sheets.fivetran_google_sheets_spotify"},
+    },
 }
 
 MOCK_FIVETRAN_GROUPS_RESPONSE_PAYLOAD = {
     "code": "Success",
-    "data": {
-        "id": "rarer_gradient",
-        "name": "GoogleSheets",
-        "created_at": "2022-12-12T17:14:33.790844Z"
-    }
+    "data": {"id": "rarer_gradient", "name": "GoogleSheets", "created_at": "2022-12-12T17:14:33.790844Z"},
 }
