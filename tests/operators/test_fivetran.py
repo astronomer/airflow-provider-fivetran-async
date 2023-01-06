@@ -6,17 +6,17 @@ import requests_mock
 from airflow.exceptions import AirflowException, TaskDeferred
 
 from fivetran_provider_async.operators import FivetranOperatorAsync
-
 from tests.common.static import (
     LOGIN,
-    PASSWORD,
-    MOCK_FIVETRAN_RESPONSE_PAYLOAD,
-    MOCK_FIVETRAN_METADATA_TABLES_RESPONSE_PAYLOAD,
-    MOCK_FIVETRAN_METADATA_COLUMNS_RESPONSE_PAYLOAD,
-    MOCK_FIVETRAN_SCHEMA_RESPONSE_PAYLOAD,
     MOCK_FIVETRAN_DESTINATIONS_RESPONSE_PAYLOAD,
-    MOCK_FIVETRAN_GROUPS_RESPONSE_PAYLOAD
+    MOCK_FIVETRAN_GROUPS_RESPONSE_PAYLOAD,
+    MOCK_FIVETRAN_METADATA_COLUMNS_RESPONSE_PAYLOAD,
+    MOCK_FIVETRAN_METADATA_TABLES_RESPONSE_PAYLOAD,
+    MOCK_FIVETRAN_RESPONSE_PAYLOAD,
+    MOCK_FIVETRAN_SCHEMA_RESPONSE_PAYLOAD,
+    PASSWORD,
 )
+
 
 @pytest.fixture
 def context():
@@ -106,11 +106,11 @@ class TestFivetranOperator(unittest.TestCase):
         )
         m.get(
             "https://api.fivetran.com/v1/destinations/rarer_gradient",
-            json=MOCK_FIVETRAN_DESTINATIONS_RESPONSE_PAYLOAD
+            json=MOCK_FIVETRAN_DESTINATIONS_RESPONSE_PAYLOAD,
         )
         m.get(
             "https://api.fivetran.com/v1/groups/interchangeable_revenge",
-            json=MOCK_FIVETRAN_GROUPS_RESPONSE_PAYLOAD
+            json=MOCK_FIVETRAN_GROUPS_RESPONSE_PAYLOAD,
         )
 
         operator = FivetranOperatorAsync(

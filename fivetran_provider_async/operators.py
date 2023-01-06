@@ -107,8 +107,7 @@ class FivetranOperatorAsync(FivetranOperator):
 
         run_facets = {
             "errorMessage": ErrorMessageRunFacet(
-                message=f"Job failed at: {connector_response['failed_at']}",
-                programmingLanguage="Fivetran"
+                message=f"Job failed at: {connector_response['failed_at']}", programmingLanguage="Fivetran"
             )
         }
 

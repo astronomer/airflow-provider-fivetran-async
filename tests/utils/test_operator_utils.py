@@ -1,23 +1,22 @@
 import unittest
 
 from fivetran_provider_async.utils.operator_utils import (
-    _get_table_id,
     _get_fields,
     _get_openlineage_name,
     _get_openlineage_namespace,
-    get_dataset
+    _get_table_id,
+    get_dataset,
 )
 from tests.common.static import (
-    MOCK_FIVETRAN_RESPONSE_PAYLOAD,
-    MOCK_FIVETRAN_METADATA_TABLES_RESPONSE_PAYLOAD,
+    MOCK_FIVETRAN_DESTINATIONS_RESPONSE_PAYLOAD,
     MOCK_FIVETRAN_METADATA_COLUMNS_RESPONSE_PAYLOAD,
+    MOCK_FIVETRAN_METADATA_TABLES_RESPONSE_PAYLOAD,
+    MOCK_FIVETRAN_RESPONSE_PAYLOAD,
     MOCK_FIVETRAN_SCHEMA_RESPONSE_PAYLOAD,
-    MOCK_FIVETRAN_DESTINATIONS_RESPONSE_PAYLOAD
 )
 
 
 class TestFivetranOperator(unittest.TestCase):
-
     def test_utils_get_table_id(self):
         schema_dict = next(iter(MOCK_FIVETRAN_SCHEMA_RESPONSE_PAYLOAD["data"]["schemas"].values()))
         table_name, table = next(iter(schema_dict["tables"].items()))
@@ -46,7 +45,7 @@ class TestFivetranOperator(unittest.TestCase):
             "destination",
         )
 
-        assert len(schema_facet.fields) == 1 
+        assert len(schema_facet.fields) == 1
         assert schema_facet.fields[0].name == "column_1_dest"
         assert schema_facet.fields[0].type == "VARCHAR(256)"
 
