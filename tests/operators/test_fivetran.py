@@ -7,6 +7,16 @@ from airflow.exceptions import AirflowException, TaskDeferred
 
 from fivetran_provider_async.operators import FivetranOperatorAsync
 
+from tests.common.static import (
+    LOGIN,
+    PASSWORD,
+    MOCK_FIVETRAN_RESPONSE_PAYLOAD,
+    MOCK_FIVETRAN_METADATA_TABLES_RESPONSE_PAYLOAD,
+    MOCK_FIVETRAN_METADATA_COLUMNS_RESPONSE_PAYLOAD,
+    MOCK_FIVETRAN_SCHEMA_RESPONSE_PAYLOAD,
+    MOCK_FIVETRAN_DESTINATIONS_RESPONSE_PAYLOAD,
+    MOCK_FIVETRAN_GROUPS_RESPONSE_PAYLOAD
+)
 
 @pytest.fixture
 def context():
@@ -17,79 +27,8 @@ def context():
     yield context
 
 
-LOGIN = "login"
-PASSWORD = "password"
-MOCK_FIVETRAN_RESPONSE_PAYLOAD = {
-    "code": "Success",
-    "data": {
-        "id": "interchangeable_revenge",
-        "paused": False,
-        "group_id": "rarer_gradient",
-        "service": "google_sheets",
-        "service_version": 1,
-        "schema": "google_sheets.fivetran_google_sheets_spotify",
-        "connected_by": "mournful_shalt",
-        "created_at": "2021-03-05T22:58:56.238875Z",
-        "succeeded_at": "2021-03-23T20:55:12.670390Z",
-        "failed_at": "2021-03-22T20:55:12.670390Z",
-        "sync_frequency": 360,
-        "schedule_type": "manual",
-        "status": {
-            "setup_state": "connected",
-            "sync_state": "scheduled",
-            "update_state": "on_schedule",
-            "is_historical_sync": False,
-            "tasks": [],
-            "warnings": [],
-        },
-        "config": {
-            "latest_version": "1",
-            "sheet_id": "https://docs.google.com/spreadsheets/d/.../edit#gid=...",
-            "named_range": "fivetran_test_range",
-            "authorization_method": "User OAuth",
-            "service_version": "1",
-            "last_synced_changes__utc_": "2021-03-23 20:54",
-        },
-    },
-}
-
-MOCK_FIVETRAN_SCHEMA_RESPONSE_PAYLOAD = {
-    "code": "Success",
-    "data": {
-        "enable_new_by_default": True,
-        "schema_change_handling": "ALLOW_ALL",
-        "schemas": {
-            "google_sheets.fivetran_google_sheets_spotify": {
-                "name_in_destination": "google_sheets.fivetran_google_sheets_spotify",
-                "enabled": True,
-                "tables": {
-                    "table_1": {
-                        "name_in_destination": "table_1",
-                        "enabled": True,
-                        "sync_mode": "SOFT_DELETE",
-                        "enabled_patch_settings": {"allowed": True},
-                        "columns": {
-                            "column_1_": {
-                                "name_in_destination": "column_1",
-                                "enabled": True,
-                                "hashed": False,
-                                "enabled_patch_settings": {
-                                    "allowed": False,
-                                    "reason_code": "SYSTEM_COLUMN",
-                                    "reason": "The column does not support exclusion as it is a Primary Key",
-                                },
-                            }
-                        },
-                    }
-                },
-            }
-        },
-    },
-}
-
-
 @mock.patch.dict("os.environ", AIRFLOW_CONN_CONN_FIVETRAN="http://API_KEY:API_SECRET@")
-class TestFivetranHook(unittest.TestCase):
+class TestFivetranOperator(unittest.TestCase):
     @requests_mock.mock()
     def test_fivetran_op_async_execute_success(self, m):
         """Tests that task gets deferred after job submission"""
@@ -148,7 +87,7 @@ class TestFivetranHook(unittest.TestCase):
         mock_log_info.assert_called_with("Fivetran sync completed")
 
     @requests_mock.mock()
-    def test_fivetran_operator_get_openlineage_facets_on_complete(self, m):
+    def test_fivetran_operator_get_openlineage_facets_on_start(self, m):
         m.get(
             "https://api.fivetran.com/v1/connectors/interchangeable_revenge/schemas",
             json=MOCK_FIVETRAN_SCHEMA_RESPONSE_PAYLOAD,
@@ -157,26 +96,21 @@ class TestFivetranHook(unittest.TestCase):
             "https://api.fivetran.com/v1/connectors/interchangeable_revenge",
             json=MOCK_FIVETRAN_RESPONSE_PAYLOAD,
         )
-
-        operator = FivetranOperatorAsync(
-            task_id="fivetran-task",
-            fivetran_conn_id="conn_fivetran",
-            connector_id="interchangeable_revenge",
-        )
-
-        facets = operator.get_openlineage_facets_on_complete(None)
-        assert facets.inputs[0].namespace == "fivetran"
-        assert facets.inputs[0].name == "https://docs.google.com/spreadsheets/d/.../edit#gid=..."
-        schema_field = facets.outputs[0].facets["SchemaDatasetFacet"][0]
-        assert schema_field.name == "column_1"
-        assert schema_field.type == ""
-        assert schema_field.description is None
-
-    @requests_mock.mock()
-    def test_fivetran_operator_get_fields(self, m):
         m.get(
-            "https://api.fivetran.com/v1/connectors/interchangeable_revenge/schemas",
-            json=MOCK_FIVETRAN_SCHEMA_RESPONSE_PAYLOAD,
+            "https://api.fivetran.com/v1/metadata/connectors/interchangeable_revenge/tables",
+            json=MOCK_FIVETRAN_METADATA_TABLES_RESPONSE_PAYLOAD,
+        )
+        m.get(
+            "https://api.fivetran.com/v1/metadata/connectors/interchangeable_revenge/columns",
+            json=MOCK_FIVETRAN_METADATA_COLUMNS_RESPONSE_PAYLOAD,
+        )
+        m.get(
+            "https://api.fivetran.com/v1/destinations/rarer_gradient",
+            json=MOCK_FIVETRAN_DESTINATIONS_RESPONSE_PAYLOAD
+        )
+        m.get(
+            "https://api.fivetran.com/v1/groups/interchangeable_revenge",
+            json=MOCK_FIVETRAN_GROUPS_RESPONSE_PAYLOAD
         )
 
         operator = FivetranOperatorAsync(
@@ -185,11 +119,10 @@ class TestFivetranHook(unittest.TestCase):
             connector_id="interchangeable_revenge",
         )
 
-        schema_facet = operator._get_fields(
-            MOCK_FIVETRAN_SCHEMA_RESPONSE_PAYLOAD["data"]["schemas"][
-                "google_sheets.fivetran_google_sheets_spotify"
-            ]["tables"]["table_1"]
-        )
-
-        assert schema_facet.fields[0].name == "column_1"
-        assert schema_facet.fields[0].type == ""
+        facets = operator.get_openlineage_facets_on_start()
+        assert facets.inputs[0].namespace == "fivetran://interchangeable_revenge"
+        assert facets.inputs[0].name == "https://docs.google.com/spreadsheets/d/.../edit#gid=..."
+        schema_field = facets.outputs[0].facets["SchemaDatasetFacet"].fields[0]
+        assert schema_field.name == "column_1_dest"
+        assert schema_field.type == "VARCHAR(256)"
+        assert schema_field.description is None
