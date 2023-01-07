@@ -1,6 +1,8 @@
+import time
 from datetime import datetime, timedelta
 
 from airflow import DAG
+from airflow.operators.python import PythonOperator
 from fivetran_provider.operators.fivetran import FivetranOperator
 
 from fivetran_provider_async.operators import FivetranOperatorAsync
@@ -22,19 +24,21 @@ dag = DAG(
 with dag:
     fivetran_async_op = FivetranOperatorAsync(
         task_id="fivetran_async_op",
-        connector_id="bronzing_largely",
+        connector_id="{{ var.value.connector_id }}",
     )
+
+    delay_task = PythonOperator(task_id="delay_python_task", python_callable=lambda: time.sleep(180))
 
     fivetran_sync_op = FivetranOperator(
         task_id="fivetran_sync_op",
-        connector_id="bronzing_largely",
+        connector_id="{{ var.value.connector_id }}",
     )
 
     fivetran_async_sensor = FivetranSensorAsync(
         task_id="fivetran_async_sensor",
-        connector_id="bronzing_largely",
+        connector_id="{{ var.value.connector_id }}",
         poke_interval=5,
         xcom="{{ task_instance.xcom_pull('fivetran_sync_op', key='return_value') }}",
     )
 
-    fivetran_async_op >> fivetran_sync_op >> fivetran_async_sensor
+    fivetran_async_op >> delay_task >> fivetran_sync_op >> fivetran_async_sensor
