@@ -7,7 +7,7 @@ from aiohttp import ClientResponseError, RequestInfo
 from airflow.exceptions import AirflowException
 
 from fivetran_provider_async.hooks import FivetranHookAsync
-from tests.common.static import LOGIN, PASSWORD, MOCK_FIVETRAN_RESPONSE_PAYLOAD_SHEETS
+from tests.common.static import LOGIN, MOCK_FIVETRAN_RESPONSE_PAYLOAD_SHEETS, PASSWORD
 
 
 @pytest.mark.asyncio
