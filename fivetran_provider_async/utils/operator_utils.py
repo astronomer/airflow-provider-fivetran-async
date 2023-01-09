@@ -109,7 +109,7 @@ def _get_openlineage_namespace(config, service, connector_id) -> str:
         return f"fivetran://{connector_id}"
 
 
-def get_dataset(
+def dataset(
     config,
     service,
     table_response,
