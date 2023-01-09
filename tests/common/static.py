@@ -135,7 +135,7 @@ MOCK_FIVETRAN_CONNECTOR_RESPONSE_PAYLOAD_GCS_TO_SNOWFLAKE = {
             "update_state": "on_schedule",
             "is_historical_sync": False,
             "tasks": [],
-            "warnings": []
+            "warnings": [],
         },
         "config": {
             "skip_before": 0,
@@ -148,9 +148,9 @@ MOCK_FIVETRAN_CONNECTOR_RESPONSE_PAYLOAD_GCS_TO_SNOWFLAKE = {
             "append_file_option": "upsert_file",
             "empty_header": False,
             "bucket": "test",
-            "auth_type": "FIVETRAN_SERVICE_ACCOUNT"
-        }
-    }
+            "auth_type": "FIVETRAN_SERVICE_ACCOUNT",
+        },
+    },
 }
 
 MOCK_FIVETRAN_SCHEMAS_RESPONSE_PAYLOAD_GCS_TO_SNOWFLAKE = {
@@ -165,15 +165,13 @@ MOCK_FIVETRAN_SCHEMAS_RESPONSE_PAYLOAD_GCS_TO_SNOWFLAKE = {
                     "subscription_periods": {
                         "name_in_destination": "subscription_periods",
                         "enabled": True,
-                        "enabled_patch_settings": {
-                            "allowed": True
-                        }
+                        "enabled_patch_settings": {"allowed": True},
                     }
-                }
+                },
             }
         },
-        "schema_change_handling": "ALLOW_ALL"
-    }
+        "schema_change_handling": "ALLOW_ALL",
+    },
 }
 
 MOCK_FIVETRAN_DESTINATIONS_RESPONSE_PAYLOAD_GCS_TO_SNOWFLAKE = {
@@ -195,7 +193,7 @@ MOCK_FIVETRAN_DESTINATIONS_RESPONSE_PAYLOAD_GCS_TO_SNOWFLAKE = {
             "auth": "PASSWORD",
             "snowflake_cloud": "AWS",
             "host": "hq12345.us-east-1.snowflakecomputing.com",
-            "user": "TEST_USER"
+            "user": "TEST_USER",
         },
-    }
+    },
 }
