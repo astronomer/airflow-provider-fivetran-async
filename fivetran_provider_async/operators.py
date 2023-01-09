@@ -105,11 +105,13 @@ class FivetranOperatorAsync(FivetranOperator):
             )
         }
 
-        run_facets = {
-            "errorMessage": ErrorMessageRunFacet(
-                message=f"Job failed at: {connector_response['failed_at']}", programmingLanguage="Fivetran"
-            )
-        }
+        run_facets = {}
+        if connector_response.get("failed_at"):
+            run_facets.extend({
+                "errorMessage": ErrorMessageRunFacet(
+                    message=f"Job failed at: {connector_response['failed_at']}", programmingLanguage="Fivetran"
+                )
+            })
 
         return OperatorLineage(inputs=inputs, outputs=outputs, job_facets=job_facets, run_facets=run_facets)
 
