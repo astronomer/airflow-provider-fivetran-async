@@ -27,7 +27,7 @@ def _get_table_id(schemas_api_table_name, schemas_api_table, tables_api_tables, 
     returned by the columns API.
     """
     if loc == "source":
-        schema_api_table_name = schemas_api_table.get("name_in_source", schemas_api_table_name) 
+        schema_api_table_name = schemas_api_table.get("name_in_source", schemas_api_table_name)
     else:
         schema_api_table_name = schemas_api_table["name_in_destination"]
     for table_api_table in tables_api_tables["items"]:

@@ -5,7 +5,10 @@ from airflow.utils.context import Context
 from fivetran_provider.operators.fivetran import FivetranOperator
 from openlineage.airflow.extractors.base import OperatorLineage
 from openlineage.client.facet import (
-    DocumentationJobFacet, ErrorMessageRunFacet, OwnershipJobFacet, OwnershipJobFacetOwners
+    DocumentationJobFacet,
+    ErrorMessageRunFacet,
+    OwnershipJobFacet,
+    OwnershipJobFacetOwners,
 )
 
 from fivetran_provider_async.triggers import FivetranTrigger
@@ -107,16 +110,19 @@ class FivetranOperatorAsync(FivetranOperator):
             ),
             "ownership": OwnershipJobFacet(
                 owners=[OwnershipJobFacetOwners(name=self.owner, type=self.email)]
-            )
+            ),
         }
 
         run_facets = {}
         if connector_response.get("failed_at"):
-            run_facets.extend({
-                "errorMessage": ErrorMessageRunFacet(
-                    message=f"Job failed at: {connector_response['failed_at']}", programmingLanguage="Fivetran"
-                )
-            })
+            run_facets.extend(
+                {
+                    "errorMessage": ErrorMessageRunFacet(
+                        message=f"Job failed at: {connector_response['failed_at']}",
+                        programmingLanguage="Fivetran",
+                    )
+                }
+            )
 
         return OperatorLineage(inputs=inputs, outputs=outputs, job_facets=job_facets, run_facets=run_facets)
 
