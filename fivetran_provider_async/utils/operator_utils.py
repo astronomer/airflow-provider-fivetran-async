@@ -78,7 +78,7 @@ def _get_openlineage_name(config, service, schema, table) -> str:
         pattern = config["pattern"].replace("\\", "")
         return f"{config['prefix']}{pattern}"
     elif service == "google_sheets":
-        return config["sheet_id"]
+        return schema["name_in_destination"]
     elif service == "snowflake":
         return f"{config['database']}.{schema['name_in_destination']}.{table}"
     else:
@@ -104,12 +104,14 @@ def _get_openlineage_namespace(config, service, connector_id) -> str:
         return "snowflake://" + name_split[0] + "." + name_split[1]
     elif service == "gcs":
         return "gs://" + config["bucket"]
+    elif service == "google_sheets":
+        return "sheets://"
     else:
         # defaulting to this for now... better than throwing a ValueError I guess. Should really only be used when there isn't an OpenLineage spec in Naming.md.
         return f"fivetran://{connector_id}"
 
 
-def dataset(
+def datasets(
     config,
     service,
     table_response,

@@ -7,14 +7,12 @@ from airflow.exceptions import AirflowException, TaskDeferred
 
 from fivetran_provider_async.operators import FivetranOperatorAsync
 from tests.common.static import (
-    LOGIN,
-    MOCK_FIVETRAN_DESTINATIONS_RESPONSE_PAYLOAD,
-    MOCK_FIVETRAN_GROUPS_RESPONSE_PAYLOAD,
-    MOCK_FIVETRAN_METADATA_COLUMNS_RESPONSE_PAYLOAD,
-    MOCK_FIVETRAN_METADATA_TABLES_RESPONSE_PAYLOAD,
-    MOCK_FIVETRAN_RESPONSE_PAYLOAD,
-    MOCK_FIVETRAN_SCHEMA_RESPONSE_PAYLOAD,
-    PASSWORD,
+    MOCK_FIVETRAN_DESTINATIONS_RESPONSE_PAYLOAD_SHEETS,
+    MOCK_FIVETRAN_GROUPS_RESPONSE_PAYLOAD_SHEETS,
+    MOCK_FIVETRAN_METADATA_COLUMNS_RESPONSE_PAYLOAD_SHEETS,
+    MOCK_FIVETRAN_METADATA_TABLES_RESPONSE_PAYLOAD_SHEETS,
+    MOCK_FIVETRAN_RESPONSE_PAYLOAD_SHEETS,
+    MOCK_FIVETRAN_SCHEMA_RESPONSE_PAYLOAD_SHEETS,
 )
 
 
@@ -34,12 +32,12 @@ class TestFivetranOperator(unittest.TestCase):
         """Tests that task gets deferred after job submission"""
         m.get(
             "https://api.fivetran.com/v1/connectors/interchangeable_revenge",
-            json=MOCK_FIVETRAN_RESPONSE_PAYLOAD,
+            json=MOCK_FIVETRAN_RESPONSE_PAYLOAD_SHEETS,
         )
 
         m.post(
             "https://api.fivetran.com/v1/connectors/interchangeable_revenge/force",
-            json=MOCK_FIVETRAN_RESPONSE_PAYLOAD,
+            json=MOCK_FIVETRAN_RESPONSE_PAYLOAD_SHEETS,
         )
 
         task = FivetranOperatorAsync(
@@ -69,7 +67,7 @@ class TestFivetranOperator(unittest.TestCase):
             fivetran_conn_id="conn_fivetran",
             connector_id="interchangeable_revenge",
         )
-        expected_return_value = MOCK_FIVETRAN_RESPONSE_PAYLOAD["data"]["succeeded_at"]
+        expected_return_value = MOCK_FIVETRAN_RESPONSE_PAYLOAD_SHEETS["data"]["succeeded_at"]
 
         with mock.patch.object(task.log, "info") as mock_log_info:
             assert (
@@ -78,7 +76,7 @@ class TestFivetranOperator(unittest.TestCase):
                     event={
                         "status": "success",
                         "message": "Fivetran sync completed",
-                        "return_value": MOCK_FIVETRAN_RESPONSE_PAYLOAD["data"]["succeeded_at"],
+                        "return_value": MOCK_FIVETRAN_RESPONSE_PAYLOAD_SHEETS["data"]["succeeded_at"],
                     },
                 )
                 == expected_return_value
@@ -90,27 +88,27 @@ class TestFivetranOperator(unittest.TestCase):
     def test_fivetran_operator_get_openlineage_facets_on_start(self, m):
         m.get(
             "https://api.fivetran.com/v1/connectors/interchangeable_revenge/schemas",
-            json=MOCK_FIVETRAN_SCHEMA_RESPONSE_PAYLOAD,
+            json=MOCK_FIVETRAN_SCHEMA_RESPONSE_PAYLOAD_SHEETS,
         )
         m.get(
             "https://api.fivetran.com/v1/connectors/interchangeable_revenge",
-            json=MOCK_FIVETRAN_RESPONSE_PAYLOAD,
+            json=MOCK_FIVETRAN_RESPONSE_PAYLOAD_SHEETS,
         )
         m.get(
             "https://api.fivetran.com/v1/metadata/connectors/interchangeable_revenge/tables",
-            json=MOCK_FIVETRAN_METADATA_TABLES_RESPONSE_PAYLOAD,
+            json=MOCK_FIVETRAN_METADATA_TABLES_RESPONSE_PAYLOAD_SHEETS,
         )
         m.get(
             "https://api.fivetran.com/v1/metadata/connectors/interchangeable_revenge/columns",
-            json=MOCK_FIVETRAN_METADATA_COLUMNS_RESPONSE_PAYLOAD,
+            json=MOCK_FIVETRAN_METADATA_COLUMNS_RESPONSE_PAYLOAD_SHEETS,
         )
         m.get(
             "https://api.fivetran.com/v1/destinations/rarer_gradient",
-            json=MOCK_FIVETRAN_DESTINATIONS_RESPONSE_PAYLOAD,
+            json=MOCK_FIVETRAN_DESTINATIONS_RESPONSE_PAYLOAD_SHEETS,
         )
         m.get(
-            "https://api.fivetran.com/v1/groups/interchangeable_revenge",
-            json=MOCK_FIVETRAN_GROUPS_RESPONSE_PAYLOAD,
+            "https://api.fivetran.com/v1/groups/rarer_gradient",
+            json=MOCK_FIVETRAN_GROUPS_RESPONSE_PAYLOAD_SHEETS,
         )
 
         operator = FivetranOperatorAsync(
@@ -120,8 +118,8 @@ class TestFivetranOperator(unittest.TestCase):
         )
 
         facets = operator.get_openlineage_facets_on_start()
-        assert facets.inputs[0].namespace == "fivetran://interchangeable_revenge"
-        assert facets.inputs[0].name == "https://docs.google.com/spreadsheets/d/.../edit#gid=..."
+        assert facets.inputs[0].namespace == "sheets://"
+        assert facets.inputs[0].name == "google_sheets.fivetran_google_sheets_spotify"
         schema_field = facets.outputs[0].facets["SchemaDatasetFacet"].fields[0]
         assert schema_field.name == "column_1_dest"
         assert schema_field.type == "VARCHAR(256)"
