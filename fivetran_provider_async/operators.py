@@ -4,7 +4,9 @@ from airflow.exceptions import AirflowException
 from airflow.utils.context import Context
 from fivetran_provider.operators.fivetran import FivetranOperator
 from openlineage.airflow.extractors.base import OperatorLineage
-from openlineage.client.facet import DocumentationJobFacet, ErrorMessageRunFacet
+from openlineage.client.facet import (
+    DocumentationJobFacet, ErrorMessageRunFacet, OwnershipJobFacet, OwnershipJobFacetOwners
+)
 
 from fivetran_provider_async.triggers import FivetranTrigger
 from fivetran_provider_async.utils.operator_utils import get_dataset
@@ -102,6 +104,9 @@ class FivetranOperatorAsync(FivetranOperator):
                 Group Name: {groups_response["name"]}\n
                 Connector ID: {self.connector_id}
                 """
+            ),
+            "ownership": OwnershipJobFacet(
+                owners=[OwnershipJobFacetOwners(name=self.owner, type=self.email)]
             )
         }
 
