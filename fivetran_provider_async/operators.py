@@ -18,7 +18,7 @@ class FivetranOperatorAsync(FivetranOperator):
         the hook.
     :param connector_id: ID of the Fivetran connector to sync, found on the
         Connector settings page in the Fivetran Dashboard.
-    :param poke_interval: Time in seconds that the job should wait in
+    :param poll_frequency: Time in seconds that the job should wait in
         between each tries
     """
 
