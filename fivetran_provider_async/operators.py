@@ -12,7 +12,7 @@ from openlineage.client.facet import (
 )
 
 from fivetran_provider_async.triggers import FivetranTrigger
-from fivetran_provider_async.utils.operator_utils import dataset
+from fivetran_provider_async.utils.operator_utils import datasets
 
 
 class FivetranOperatorAsync(FivetranOperator):
@@ -80,7 +80,7 @@ class FivetranOperatorAsync(FivetranOperator):
 
         for schema in schema_response["schemas"].values():
 
-            inputs = dataset(
+            inputs = datasets(
                 config=connector_response["config"],
                 service=connector_response["service"],
                 table_response=table_response,
@@ -90,7 +90,7 @@ class FivetranOperatorAsync(FivetranOperator):
                 loc="source",
             )
 
-            outputs = dataset(
+            outputs = datasets(
                 config=destinations_response["config"],
                 service=destinations_response["service"],
                 table_response=table_response,

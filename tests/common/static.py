@@ -1,6 +1,7 @@
 LOGIN = "login"
 PASSWORD = "password"
-MOCK_FIVETRAN_RESPONSE_PAYLOAD = {
+
+MOCK_FIVETRAN_RESPONSE_PAYLOAD_SHEETS = {
     "code": "Success",
     "data": {
         "id": "interchangeable_revenge",
@@ -34,7 +35,7 @@ MOCK_FIVETRAN_RESPONSE_PAYLOAD = {
     },
 }
 
-MOCK_FIVETRAN_SCHEMA_RESPONSE_PAYLOAD = {
+MOCK_FIVETRAN_SCHEMA_RESPONSE_PAYLOAD_SHEETS = {
     "code": "Success",
     "data": {
         "enable_new_by_default": True,
@@ -56,7 +57,7 @@ MOCK_FIVETRAN_SCHEMA_RESPONSE_PAYLOAD = {
     },
 }
 
-MOCK_FIVETRAN_METADATA_TABLES_RESPONSE_PAYLOAD = {
+MOCK_FIVETRAN_METADATA_TABLES_RESPONSE_PAYLOAD_SHEETS = {
     "code": "Success",
     "data": {
         "items": [
@@ -70,7 +71,7 @@ MOCK_FIVETRAN_METADATA_TABLES_RESPONSE_PAYLOAD = {
     },
 }
 
-MOCK_FIVETRAN_METADATA_COLUMNS_RESPONSE_PAYLOAD = {
+MOCK_FIVETRAN_METADATA_COLUMNS_RESPONSE_PAYLOAD_SHEETS = {
     "code": "Success",
     "data": {
         "items": [
@@ -88,7 +89,7 @@ MOCK_FIVETRAN_METADATA_COLUMNS_RESPONSE_PAYLOAD = {
     },
 }
 
-MOCK_FIVETRAN_DESTINATIONS_RESPONSE_PAYLOAD = {
+MOCK_FIVETRAN_DESTINATIONS_RESPONSE_PAYLOAD_SHEETS = {
     "code": "Success",
     "data": {
         "id": "rarer_gradient",
@@ -101,7 +102,100 @@ MOCK_FIVETRAN_DESTINATIONS_RESPONSE_PAYLOAD = {
     },
 }
 
-MOCK_FIVETRAN_GROUPS_RESPONSE_PAYLOAD = {
+MOCK_FIVETRAN_GROUPS_RESPONSE_PAYLOAD_SHEETS = {
     "code": "Success",
     "data": {"id": "rarer_gradient", "name": "GoogleSheets", "created_at": "2022-12-12T17:14:33.790844Z"},
+}
+
+"""
+GCS --> Snowflake Mock API Responses
+"""
+
+MOCK_FIVETRAN_CONNECTOR_RESPONSE_PAYLOAD_GCS_TO_SNOWFLAKE = {
+    "code": "Success",
+    "data": {
+        "id": "cropping_limitation",
+        "group_id": "stowing_sway",
+        "service": "gcs",
+        "service_version": 1,
+        "schema": "demo.subscription_periods",
+        "connected_by": "pummel_versa",
+        "created_at": "2022-12-13T21:27:47.327348Z",
+        "succeeded_at": "2023-01-05T18:12:49.562Z",
+        "failed_at": None,
+        "paused": False,
+        "pause_after_trial": False,
+        "sync_frequency": 1440,
+        "daily_sync_time": "23:00",
+        "schedule_type": "manual",
+        "status": {
+            "setup_state": "connected",
+            "schema_status": "ready",
+            "sync_state": "scheduled",
+            "update_state": "on_schedule",
+            "is_historical_sync": False,
+            "tasks": [],
+            "warnings": []
+        },
+        "config": {
+            "skip_before": 0,
+            "skip_after": 0,
+            "prefix": "fivetran-demo/",
+            "pattern": "subscription_periods\\.csv",
+            "file_type": "infer",
+            "on_error": "fail",
+            "compression": "infer",
+            "append_file_option": "upsert_file",
+            "empty_header": False,
+            "bucket": "test",
+            "auth_type": "FIVETRAN_SERVICE_ACCOUNT"
+        }
+    }
+}
+
+MOCK_FIVETRAN_SCHEMAS_RESPONSE_PAYLOAD_GCS_TO_SNOWFLAKE = {
+    "code": "Success",
+    "data": {
+        "enable_new_by_default": True,
+        "schemas": {
+            "demo": {
+                "name_in_destination": "demo",
+                "enabled": True,
+                "tables": {
+                    "subscription_periods": {
+                        "name_in_destination": "subscription_periods",
+                        "enabled": True,
+                        "enabled_patch_settings": {
+                            "allowed": True
+                        }
+                    }
+                }
+            }
+        },
+        "schema_change_handling": "ALLOW_ALL"
+    }
+}
+
+MOCK_FIVETRAN_DESTINATIONS_RESPONSE_PAYLOAD_GCS_TO_SNOWFLAKE = {
+    "code": "Success",
+    "data": {
+        "id": "stowing_sway",
+        "group_id": "stowing_sway",
+        "service": "snowflake",
+        "region": "GCP_US_EAST4",
+        "time_zone_offset": "-8",
+        "setup_status": "connected",
+        "config": {
+            "snowflake_region": "us_east_1",
+            "database": "TEST",
+            "password": "******",
+            "role": "TEST_USER",
+            "connection_type": "Directly",
+            "port": "443",
+            "auth": "PASSWORD",
+            "snowflake_cloud": "AWS",
+            "host": "hq12345.us-east-1.snowflakecomputing.com",
+            "user": "TEST_USER"
+        },
+    }
 }
