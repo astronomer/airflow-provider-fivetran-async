@@ -8,15 +8,15 @@ from openlineage.client.facet import (
 from openlineage.client.run import Dataset
 
 
-def _get_table_id(table_src, table, tables, loc) -> str:
+def _get_table_id(schemas_api_table_name, schemas_api_table, tables_api_tables, loc) -> str:
     """
     Finds a table ID for the given table names
-    :param table_src: The source name of the table from the schemas API response
-    :type table_src: str
-    :param table: The table information from the schemas API response
-    :type table: dict
-    :param tables: The tables returned from the metadata tables API response
-    :type tables: List[dict]
+    :param schemas_api_table_name: The source name of the table from the schemas API response
+    :type schemas_api_table_name: str
+    :param schemas_api_table: The table information from the schemas API response
+    :type schemas_api_table: dict
+    :param tables_api_tables: The tables returned from the metadata tables API response
+    :type tables_api_tables: List[dict]
     :param loc: Short for location, either source or destination
     :type loc: str
 
@@ -27,12 +27,12 @@ def _get_table_id(table_src, table, tables, loc) -> str:
     returned by the columns API.
     """
     if loc == "source":
-        table_name = table["name_in_source"] if table.get("name_in_source") else table_src
+        schema_api_table_name = schemas_api_table.get("name_in_source", schemas_api_table_name) 
     else:
-        table_name = table["name_in_destination"]
-    for t in tables["items"]:
-        if t[f"name_in_{loc}"] == table_name:
-            return t["id"]
+        schema_api_table_name = schemas_api_table["name_in_destination"]
+    for table_api_table in tables_api_tables["items"]:
+        if table_api_table[f"name_in_{loc}"] == schema_api_table_name:
+            return table_api_table["id"]
 
 
 def _get_fields(table_id, columns, loc) -> SchemaDatasetFacet:
