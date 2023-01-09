@@ -16,7 +16,7 @@ from tests.common.static import (
 )
 
 
-class TestFivetranOperator(unittest.TestCase):
+class TestFivetranUtils(unittest.TestCase):
     def test_utils_get_table_id(self):
         schema_dict = next(iter(MOCK_FIVETRAN_SCHEMA_RESPONSE_PAYLOAD["data"]["schemas"].values()))
         table_name, table = next(iter(schema_dict["tables"].items()))
