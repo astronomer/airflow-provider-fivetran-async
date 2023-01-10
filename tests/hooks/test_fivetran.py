@@ -7,41 +7,7 @@ from aiohttp import ClientResponseError, RequestInfo
 from airflow.exceptions import AirflowException
 
 from fivetran_provider_async.hooks import FivetranHookAsync
-
-LOGIN = "login"
-PASSWORD = "password"
-MOCK_FIVETRAN_RESPONSE_PAYLOAD = {
-    "code": "Success",
-    "data": {
-        "id": "interchangeable_revenge",
-        "group_id": "rarer_gradient",
-        "service": "google_sheets",
-        "service_version": 1,
-        "schema": "google_sheets.fivetran_google_sheets_spotify",
-        "connected_by": "mournful_shalt",
-        "created_at": "2021-03-05T22:58:56.238875Z",
-        "succeeded_at": "2021-03-23T20:55:12.670390Z",
-        "failed_at": "2021-03-22T20:55:12.670390Z",
-        "sync_frequency": 360,
-        "schedule_type": "manual",
-        "status": {
-            "setup_state": "connected",
-            "sync_state": "scheduled",
-            "update_state": "on_schedule",
-            "is_historical_sync": False,
-            "tasks": [],
-            "warnings": [],
-        },
-        "config": {
-            "latest_version": "1",
-            "sheet_id": "https://docs.google.com/spreadsheets/d/.../edit#gid=...",
-            "named_range": "fivetran_test_range",
-            "authorization_method": "User OAuth",
-            "service_version": "1",
-            "last_synced_changes__utc_": "2021-03-23 20:54",
-        },
-    },
-}
+from tests.common.static import LOGIN, MOCK_FIVETRAN_RESPONSE_PAYLOAD_SHEETS, PASSWORD
 
 
 @pytest.mark.asyncio
@@ -49,7 +15,7 @@ MOCK_FIVETRAN_RESPONSE_PAYLOAD = {
 async def test_fivetran_hook_get_connector_async(mock_api_call_async_response):
     """Tests that the get_connector_async method fetches the details of a connector"""
     hook = FivetranHookAsync(fivetran_conn_id="conn_fivetran")
-    mock_api_call_async_response.return_value = MOCK_FIVETRAN_RESPONSE_PAYLOAD
+    mock_api_call_async_response.return_value = MOCK_FIVETRAN_RESPONSE_PAYLOAD_SHEETS
     result = await hook.get_connector_async(connector_id="interchangeable_revenge")
     assert result["status"]["setup_state"] == "connected"
 
@@ -59,7 +25,7 @@ async def test_fivetran_hook_get_connector_async(mock_api_call_async_response):
 async def test_fivetran_hook_get_connector_async_error(mock_api_call_async_response):
     """Tests that the get_connector_async method raises exception when connector_id is not specified"""
     hook = FivetranHookAsync(fivetran_conn_id="conn_fivetran")
-    mock_api_call_async_response.return_value = MOCK_FIVETRAN_RESPONSE_PAYLOAD
+    mock_api_call_async_response.return_value = MOCK_FIVETRAN_RESPONSE_PAYLOAD_SHEETS
     with pytest.raises(ValueError) as exc:
         await hook.get_connector_async(connector_id="")
     assert str(exc.value) == "No value specified for connector_id"
@@ -86,7 +52,7 @@ async def test_fivetran_hook_get_sync_status_async(
     """Tests that get_sync_status_async method return success or pending depending on whether
     current_completed_at > previous_completed_at"""
     hook = FivetranHookAsync(fivetran_conn_id="conn_fivetran")
-    mock_api_call_async_response.return_value = MOCK_FIVETRAN_RESPONSE_PAYLOAD
+    mock_api_call_async_response.return_value = MOCK_FIVETRAN_RESPONSE_PAYLOAD_SHEETS
     result = await hook.get_sync_status_async(
         connector_id="interchangeable_revenge", previous_completed_at=mock_previous_completed_at
     )
@@ -99,7 +65,7 @@ async def test_fivetran_hook_get_sync_status_async_exception(mock_api_call_async
     """Tests that get_sync_status_async method raises exception  when failed_at > previous_completed_at"""
     mock_previous_completed_at = pendulum.datetime(2021, 3, 21, 21, 55)
     hook = FivetranHookAsync(fivetran_conn_id="conn_fivetran")
-    mock_api_call_async_response.return_value = MOCK_FIVETRAN_RESPONSE_PAYLOAD
+    mock_api_call_async_response.return_value = MOCK_FIVETRAN_RESPONSE_PAYLOAD_SHEETS
 
     with pytest.raises(AirflowException) as exc:
         await hook.get_sync_status_async(
@@ -114,9 +80,9 @@ async def test_fivetran_hook_get_last_sync_async_no_xcom(mock_api_call_async_res
     """Tests that the get_last_sync_async method returns the last time Fivetran connector
     completed a sync"""
     hook = FivetranHookAsync(fivetran_conn_id="conn_fivetran")
-    mock_api_call_async_response.return_value = MOCK_FIVETRAN_RESPONSE_PAYLOAD
+    mock_api_call_async_response.return_value = MOCK_FIVETRAN_RESPONSE_PAYLOAD_SHEETS
     result = await hook.get_last_sync_async(connector_id="interchangeable_revenge")
-    assert result == pendulum.parse(MOCK_FIVETRAN_RESPONSE_PAYLOAD["data"]["succeeded_at"])
+    assert result == pendulum.parse(MOCK_FIVETRAN_RESPONSE_PAYLOAD_SHEETS["data"]["succeeded_at"])
 
 
 @pytest.mark.asyncio
@@ -126,7 +92,7 @@ async def test_fivetran_hook_get_last_sync_async_with_xcom(mock_api_call_async_r
     completed a sync when xcom is passed"""
     XCOM = "2021-03-22T20:55:12.670390Z"
     hook = FivetranHookAsync(fivetran_conn_id="conn_fivetran")
-    mock_api_call_async_response.return_value = MOCK_FIVETRAN_RESPONSE_PAYLOAD
+    mock_api_call_async_response.return_value = MOCK_FIVETRAN_RESPONSE_PAYLOAD_SHEETS
     result = await hook.get_last_sync_async(connector_id="interchangeable_revenge", xcom=XCOM)
     assert result == pendulum.parse(XCOM)
 
