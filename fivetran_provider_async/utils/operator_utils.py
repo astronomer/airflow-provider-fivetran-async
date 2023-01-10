@@ -82,7 +82,7 @@ def _get_openlineage_name(config, service, schema, table) -> str:
     elif service == "snowflake" or service == "redshift":
         return f"{config['database']}.{schema['name_in_destination']}.{table}"
     # TODO: find where dataset and table are returned in Fivetran API response for BigQuery
-    #elif service == "bigquery":
+    # elif service == "bigquery":
     #    return f"{config['project_id']}.{}.{}}"
     else:
         # defaulting to just returning the schema name in destination for now.
