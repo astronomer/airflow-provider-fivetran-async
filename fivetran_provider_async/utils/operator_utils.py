@@ -79,8 +79,11 @@ def _get_openlineage_name(config, service, schema, table) -> str:
         return f"{config['prefix']}{pattern}"
     elif service == "google_sheets":
         return schema["name_in_destination"]
-    elif service == "snowflake":
+    elif service == "snowflake" or service == "redshift":
         return f"{config['database']}.{schema['name_in_destination']}.{table}"
+    # TODO: find where dataset and table are returned in Fivetran API response for BigQuery
+    #elif service == "bigquery":
+    #    return f"{config['project_id']}.{}.{}}"
     else:
         # defaulting to just returning the schema name in destination for now.
         return schema["name_in_destination"]
@@ -101,9 +104,14 @@ def _get_openlineage_namespace(config, service, connector_id) -> str:
     """
     if service == "snowflake":
         name_split = config["host"].split(".")
-        return "snowflake://" + name_split[0] + "." + name_split[1]
+        return f"snowflake://{name_split[0]}.{name_split[1]}"
     elif service == "gcs":
-        return "gs://" + config["bucket"]
+        return f"gs://{config['bucket']}"
+    elif service == "redshift":
+        name_split = config["host"].split(".")
+        return f"redshift://{name_split[1]}.{config['cluster_region']}:{config['port']}"
+    elif service == "bigquery":
+        return "bigquery:"
     elif service == "google_sheets":
         return "sheets://"
     else:
