@@ -141,12 +141,12 @@ def datasets(
                     namespace=namespace,
                     name=name,
                     facets={
-                        "SchemaDatasetFacet": _get_fields(
+                        "schema": _get_fields(
                             table_id=_get_table_id(table_name, table, table_response, loc),
                             columns=column_response,
                             loc=loc,
                         ),
-                        "DataSourceDatasetFacet": DataSourceDatasetFacet(name=name, uri=uri),
+                        "datasource": DataSourceDatasetFacet(name=name, uri=uri),
                     },
                 )
             ]
