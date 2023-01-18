@@ -117,7 +117,7 @@ class TestFivetranUtils(unittest.TestCase):
         )[0]
         assert dataset.namespace == "sheets://"
         assert dataset.name == "google_sheets.fivetran_google_sheets_spotify"
-        schema_field = dataset.facets["SchemaDatasetFacet"].fields[0]
+        schema_field = dataset.facets["schema"].fields[0]
         assert schema_field.name == "column_1"
         assert schema_field.type == "String"
         assert schema_field.description is None
@@ -134,7 +134,7 @@ class TestFivetranUtils(unittest.TestCase):
         )[0]
         assert dataset.namespace == "sheets://"
         assert dataset.name == "google_sheets.fivetran_google_sheets_spotify"
-        schema_field = dataset.facets["SchemaDatasetFacet"].fields[0]
+        schema_field = dataset.facets["schema"].fields[0]
         assert schema_field.name == "column_1_dest"
         assert schema_field.type == "VARCHAR(256)"
         assert schema_field.description is None
