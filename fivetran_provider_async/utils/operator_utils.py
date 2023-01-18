@@ -115,7 +115,7 @@ def _get_openlineage_namespace(config, service, connector_id) -> str:
     elif service == "google_sheets":
         return "sheets://"
     else:
-        # defaulting to this for now... better than throwing a ValueError I guess. Should really only be used when there isn't an OpenLineage spec in Naming.md.
+        # Default namespace for now
         return f"fivetran://{connector_id}"
 
 
