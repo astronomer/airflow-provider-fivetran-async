@@ -120,7 +120,7 @@ class TestFivetranOperator(unittest.TestCase):
         facets = operator.get_openlineage_facets_on_start()
         assert facets.inputs[0].namespace == "sheets://"
         assert facets.inputs[0].name == "google_sheets.fivetran_google_sheets_spotify"
-        schema_field = facets.outputs[0].facets["SchemaDatasetFacet"].fields[0]
+        schema_field = facets.outputs[0].facets["schema"].fields[0]
         assert schema_field.name == "column_1_dest"
         assert schema_field.type == "VARCHAR(256)"
         assert schema_field.description is None
