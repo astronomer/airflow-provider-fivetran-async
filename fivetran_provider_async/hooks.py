@@ -114,7 +114,7 @@ class FivetranHookAsync(FivetranHook):
             service_name = connector_details["service"]
             schema_name = connector_details["schema"]
             raise AirflowException(
-                f'Fivetran sync for connector "{connector_id}" failed; '
+                f"Fivetran sync for connector {connector_id} failed; "
                 f"please see logs at "
                 f"{self._connector_ui_url_logs(service_name, schema_name)}"
             )

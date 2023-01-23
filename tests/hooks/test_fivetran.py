@@ -105,7 +105,7 @@ async def test_fivetran_hook_get_sync_status_async_exception(mock_api_call_async
         await hook.get_sync_status_async(
             connector_id="interchangeable_revenge", previous_completed_at=mock_previous_completed_at
         )
-    assert 'Fivetran sync for connector "interchangeable_revenge" failed' in str(exc.value)
+    assert "Fivetran sync for connector interchangeable_revenge failed" in str(exc.value)
 
 
 @pytest.mark.asyncio
