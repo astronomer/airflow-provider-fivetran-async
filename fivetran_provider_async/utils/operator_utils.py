@@ -1,11 +1,11 @@
 from typing import List
 
-from openlineage.client.facet import (
+from fivetran_provider_async import (
     DataSourceDatasetFacet,
     SchemaDatasetFacet,
     SchemaField,
 )
-from openlineage.client.run import Dataset
+from fivetran_provider_async import Dataset
 
 
 def _get_table_id(schemas_api_table_name, schemas_api_table, tables_api_tables, loc) -> str:

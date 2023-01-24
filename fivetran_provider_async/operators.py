@@ -2,15 +2,15 @@ from typing import Any, Dict, Optional
 
 from airflow.exceptions import AirflowException
 from airflow.utils.context import Context
+
 from fivetran_provider.operators.fivetran import FivetranOperator
-from openlineage.airflow.extractors.base import OperatorLineage
-from openlineage.client.facet import (
+from fivetran_provider_async import OperatorLineage
+from fivetran_provider_async import (
     DocumentationJobFacet,
     ErrorMessageRunFacet,
     OwnershipJobFacet,
     OwnershipJobFacetOwners,
 )
-
 from fivetran_provider_async.triggers import FivetranTrigger
 from fivetran_provider_async.utils.operator_utils import datasets
 
