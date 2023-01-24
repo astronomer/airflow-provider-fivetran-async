@@ -1,11 +1,11 @@
 from typing import List
 
 from fivetran_provider_async import (
+    Dataset,
     DataSourceDatasetFacet,
     SchemaDatasetFacet,
     SchemaField,
 )
-from fivetran_provider_async import Dataset
 
 
 def _get_table_id(schemas_api_table_name, schemas_api_table, tables_api_tables, loc) -> str:

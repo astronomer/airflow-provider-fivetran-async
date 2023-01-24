@@ -2,12 +2,12 @@ from typing import Any, Dict, Optional
 
 from airflow.exceptions import AirflowException
 from airflow.utils.context import Context
-
 from fivetran_provider.operators.fivetran import FivetranOperator
-from fivetran_provider_async import OperatorLineage
+
 from fivetran_provider_async import (
     DocumentationJobFacet,
     ErrorMessageRunFacet,
+    OperatorLineage,
     OwnershipJobFacet,
     OwnershipJobFacetOwners,
 )
