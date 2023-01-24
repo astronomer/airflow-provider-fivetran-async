@@ -39,10 +39,7 @@ def _get_fields(table_id, columns, loc):
     :param loc: Either the source or location destination.
     :type loc: str
     """
-    from fivetran_provider_async import (
-        SchemaDatasetFacet,
-        SchemaField,
-    )
+    from fivetran_provider_async import SchemaDatasetFacet, SchemaField
 
     return SchemaDatasetFacet(
         fields=[
@@ -126,10 +123,7 @@ def datasets(
     connector_id,
     loc,
 ):
-    from fivetran_provider_async import (
-        Dataset,
-        DataSourceDatasetFacet,
-    )
+    from fivetran_provider_async import Dataset, DataSourceDatasetFacet
 
     datasets = []
 
