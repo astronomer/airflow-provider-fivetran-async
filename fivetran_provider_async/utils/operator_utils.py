@@ -1,12 +1,5 @@
 from typing import List
 
-from fivetran_provider_async import (
-    Dataset,
-    DataSourceDatasetFacet,
-    SchemaDatasetFacet,
-    SchemaField,
-)
-
 
 def _get_table_id(schemas_api_table_name, schemas_api_table, tables_api_tables, loc) -> str:
     """
@@ -35,7 +28,7 @@ def _get_table_id(schemas_api_table_name, schemas_api_table, tables_api_tables, 
             return table_api_table["id"]
 
 
-def _get_fields(table_id, columns, loc) -> SchemaDatasetFacet:
+def _get_fields(table_id, columns, loc):
     """
     Creates the SchemaDatasetFacet and necessary SchemaField objects.
 
@@ -46,6 +39,11 @@ def _get_fields(table_id, columns, loc) -> SchemaDatasetFacet:
     :param loc: Either the source or location destination.
     :type loc: str
     """
+    from fivetran_provider_async import (
+        SchemaDatasetFacet,
+        SchemaField,
+    )
+
     return SchemaDatasetFacet(
         fields=[
             SchemaField(
@@ -127,7 +125,12 @@ def datasets(
     schema,
     connector_id,
     loc,
-) -> List[Dataset]:
+):
+    from fivetran_provider_async import (
+        Dataset,
+        DataSourceDatasetFacet,
+    )
+
     datasets = []
 
     for table_name, table in schema["tables"].items():

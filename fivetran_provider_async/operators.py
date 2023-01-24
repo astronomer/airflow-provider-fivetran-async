@@ -4,13 +4,6 @@ from airflow.exceptions import AirflowException
 from airflow.utils.context import Context
 from fivetran_provider.operators.fivetran import FivetranOperator
 
-from fivetran_provider_async import (
-    DocumentationJobFacet,
-    ErrorMessageRunFacet,
-    OperatorLineage,
-    OwnershipJobFacet,
-    OwnershipJobFacetOwners,
-)
 from fivetran_provider_async.triggers import FivetranTrigger
 from fivetran_provider_async.utils.operator_utils import datasets
 
@@ -64,10 +57,18 @@ class FivetranOperatorAsync(FivetranOperator):
                 )
                 return event["return_value"]
 
-    def get_openlineage_facets_on_start(self) -> OperatorLineage:
+    def get_openlineage_facets_on_start(self):
         """
         Default extractor method that OpenLineage will call on execute completion.
         """
+        from fivetran_provider_async import (
+            DocumentationJobFacet,
+            ErrorMessageRunFacet,
+            OperatorLineage,
+            OwnershipJobFacet,
+            OwnershipJobFacetOwners,
+        )
+
         # Should likely use the sync hook here to ensure that OpenLineage data is
         # returned before the timeout.
         hook = self._get_hook()
@@ -122,5 +123,5 @@ class FivetranOperatorAsync(FivetranOperator):
 
         return OperatorLineage(inputs=inputs, outputs=outputs, job_facets=job_facets, run_facets=run_facets)
 
-    def get_openlineage_facets_on_complete(self, task_instance) -> OperatorLineage:
+    def get_openlineage_facets_on_complete(self, task_instance):
         return self.get_openlineage_facets_on_start()
