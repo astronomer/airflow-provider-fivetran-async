@@ -1,6 +1,3 @@
-from typing import List
-
-
 def _get_table_id(schemas_api_table_name, schemas_api_table, tables_api_tables, loc) -> str:
     """
     Finds a table ID for the given table names
