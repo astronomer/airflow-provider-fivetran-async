@@ -1,4 +1,25 @@
+# flake8: noqa F401
 __version__ = "1.0.0a4"
+
+import logging
+
+log = logging.getLogger(__name__)
+
+
+try:
+    from openlineage.airflow.extractors.base import OperatorLineage
+    from openlineage.client.facet import (
+        DataSourceDatasetFacet,
+        DocumentationJobFacet,
+        ErrorMessageRunFacet,
+        OwnershipJobFacet,
+        OwnershipJobFacetOwners,
+        SchemaDatasetFacet,
+        SchemaField,
+    )
+    from openlineage.client.run import Dataset
+except ImportError:
+    logging.debug("openlineage-airflow python dependency is missing")
 
 
 def get_provider_info():
