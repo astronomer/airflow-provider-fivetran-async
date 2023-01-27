@@ -27,6 +27,7 @@ jobs:
           architecture: 'x64'
       - run: pip install -U pip wheel
       - run: pip install -e '.[tests]'
+      - run: pip install -e '.[openlineage]'
       - run: pytest --junit-xml=test-report/report.xml tests
 
   build-n-publish:

@@ -5,6 +5,7 @@ from airflow.utils.context import Context
 from fivetran_provider.operators.fivetran import FivetranOperator
 
 from fivetran_provider_async.triggers import FivetranTrigger
+from fivetran_provider_async.utils.operator_utils import datasets
 
 
 class FivetranOperatorAsync(FivetranOperator):
@@ -55,3 +56,72 @@ class FivetranOperatorAsync(FivetranOperator):
                     event["message"],
                 )
                 return event["return_value"]
+
+    def get_openlineage_facets_on_start(self):
+        """
+        Default extractor method that OpenLineage will call on execute completion.
+        """
+        from fivetran_provider_async import (
+            DocumentationJobFacet,
+            ErrorMessageRunFacet,
+            OperatorLineage,
+            OwnershipJobFacet,
+            OwnershipJobFacetOwners,
+        )
+
+        # Should likely use the sync hook here to ensure that OpenLineage data is
+        # returned before the timeout.
+        hook = self._get_hook()
+        connector_response = hook.get_connector(self.connector_id)
+        groups_response = hook.get_groups(connector_response["group_id"])
+        destinations_response = hook.get_destinations(connector_response["group_id"])
+        schema_response = hook.get_connector_schemas(self.connector_id)
+        table_response = hook.get_metadata(self.connector_id, "tables")
+        column_response = hook.get_metadata(self.connector_id, "columns")
+
+        for schema in schema_response["schemas"].values():
+
+            inputs = datasets(
+                config=connector_response["config"],
+                service=connector_response["service"],
+                table_response=table_response,
+                column_response=column_response,
+                schema=schema,
+                connector_id=self.connector_id,
+                loc="source",
+            )
+
+            outputs = datasets(
+                config=destinations_response["config"],
+                service=destinations_response["service"],
+                table_response=table_response,
+                column_response=column_response,
+                schema=schema,
+                connector_id=self.connector_id,
+                loc="destination",
+            )
+
+        job_facets = {
+            "documentation": DocumentationJobFacet(
+                description=f"""
+                Fivetran run for service: {connector_response['service']}\n
+                Group Name: {groups_response["name"]}\n
+                Connector ID: {self.connector_id}
+                """
+            ),
+            "ownership": OwnershipJobFacet(
+                owners=[OwnershipJobFacetOwners(name=self.owner, type=self.email)]
+            ),
+        }
+
+        run_facets = {}
+        if connector_response.get("failed_at"):
+            run_facets["errorMessage"] = ErrorMessageRunFacet(
+                message=f"Job failed at: {connector_response['failed_at']}",
+                programmingLanguage="Fivetran",
+            )
+
+        return OperatorLineage(inputs=inputs, outputs=outputs, job_facets=job_facets, run_facets=run_facets)
+
+    def get_openlineage_facets_on_complete(self, task_instance):
+        return self.get_openlineage_facets_on_start()
