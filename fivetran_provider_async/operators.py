@@ -80,7 +80,6 @@ class FivetranOperatorAsync(FivetranOperator):
         column_response = hook.get_metadata(self.connector_id, "columns")
 
         for schema in schema_response["schemas"].values():
-
             inputs = datasets(
                 config=connector_response["config"],
                 service=connector_response["service"],
