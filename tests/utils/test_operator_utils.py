@@ -81,7 +81,7 @@ class TestFivetranUtils(unittest.TestCase):
             ),
             table="subscription_periods",
         )
-        assert openlineage_name_snowflake_downstream == "TEST.demo.subscription_periods"
+        assert openlineage_name_snowflake_downstream == "test.demo.subscription_periods"
 
     def test_utils_get_openlineage_namespace(self):
         namespace_sheets = _get_openlineage_namespace(
@@ -96,7 +96,7 @@ class TestFivetranUtils(unittest.TestCase):
             service=MOCK_FIVETRAN_DESTINATIONS_RESPONSE_PAYLOAD_GCS_TO_SNOWFLAKE["data"]["service"],
             connector_id=CONNECTOR_ID_GCS_TO_SNOWFLAKE,
         )
-        assert namespace_snowflake == "snowflake://hq12345.us-east-1"
+        assert namespace_snowflake == "snowflake://hq12345.us-east-1.aws"
 
         namespace_gcs = _get_openlineage_namespace(
             config=MOCK_FIVETRAN_CONNECTOR_RESPONSE_PAYLOAD_GCS_TO_SNOWFLAKE["data"]["config"],
