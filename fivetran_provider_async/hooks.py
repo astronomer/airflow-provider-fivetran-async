@@ -2,6 +2,8 @@ import asyncio
 from typing import Any, Dict, cast
 
 import aiohttp
+import pendulum
+import time
 from aiohttp import ClientResponseError
 from airflow.exceptions import AirflowException
 from asgiref.sync import sync_to_async
@@ -44,6 +46,7 @@ class FivetranHookAsync(FivetranHook):
                 request_func = session.get
             elif method == "POST":
                 request_func = session.post
+                headers.update({"Content-Type": "application/json;version=2"})
             elif method == "PATCH":
                 request_func = session.patch
                 headers.update({"Content-Type": "application/json;version=2"})
@@ -92,7 +95,7 @@ class FivetranHookAsync(FivetranHook):
         resp = await self._do_api_call_async(("GET", endpoint))
         return resp["data"]
 
-    async def get_sync_status_async(self, connector_id, previous_completed_at):
+    async def get_sync_status_async(self, connector_id, previous_completed_at, reschedule_time):
         """
         For sensor, return True if connector's 'succeeded_at' field has updated.
 
@@ -102,6 +105,9 @@ class FivetranHookAsync(FivetranHook):
         :param previous_completed_at: The last time the connector ran, collected on Sensor
             initialization.
         :type previous_completed_at: pendulum.datetime.DateTime
+        :param reschedule_time: Optional, if connector is in reset state
+            number of seconds to wait before restarting, else Fivetran suggestion used
+        :type reschedule_time: int
         """
         connector_details = await self.get_connector_async(connector_id)
         succeeded_at = self._parse_timestamp(connector_details["succeeded_at"])
@@ -122,6 +128,20 @@ class FivetranHookAsync(FivetranHook):
         sync_state = connector_details["status"]["sync_state"]
         self.log.info('Connector "%s": sync_state = "%s"', connector_id, sync_state)
 
+        # if sync in resheduled start, wait for time recommended by Fivetran
+        # or manually specified, then restart sync
+        if (
+                sync_state == "rescheduled"
+                and connector_details["schedule_type"] == "manual"
+        ):
+            self.log.info(
+                f'Connector is in "rescheduled" state and needs to be manually restarted'
+            )
+            self.pause_and_restart(
+                connector_details["status"]["rescheduled_for"], reschedule_time
+            )
+            return False
+
         # Check if sync started by airflow has finished
         # indicated by new 'succeeded_at' timestamp
         if current_completed_at > previous_completed_at:
@@ -133,6 +153,48 @@ class FivetranHookAsync(FivetranHook):
         else:
             job_status = "pending"
             return job_status
+
+    def pause_and_restart(self, connector_id, reschedule_for, reschedule_time):
+        """
+        While a connector is syncing, if it falls into a reschedule state,
+        wait for a time either specified by the user of recommended by Fivetran,
+        Then restart a sync
+        :param connector_id: Fivetran connector_id, found in connector settings
+            page in the Fivetran user interface.
+        :type connector_id: str
+        :param reschedule_for: From connector details, if schedule_type is manual,
+            then the connector expects triggering the event at the designated UTC time
+        :type reschedule_for: str
+        :param reschedule_time: Optional, if connector is in reset state
+            number of seconds to wait before restarting, else Fivetran suggestion used
+        :type reschedule_time: int
+        """
+        if reschedule_time:
+            self.log.info(f'Starting connector again in "{reschedule_time}" seconds')
+            time.sleep(reschedule_time)
+        else:
+            wait_time = (
+                    self._parse_timestamp(reschedule_for).add(minutes=1) - pendulum.now(tz="UTC")
+            ).seconds
+            self.log.info(f'Starting connector again in "{wait_time}" seconds')
+            time.sleep(wait_time)
+
+        self.log.info("Restarting connector now")
+        return self.start_fivetran_sync(connector_id)
+
+    def _parse_timestamp(self, api_time):
+        """
+        Returns either the pendulum-parsed actual timestamp or
+            a very out-of-date timestamp if not set
+        :param api_time: timestamp format as returned by the Fivetran API.
+        :type api_time: str
+        :rtype: Pendulum.DateTime
+        """
+        return (
+            pendulum.parse(api_time)
+            if api_time is not None
+            else pendulum.from_timestamp(-1)
+        )
 
     async def get_last_sync_async(self, connector_id, xcom=""):
         """
