@@ -95,7 +95,7 @@ class FivetranHookAsync(FivetranHook):
         resp = await self._do_api_call_async(("GET", endpoint))
         return resp["data"]
 
-    async def get_sync_status_async(self, connector_id, previous_completed_at, reschedule_time):
+    async def get_sync_status_async(self, connector_id, previous_completed_at, reschedule_time=0):
         """
         For sensor, return True if connector's 'succeeded_at' field has updated.
 
@@ -131,7 +131,7 @@ class FivetranHookAsync(FivetranHook):
         # if sync in resheduled start, wait for time recommended by Fivetran
         # or manually specified, then restart sync
         if sync_state == "rescheduled" and connector_details["schedule_type"] == "manual":
-            self.log.info(f'Connector is in "rescheduled" state and needs to be manually restarted')
+            self.log.info('Connector is in "rescheduled" state and needs to be manually restarted')
             self.pause_and_restart(connector_details["status"]["rescheduled_for"], reschedule_time)
             return False
 
@@ -152,6 +152,7 @@ class FivetranHookAsync(FivetranHook):
         While a connector is syncing, if it falls into a reschedule state,
         wait for a time either specified by the user of recommended by Fivetran,
         Then restart a sync
+
         :param connector_id: Fivetran connector_id, found in connector settings
             page in the Fivetran user interface.
         :type connector_id: str
@@ -163,13 +164,15 @@ class FivetranHookAsync(FivetranHook):
         :type reschedule_time: int
         """
         if reschedule_time:
-            self.log.info(f'Starting connector again in "{reschedule_time}" seconds')
+            log_statement = f'Starting connector again in "{reschedule_time}" seconds'
+            self.log.info(log_statement)
             time.sleep(reschedule_time)
         else:
             wait_time = (
                 self._parse_timestamp(reschedule_for).add(minutes=1) - pendulum.now(tz="UTC")
             ).seconds
-            self.log.info(f'Starting connector again in "{wait_time}" seconds')
+            log_statement = f'Starting connector again in "{wait_time}" seconds'
+            self.log.info(log_statement)
             time.sleep(wait_time)
 
         self.log.info("Restarting connector now")
@@ -177,8 +180,8 @@ class FivetranHookAsync(FivetranHook):
 
     def _parse_timestamp(self, api_time):
         """
-        Returns either the pendulum-parsed actual timestamp or
-            a very out-of-date timestamp if not set
+        Returns either the pendulum-parsed actual timestamp or a very out-of-date timestamp if not set.
+
         :param api_time: timestamp format as returned by the Fivetran API.
         :type api_time: str
         :rtype: Pendulum.DateTime
