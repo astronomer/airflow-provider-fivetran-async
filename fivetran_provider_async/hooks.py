@@ -1,9 +1,9 @@
 import asyncio
+import time
 from typing import Any, Dict, cast
 
 import aiohttp
 import pendulum
-import time
 from aiohttp import ClientResponseError
 from airflow.exceptions import AirflowException
 from asgiref.sync import sync_to_async
@@ -130,16 +130,9 @@ class FivetranHookAsync(FivetranHook):
 
         # if sync in resheduled start, wait for time recommended by Fivetran
         # or manually specified, then restart sync
-        if (
-                sync_state == "rescheduled"
-                and connector_details["schedule_type"] == "manual"
-        ):
-            self.log.info(
-                f'Connector is in "rescheduled" state and needs to be manually restarted'
-            )
-            self.pause_and_restart(
-                connector_details["status"]["rescheduled_for"], reschedule_time
-            )
+        if sync_state == "rescheduled" and connector_details["schedule_type"] == "manual":
+            self.log.info(f'Connector is in "rescheduled" state and needs to be manually restarted')
+            self.pause_and_restart(connector_details["status"]["rescheduled_for"], reschedule_time)
             return False
 
         # Check if sync started by airflow has finished
@@ -174,7 +167,7 @@ class FivetranHookAsync(FivetranHook):
             time.sleep(reschedule_time)
         else:
             wait_time = (
-                    self._parse_timestamp(reschedule_for).add(minutes=1) - pendulum.now(tz="UTC")
+                self._parse_timestamp(reschedule_for).add(minutes=1) - pendulum.now(tz="UTC")
             ).seconds
             self.log.info(f'Starting connector again in "{wait_time}" seconds')
             time.sleep(wait_time)
@@ -190,11 +183,7 @@ class FivetranHookAsync(FivetranHook):
         :type api_time: str
         :rtype: Pendulum.DateTime
         """
-        return (
-            pendulum.parse(api_time)
-            if api_time is not None
-            else pendulum.from_timestamp(-1)
-        )
+        return pendulum.parse(api_time) if api_time is not None else pendulum.from_timestamp(-1)
 
     async def get_last_sync_async(self, connector_id, xcom=""):
         """

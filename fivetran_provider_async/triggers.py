@@ -26,14 +26,14 @@ class FivetranTrigger(BaseTrigger):
     """
 
     def __init__(
-            self,
-            task_id: str,
-            connector_id: str,
-            fivetran_conn_id: str,
-            previous_completed_at: pendulum.DateTime | None = None,
-            xcom: str = "",
-            poke_interval: float = 4.0,
-            reschedule_time: int = 0,
+        self,
+        task_id: str,
+        connector_id: str,
+        fivetran_conn_id: str,
+        previous_completed_at: pendulum.DateTime | None = None,
+        xcom: str = "",
+        poke_interval: float = 4.0,
+        reschedule_time: int = 0,
     ):
         super().__init__()
         self.task_id = task_id
@@ -69,9 +69,7 @@ class FivetranTrigger(BaseTrigger):
                 self.previous_completed_at = await hook.get_last_sync_async(self.connector_id, self.xcom)
             while True:
                 res = await hook.get_sync_status_async(
-                    self.connector_id,
-                    self.previous_completed_at,
-                    self.reschedule_time
+                    self.connector_id, self.previous_completed_at, self.reschedule_time
                 )
                 if res == "success":
                     self.previous_completed_at = await hook.get_last_sync_async(self.connector_id)
