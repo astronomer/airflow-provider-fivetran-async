@@ -29,3 +29,7 @@ ENV/
 # test reports
 test-report/
 coverage.xml
+
+# dev
+dev/logs
+dev/dags
