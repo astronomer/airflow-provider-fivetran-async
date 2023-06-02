@@ -2,6 +2,7 @@ from typing import Any, Dict, Optional
 
 from airflow.exceptions import AirflowException
 from airflow.utils.context import Context
+from airflow.utils.decorators import apply_defaults
 from fivetran_provider.sensors.fivetran import FivetranSensor
 
 from fivetran_provider_async.triggers import FivetranTrigger
@@ -30,6 +31,7 @@ class FivetranSensorAsync(FivetranSensor):
             number of seconds to wait before restarting, else Fivetran suggestion used
     """
 
+    @apply_defaults
     def __init__(
         self,
         connector_id: str,
@@ -56,7 +58,6 @@ class FivetranSensorAsync(FivetranSensor):
             poke_interval=self.poke_interval,
             fivetran_retry_limit=self.fivetran_retry_limit,
             fivetran_retry_delay=self.fivetran_retry_delay,
-            hook=self.hook,
             xcom=self.xcom,
             **kwargs,
         )
