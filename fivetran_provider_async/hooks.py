@@ -132,7 +132,11 @@ class FivetranHookAsync(FivetranHook):
         # or manually specified, then restart sync
         if sync_state == "rescheduled" and connector_details["schedule_type"] == "manual":
             self.log.info('Connector is in "rescheduled" state and needs to be manually restarted')
-            self.pause_and_restart(connector_details["status"]["rescheduled_for"], reschedule_time)
+            self.pause_and_restart(
+                connector_id=connector_id,
+                reschedule_for=connector_details["status"]["rescheduled_for"],
+                reschedule_time=reschedule_time,
+            )
             return False
 
         # Check if sync started by airflow has finished

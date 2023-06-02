@@ -26,7 +26,40 @@ class FivetranSensorAsync(FivetranSensor):
         between each tries
     :param fivetran_retry_limit: # of retries when encountering API errors
     :param fivetran_retry_delay: Time to wait before retrying API request
+    :param reschedule_time: Optional, if connector is in reset state
+            number of seconds to wait before restarting, else Fivetran suggestion used
     """
+
+    def __init__(
+        self,
+        connector_id: str,
+        fivetran_conn_id: str = "fivetran",
+        poke_interval: int = 60,
+        fivetran_retry_limit: int = 3,
+        fivetran_retry_delay: int = 1,
+        xcom: str = "",
+        reschedule_time: int = 0,
+        **kwargs: Any,
+    ) -> None:
+        self.fivetran_conn_id = fivetran_conn_id
+        self.connector_id = connector_id
+        self.poke_interval = poke_interval
+        self.previous_completed_at = None
+        self.fivetran_retry_limit = fivetran_retry_limit
+        self.fivetran_retry_delay = fivetran_retry_delay
+        self.hook = None
+        self.xcom = xcom
+        self.reschedule_time = reschedule_time
+        super().__init__(
+            connector_id=self.connector_id,
+            fivetran_conn_id=self.fivetran_conn_id,
+            poke_interval=self.poke_interval,
+            fivetran_retry_limit=self.fivetran_retry_limit,
+            fivetran_retry_delay=self.fivetran_retry_delay,
+            hook=self.hook,
+            xcom=self.xcom,
+            **kwargs,
+        )
 
     def execute(self, context: Dict[str, Any]) -> None:
         """Check for the target_status and defers using the trigger"""
@@ -39,6 +72,7 @@ class FivetranSensorAsync(FivetranSensor):
                 previous_completed_at=self.previous_completed_at,
                 xcom=self.xcom,
                 poke_interval=self.poke_interval,
+                reschedule_time=self.reschedule_time,
             ),
             method_name="execute_complete",
         )
