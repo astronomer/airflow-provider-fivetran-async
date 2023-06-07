@@ -33,6 +33,21 @@ def test_fivetran_sensor_async():
     assert isinstance(exc.value.trigger, FivetranTrigger), "Trigger is not a FivetranTrigger"
 
 
+def test_fivetran_sensor_async_with_response_wait_time():
+    """Asserts that a task is deferred and a FivetranTrigger will be fired
+    when the FivetranSensorAsync is executed when reschedule_wait_time is specified."""
+    task = FivetranSensorAsync(
+        task_id=TASK_ID,
+        fivetran_conn_id="fivetran_default",
+        connector_id="test_connector",
+        poke_interval=5,
+        reschedule_wait_time=60,
+    )
+    with pytest.raises(TaskDeferred) as exc:
+        task.execute(context)
+    assert isinstance(exc.value.trigger, FivetranTrigger), "Trigger is not a FivetranTrigger"
+
+
 def test_fivetran_sensor_async_execute_failure(context):
     """Tests that an AirflowException is raised in case of error event"""
     task = FivetranSensorAsync(

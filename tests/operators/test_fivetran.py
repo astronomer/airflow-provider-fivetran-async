@@ -48,6 +48,29 @@ class TestFivetranOperator(unittest.TestCase):
         with pytest.raises(TaskDeferred):
             task.execute(context)
 
+    @requests_mock.mock()
+    def test_fivetran_op_async_execute_success_reschedule_wait_time_and_manual_mode(self, m):
+        """Tests that task gets deferred after job submission with reschedule wait time and manual mode."""
+        m.get(
+            "https://api.fivetran.com/v1/connectors/interchangeable_revenge",
+            json=MOCK_FIVETRAN_RESPONSE_PAYLOAD_SHEETS,
+        )
+
+        m.post(
+            "https://api.fivetran.com/v1/connectors/interchangeable_revenge/force",
+            json=MOCK_FIVETRAN_RESPONSE_PAYLOAD_SHEETS,
+        )
+
+        task = FivetranOperatorAsync(
+            task_id="fivetran_op_async",
+            fivetran_conn_id="conn_fivetran",
+            connector_id="interchangeable_revenge",
+            reschedule_wait_time=60,
+            schedule_type="manual",
+        )
+        with pytest.raises(TaskDeferred):
+            task.execute(context)
+
     def test_fivetran_op_async_execute_complete_error(self):
         """Tests that execute_complete method raises exception in case of error"""
         task = FivetranOperatorAsync(

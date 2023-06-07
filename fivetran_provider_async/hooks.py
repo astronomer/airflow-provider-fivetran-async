@@ -176,7 +176,8 @@ class FivetranHookAsync(FivetranHook):
             ).seconds
             if wait_time < 0:
                 raise ValueError(
-                    f"Wait time of {wait_time} suggested by Fivetran has passed. Sync connector manually."
+                    f"Reschedule time {wait_time} configured in "
+                    f"Fivetran connector has elapsed. Sync connector manually."
                 )
             log_statement = f'Starting connector again in "{wait_time}" seconds'
             self.log.info(log_statement)
