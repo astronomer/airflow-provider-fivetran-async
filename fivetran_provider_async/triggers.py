@@ -21,8 +21,8 @@ class FivetranTrigger(BaseTrigger):
     :param xcom: If used, FivetranSensorAsync receives timestamp of previously
         completed sync
     :param poke_interval:  polling period in seconds to check for the status
-    :param reschedule_time: Optional, if connector is in reset state
-            number of seconds to wait before restarting, else Fivetran suggestion used
+    :param reschedule_time: Optional, if connector is in reset state,
+            number of seconds to wait before restarting the sync.
     """
 
     def __init__(
