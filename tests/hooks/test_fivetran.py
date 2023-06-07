@@ -56,7 +56,7 @@ async def test_fivetran_hook_get_sync_status_async(
     result = await hook.get_sync_status_async(
         connector_id="interchangeable_revenge",
         previous_completed_at=mock_previous_completed_at,
-        reschedule_time=60,
+        reschedule_wait_time=60,
     )
     assert result == expected_result
 
@@ -86,7 +86,7 @@ async def test_fivetran_hook_pause_and_restart(mock_api_call_async_response, moc
     mock_api_call_async_response.return_value = MOCK_FIVETRAN_RESPONSE_PAYLOAD_SHEETS
 
     result = hook.pause_and_restart(
-        connector_id="interchangeable_revenge", reschedule_for="manual", reschedule_time=60
+        connector_id="interchangeable_revenge", reschedule_for="manual", reschedule_wait_time=60
     )
     assert result is True
 

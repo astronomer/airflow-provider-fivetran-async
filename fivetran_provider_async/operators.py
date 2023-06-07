@@ -23,7 +23,7 @@ class FivetranOperatorAsync(FivetranOperator):
     :param connector_id: ID of the Fivetran connector to sync, found on the Connector settings page.
     :param schedule_type: schedule type. Default is "manual" which takes the connector off Fivetran schedule.
     :param poll_frequency: Time in seconds that the job should wait in between each try.
-    :param reschedule_time: Optional, if connector is in reset state,
+    :param reschedule_wait_time: Optional, if connector is in reset state,
             number of seconds to wait before restarting the sync.
     """
 
@@ -37,7 +37,7 @@ class FivetranOperatorAsync(FivetranOperator):
         fivetran_retry_delay: int = 1,
         poll_frequency: int = 15,
         schedule_type: str = "manual",
-        reschedule_time: int = 0,
+        reschedule_wait_time: int = 0,
         **kwargs,
     ):
         self.connector_id = connector_id
@@ -48,7 +48,7 @@ class FivetranOperatorAsync(FivetranOperator):
         self.fivetran_retry_delay = fivetran_retry_delay
         self.poll_frequency = poll_frequency
         self.schedule_type = schedule_type
-        self.reschedule_time = reschedule_time
+        self.reschedule_wait_time = reschedule_wait_time
         super().__init__(
             connector_id=self.connector_id,
             run_name=self.run_name,
@@ -75,7 +75,7 @@ class FivetranOperatorAsync(FivetranOperator):
                 fivetran_conn_id=self.fivetran_conn_id,
                 connector_id=self.connector_id,
                 poke_interval=self.poll_frequency,
-                reschedule_time=self.reschedule_time,
+                reschedule_wait_time=self.reschedule_wait_time,
             ),
             method_name="execute_complete",
         )
