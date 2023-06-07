@@ -106,7 +106,7 @@ class FivetranHookAsync(FivetranHook):
             initialization.
         :type previous_completed_at: pendulum.datetime.DateTime
         :param reschedule_time: Optional, if connector is in reset state
-            number of seconds to wait before restarting, else Fivetran suggestion used
+            number of seconds to wait before restarting, else uses Fivetran suggestion
         :type reschedule_time: int
         """
         connector_details = await self.get_connector_async(connector_id)
