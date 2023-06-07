@@ -2,6 +2,7 @@ from typing import Any, Dict, Optional
 
 from airflow.exceptions import AirflowException
 from airflow.utils.context import Context
+from airflow.utils.decorators import apply_defaults
 from fivetran_provider.sensors.fivetran import FivetranSensor
 
 from fivetran_provider_async.triggers import FivetranTrigger
@@ -26,7 +27,40 @@ class FivetranSensorAsync(FivetranSensor):
         between each tries
     :param fivetran_retry_limit: # of retries when encountering API errors
     :param fivetran_retry_delay: Time to wait before retrying API request
+    :param reschedule_wait_time: Optional, if connector is in reset state
+            number of seconds to wait before restarting, else Fivetran suggestion used
     """
+
+    @apply_defaults
+    def __init__(
+        self,
+        connector_id: str,
+        fivetran_conn_id: str = "fivetran",
+        poke_interval: int = 60,
+        fivetran_retry_limit: int = 3,
+        fivetran_retry_delay: int = 1,
+        xcom: str = "",
+        reschedule_wait_time: int = 0,
+        **kwargs: Any,
+    ) -> None:
+        self.fivetran_conn_id = fivetran_conn_id
+        self.connector_id = connector_id
+        self.poke_interval = poke_interval
+        self.previous_completed_at = None
+        self.fivetran_retry_limit = fivetran_retry_limit
+        self.fivetran_retry_delay = fivetran_retry_delay
+        self.hook = None
+        self.xcom = xcom
+        self.reschedule_wait_time = reschedule_wait_time
+        super().__init__(
+            connector_id=self.connector_id,
+            fivetran_conn_id=self.fivetran_conn_id,
+            poke_interval=self.poke_interval,
+            fivetran_retry_limit=self.fivetran_retry_limit,
+            fivetran_retry_delay=self.fivetran_retry_delay,
+            xcom=self.xcom,
+            **kwargs,
+        )
 
     def execute(self, context: Dict[str, Any]) -> None:
         """Check for the target_status and defers using the trigger"""
@@ -39,6 +73,7 @@ class FivetranSensorAsync(FivetranSensor):
                 previous_completed_at=self.previous_completed_at,
                 xcom=self.xcom,
                 poke_interval=self.poke_interval,
+                reschedule_wait_time=self.reschedule_wait_time,
             ),
             method_name="execute_complete",
         )

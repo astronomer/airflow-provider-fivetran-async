@@ -1,3 +1,5 @@
+import pendulum
+
 LOGIN = "login"
 PASSWORD = "password"
 
@@ -23,6 +25,76 @@ MOCK_FIVETRAN_RESPONSE_PAYLOAD_SHEETS = {
             "is_historical_sync": False,
             "tasks": [],
             "warnings": [],
+        },
+        "config": {
+            "latest_version": "1",
+            "sheet_id": "https://docs.google.com/spreadsheets/d/.../edit#gid=...",
+            "named_range": "fivetran_test_range",
+            "authorization_method": "User OAuth",
+            "service_version": "1",
+            "last_synced_changes__utc_": "2021-03-23 20:54",
+        },
+    },
+}
+
+MOCK_FIVETRAN_RESPONSE_PAYLOAD_SHEETS_RESCHEDULE_MODE = {
+    "code": "Success",
+    "data": {
+        "id": "interchangeable_revenge",
+        "paused": False,
+        "group_id": "rarer_gradient",
+        "service": "google_sheets",
+        "service_version": 1,
+        "schema": "google_sheets.fivetran_google_sheets_spotify",
+        "connected_by": "mournful_shalt",
+        "created_at": "2021-03-05T22:58:56.238875Z",
+        "succeeded_at": "2021-03-23T20:55:12.670390Z",
+        "failed_at": "2021-03-22T20:55:12.670390Z",
+        "sync_frequency": 360,
+        "schedule_type": "manual",
+        "status": {
+            "setup_state": "connected",
+            "sync_state": "rescheduled",
+            "update_state": "on_schedule",
+            "is_historical_sync": False,
+            "tasks": [],
+            "warnings": [],
+            "rescheduled_for": "2021-03-05T22:59:56.238875Z",
+        },
+        "config": {
+            "latest_version": "1",
+            "sheet_id": "https://docs.google.com/spreadsheets/d/.../edit#gid=...",
+            "named_range": "fivetran_test_range",
+            "authorization_method": "User OAuth",
+            "service_version": "1",
+            "last_synced_changes__utc_": "2021-03-23 20:54",
+        },
+    },
+}
+
+MOCK_FIVETRAN_RESPONSE_PAYLOAD_SHEETS_WITH_RESCHEDULE_FOR = {
+    "code": "Success",
+    "data": {
+        "id": "interchangeable_revenge",
+        "paused": False,
+        "group_id": "rarer_gradient",
+        "service": "google_sheets",
+        "service_version": 1,
+        "schema": "google_sheets.fivetran_google_sheets_spotify",
+        "connected_by": "mournful_shalt",
+        "created_at": "2021-03-05T22:58:56.238875Z",
+        "succeeded_at": "2021-03-23T20:55:12.670390Z",
+        "failed_at": "2021-03-22T20:55:12.670390Z",
+        "sync_frequency": 360,
+        "schedule_type": "manual",
+        "status": {
+            "setup_state": "connected",
+            "sync_state": "rescheduled",
+            "update_state": "on_schedule",
+            "is_historical_sync": False,
+            "tasks": [],
+            "warnings": [],
+            "rescheduled_for": str(pendulum.now(tz="UTC").add(minutes=1)),
         },
         "config": {
             "latest_version": "1",

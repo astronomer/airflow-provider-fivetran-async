@@ -7,7 +7,13 @@ from aiohttp import ClientResponseError, RequestInfo
 from airflow.exceptions import AirflowException
 
 from fivetran_provider_async.hooks import FivetranHookAsync
-from tests.common.static import LOGIN, MOCK_FIVETRAN_RESPONSE_PAYLOAD_SHEETS, PASSWORD
+from tests.common.static import (
+    LOGIN,
+    MOCK_FIVETRAN_RESPONSE_PAYLOAD_SHEETS,
+    MOCK_FIVETRAN_RESPONSE_PAYLOAD_SHEETS_RESCHEDULE_MODE,
+    MOCK_FIVETRAN_RESPONSE_PAYLOAD_SHEETS_WITH_RESCHEDULE_FOR,
+    PASSWORD,
+)
 
 
 @pytest.mark.asyncio
@@ -54,8 +60,106 @@ async def test_fivetran_hook_get_sync_status_async(
     hook = FivetranHookAsync(fivetran_conn_id="conn_fivetran")
     mock_api_call_async_response.return_value = MOCK_FIVETRAN_RESPONSE_PAYLOAD_SHEETS
     result = await hook.get_sync_status_async(
-        connector_id="interchangeable_revenge", previous_completed_at=mock_previous_completed_at
+        connector_id="interchangeable_revenge",
+        previous_completed_at=mock_previous_completed_at,
+        reschedule_wait_time=60,
     )
+    assert result == expected_result
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "mock_previous_completed_at, expected_result",
+    [
+        (
+            pendulum.datetime(2021, 3, 23),  # current_completed_at > previous_completed_at
+            "success",
+        ),
+        (
+            pendulum.datetime(2021, 3, 23, 21, 55),  # current_completed_at < previous_completed_at
+            "pending",
+        ),
+    ],
+)
+@mock.patch("fivetran_provider_async.hooks.FivetranHookAsync._do_api_call_async")
+async def test_fivetran_hook_get_sync_status_async_with_reschedule_mode_error_for_wait_time(
+    mock_api_call_async_response, mock_previous_completed_at, expected_result
+):
+    """Tests that get_sync_status_async method return error with rescheduled_for in Fivetran API response
+    along with schedule_type as manual and negative wait time."""
+    hook = FivetranHookAsync(fivetran_conn_id="conn_fivetran")
+    mock_api_call_async_response.return_value = MOCK_FIVETRAN_RESPONSE_PAYLOAD_SHEETS_RESCHEDULE_MODE
+    with pytest.raises(ValueError, match="Sync connector manually."):
+        await hook.get_sync_status_async(
+            connector_id="interchangeable_revenge",
+            previous_completed_at=mock_previous_completed_at,
+        )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "mock_previous_completed_at, expected_result",
+    [
+        (
+            pendulum.datetime(2021, 3, 23),  # current_completed_at > previous_completed_at
+            "success",
+        ),
+        (
+            pendulum.datetime(2021, 3, 23, 21, 55),  # current_completed_at < previous_completed_at
+            "pending",
+        ),
+    ],
+)
+@mock.patch("fivetran_provider_async.hooks.FivetranHookAsync._do_api_call_async")
+@mock.patch("fivetran_provider_async.hooks.FivetranHookAsync.start_fivetran_sync")
+async def test_fivetran_hook_get_sync_status_async_with_reschedule_mode(
+    mock_start_fivetran_sync, mock_api_call_async_response, mock_previous_completed_at, expected_result
+):
+    """Tests that get_sync_status_async method return success or pending depending on whether
+    current_completed_at > previous_completed_at with reschedule_time specified by user and
+    schedule_type as manual in API response."""
+    mock_start_fivetran_sync.return_value = pendulum.datetime(2021, 3, 21, 21, 55)
+    hook = FivetranHookAsync(fivetran_conn_id="conn_fivetran")
+    mock_api_call_async_response.return_value = MOCK_FIVETRAN_RESPONSE_PAYLOAD_SHEETS_RESCHEDULE_MODE
+    result = await hook.get_sync_status_async(
+        connector_id="interchangeable_revenge",
+        previous_completed_at=mock_previous_completed_at,
+        reschedule_wait_time=10,
+    )
+
+    assert result == expected_result
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "mock_previous_completed_at, expected_result",
+    [
+        (
+            pendulum.datetime(2021, 3, 23),  # current_completed_at > previous_completed_at
+            "success",
+        ),
+        (
+            pendulum.datetime(2021, 3, 23, 21, 55),  # current_completed_at < previous_completed_at
+            "pending",
+        ),
+    ],
+)
+@mock.patch("fivetran_provider_async.hooks.FivetranHookAsync._do_api_call_async")
+@mock.patch("fivetran_provider_async.hooks.FivetranHookAsync.start_fivetran_sync")
+async def test_fivetran_hook_get_sync_status_async_with_reschedule_for_and_schedule_type_manual(
+    mock_start_fivetran_sync, mock_api_call_async_response, mock_previous_completed_at, expected_result
+):
+    """Tests that get_sync_status_async method return success or pending depending on whether
+    current_completed_at > previous_completed_at with reschedule_for in Fivetran API response
+    along with schedule_type as manual."""
+    mock_start_fivetran_sync.return_value = pendulum.datetime(2021, 3, 21, 21, 55)
+    hook = FivetranHookAsync(fivetran_conn_id="conn_fivetran")
+    mock_api_call_async_response.return_value = MOCK_FIVETRAN_RESPONSE_PAYLOAD_SHEETS_WITH_RESCHEDULE_FOR
+    result = await hook.get_sync_status_async(
+        connector_id="interchangeable_revenge",
+        previous_completed_at=mock_previous_completed_at,
+    )
+
     assert result == expected_result
 
 
@@ -72,6 +176,21 @@ async def test_fivetran_hook_get_sync_status_async_exception(mock_api_call_async
             connector_id="interchangeable_revenge", previous_completed_at=mock_previous_completed_at
         )
     assert "Fivetran sync for connector interchangeable_revenge failed" in str(exc.value)
+
+
+@pytest.mark.asyncio
+@mock.patch("fivetran_provider_async.hooks.FivetranHookAsync.start_fivetran_sync")
+@mock.patch("fivetran_provider_async.hooks.FivetranHookAsync._do_api_call_async")
+async def test_fivetran_hook_pause_and_restart(mock_api_call_async_response, mock_start_fivetran_sync):
+    """Tests that pause_and_restart method for manual mode with reschedule time set."""
+    hook = FivetranHookAsync(fivetran_conn_id="conn_fivetran")
+    mock_start_fivetran_sync.return_value = True
+    mock_api_call_async_response.return_value = MOCK_FIVETRAN_RESPONSE_PAYLOAD_SHEETS
+
+    result = hook.pause_and_restart(
+        connector_id="interchangeable_revenge", reschedule_for="manual", reschedule_wait_time=60
+    )
+    assert result is True
 
 
 @pytest.mark.asyncio

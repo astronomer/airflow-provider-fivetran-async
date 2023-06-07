@@ -21,6 +21,8 @@ class FivetranTrigger(BaseTrigger):
     :param xcom: If used, FivetranSensorAsync receives timestamp of previously
         completed sync
     :param poke_interval:  polling period in seconds to check for the status
+    :param reschedule_wait_time: Optional, if connector is in reset state,
+            number of seconds to wait before restarting the sync.
     """
 
     def __init__(
@@ -31,6 +33,7 @@ class FivetranTrigger(BaseTrigger):
         previous_completed_at: pendulum.DateTime | None = None,
         xcom: str = "",
         poke_interval: float = 4.0,
+        reschedule_wait_time: int = 0,
     ):
         super().__init__()
         self.task_id = task_id
@@ -39,6 +42,7 @@ class FivetranTrigger(BaseTrigger):
         self.previous_completed_at = previous_completed_at
         self.xcom = xcom
         self.poke_interval = poke_interval
+        self.reschedule_wait_time = reschedule_wait_time
 
     def serialize(self) -> Tuple[str, Dict[str, Any]]:
         """Serializes FivetranTrigger arguments and classpath."""
@@ -51,6 +55,7 @@ class FivetranTrigger(BaseTrigger):
                 "fivetran_conn_id": self.fivetran_conn_id,
                 "previous_completed_at": self.previous_completed_at,
                 "xcom": self.xcom,
+                "reschedule_wait_time": self.reschedule_wait_time,
             },
         )
 
@@ -64,7 +69,9 @@ class FivetranTrigger(BaseTrigger):
             if self.previous_completed_at is None:
                 self.previous_completed_at = await hook.get_last_sync_async(self.connector_id, self.xcom)
             while True:
-                res = await hook.get_sync_status_async(self.connector_id, self.previous_completed_at)
+                res = await hook.get_sync_status_async(
+                    self.connector_id, self.previous_completed_at, self.reschedule_wait_time
+                )
                 if res == "success":
                     self.previous_completed_at = await hook.get_last_sync_async(self.connector_id)
                     msg = "Fivetran connector %s finished syncing at %s" % (

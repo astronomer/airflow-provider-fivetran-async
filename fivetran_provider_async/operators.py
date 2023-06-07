@@ -15,13 +15,51 @@ class FivetranOperatorAsync(FivetranOperator):
     the sync job to start. You can find `connector_id` in the Settings page of the connector
     you configured in the `Fivetran dashboard <https://fivetran.com/dashboard/connectors>`_.
 
-    :param fivetran_conn_id: `Conn ID` of the Connection to be used to configure
-        the hook.
-    :param connector_id: ID of the Fivetran connector to sync, found on the
-        Connector settings page in the Fivetran Dashboard.
-    :param poll_frequency: Time in seconds that the job should wait in
-        between each tries
+    :param fivetran_conn_id: `Conn ID` of the Connection to be used to configure the hook.
+    :param fivetran_retry_limit: # of retries when encountering API errors
+    :param fivetran_retry_delay: Time to wait before retrying API request
+    :param run_name: Fivetran run name
+    :param timeout_seconds: Timeout in seconds
+    :param connector_id: ID of the Fivetran connector to sync, found on the Connector settings page.
+    :param schedule_type: schedule type. Default is "manual" which takes the connector off Fivetran schedule.
+    :param poll_frequency: Time in seconds that the job should wait in between each try.
+    :param reschedule_wait_time: Optional, if connector is in reset state,
+            number of seconds to wait before restarting the sync.
     """
+
+    def __init__(
+        self,
+        connector_id: str,
+        run_name: Optional[str] = None,
+        timeout_seconds: Optional[int] = None,
+        fivetran_conn_id: str = "fivetran",
+        fivetran_retry_limit: int = 3,
+        fivetran_retry_delay: int = 1,
+        poll_frequency: int = 15,
+        schedule_type: str = "manual",
+        reschedule_wait_time: int = 0,
+        **kwargs,
+    ):
+        self.connector_id = connector_id
+        self.fivetran_conn_id = fivetran_conn_id
+        self.run_name = run_name
+        self.timeout_seconds = timeout_seconds
+        self.fivetran_retry_limit = fivetran_retry_limit
+        self.fivetran_retry_delay = fivetran_retry_delay
+        self.poll_frequency = poll_frequency
+        self.schedule_type = schedule_type
+        self.reschedule_wait_time = reschedule_wait_time
+        super().__init__(
+            connector_id=self.connector_id,
+            run_name=self.run_name,
+            timeout_seconds=self.timeout_seconds,
+            fivetran_conn_id=self.fivetran_conn_id,
+            fivetran_retry_limit=self.fivetran_retry_limit,
+            fivetran_retry_delay=self.fivetran_retry_delay,
+            poll_frequency=self.poll_frequency,
+            schedule_type=self.schedule_type,
+            **kwargs,
+        )
 
     def execute(self, context: Dict[str, Any]) -> None:
         """Start the sync using synchronous hook"""
@@ -37,6 +75,7 @@ class FivetranOperatorAsync(FivetranOperator):
                 fivetran_conn_id=self.fivetran_conn_id,
                 connector_id=self.connector_id,
                 poke_interval=self.poll_frequency,
+                reschedule_wait_time=self.reschedule_wait_time,
             ),
             method_name="execute_complete",
         )
