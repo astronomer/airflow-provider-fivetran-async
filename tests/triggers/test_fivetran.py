@@ -68,6 +68,7 @@ def test_fivetran_trigger_serialization():
         "previous_completed_at": PREV_COMPLETED_AT,
         "xcom": "",
         "task_id": "fivetran_sync_task",
+        "reschedule_time": 0,
     }
 
 

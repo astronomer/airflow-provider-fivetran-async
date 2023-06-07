@@ -105,8 +105,8 @@ class FivetranHookAsync(FivetranHook):
         :param previous_completed_at: The last time the connector ran, collected on Sensor
             initialization.
         :type previous_completed_at: pendulum.datetime.DateTime
-        :param reschedule_time: Optional, if connector is in reset state
-            number of seconds to wait before restarting, else uses Fivetran suggestion
+        :param reschedule_time: Optional, if connector is in reset state,
+            number of seconds to wait before restarting the sync.
         :type reschedule_time: int
         """
         connector_details = await self.get_connector_async(connector_id)
@@ -128,7 +128,7 @@ class FivetranHookAsync(FivetranHook):
         sync_state = connector_details["status"]["sync_state"]
         self.log.info('Connector "%s": sync_state = "%s"', connector_id, sync_state)
 
-        # if sync in resheduled start, wait for time recommended by Fivetran
+        # if sync in rescheduled start, wait for time recommended by Fivetran
         # or manually specified, then restart sync
         if sync_state == "rescheduled" and connector_details["schedule_type"] == "manual":
             self.log.info('Connector is in "rescheduled" state and needs to be manually restarted')
@@ -137,7 +137,6 @@ class FivetranHookAsync(FivetranHook):
                 reschedule_for=connector_details["status"]["rescheduled_for"],
                 reschedule_time=reschedule_time,
             )
-            return False
 
         # Check if sync started by airflow has finished
         # indicated by new 'succeeded_at' timestamp
@@ -160,11 +159,11 @@ class FivetranHookAsync(FivetranHook):
         :param connector_id: Fivetran connector_id, found in connector settings
             page in the Fivetran user interface.
         :type connector_id: str
-        :param reschedule_for: From connector details, if schedule_type is manual,
-            then the connector expects triggering the event at the designated UTC time
+        :param reschedule_for: From Fivetran API response, if schedule_type is manual,
+            then the connector expects triggering the event at the designated UTC time.
         :type reschedule_for: str
-        :param reschedule_time: Optional, if connector is in reset state
-            number of seconds to wait before restarting, else Fivetran suggestion used
+        :param reschedule_time: Optional, if connector is in reset state,
+            number of seconds to wait before restarting the sync.
         :type reschedule_time: int
         """
         if reschedule_time:
@@ -175,6 +174,10 @@ class FivetranHookAsync(FivetranHook):
             wait_time = (
                 self._parse_timestamp(reschedule_for).add(minutes=1) - pendulum.now(tz="UTC")
             ).seconds
+            if wait_time < 0:
+                raise ValueError(
+                    f"Wait time of {wait_time} suggested by Fivetran has passed. Sync connector manually."
+                )
             log_statement = f'Starting connector again in "{wait_time}" seconds'
             self.log.info(log_statement)
             time.sleep(wait_time)

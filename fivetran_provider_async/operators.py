@@ -23,8 +23,8 @@ class FivetranOperatorAsync(FivetranOperator):
     :param connector_id: ID of the Fivetran connector to sync, found on the Connector settings page.
     :param schedule_type: schedule type. Default is "manual" which takes the connector off Fivetran schedule.
     :param poll_frequency: Time in seconds that the job should wait in between each try.
-    :param reschedule_time: Optional, if connector is in reset state
-            number of seconds to wait before restarting, else Fivetran suggestion used
+    :param reschedule_time: Optional, if connector is in reset state,
+            number of seconds to wait before restarting the sync.
     """
 
     def __init__(

@@ -55,6 +55,7 @@ class FivetranTrigger(BaseTrigger):
                 "fivetran_conn_id": self.fivetran_conn_id,
                 "previous_completed_at": self.previous_completed_at,
                 "xcom": self.xcom,
+                "reschedule_time": self.reschedule_time,
             },
         )
 
