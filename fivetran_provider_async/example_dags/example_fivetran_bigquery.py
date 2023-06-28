@@ -1,11 +1,11 @@
 from airflow import DAG, AirflowException
 from airflow.operators.dummy_operator import DummyOperator
-from airflow.providers.google.cloud.sensors.bigquery import BigQueryTableExistenceSensor
 from airflow.providers.google.cloud.operators.bigquery import BigQueryValueCheckOperator
-from fivetran_provider.operators.fivetran import FivetranOperator
-from fivetran_provider_async.sensors import FivetranSensor
+from airflow.providers.google.cloud.sensors.bigquery import BigQueryTableExistenceSensor
 from airflow.utils.dates import datetime
+from fivetran_provider.operators.fivetran import FivetranOperator
 
+from fivetran_provider_async.sensors import FivetranSensor
 
 TABLE = "forestfires"
 DATASET = "google_sheets"

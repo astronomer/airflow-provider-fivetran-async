@@ -1,10 +1,9 @@
+from datetime import datetime, timedelta
+
 from airflow import DAG
 
 from fivetran_provider_async.operators import FivetranOperator
 from fivetran_provider_async.sensors import FivetranSensor
-
-from datetime import datetime, timedelta
-
 
 default_args = {
     "owner": "Airflow",

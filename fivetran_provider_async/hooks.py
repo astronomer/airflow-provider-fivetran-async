@@ -6,15 +6,12 @@ from typing import Any, Dict, cast
 
 import aiohttp
 import pendulum
-
 import requests
-from requests import exceptions as requests_exceptions
-
 from aiohttp import ClientResponseError
 from airflow.exceptions import AirflowException
-from asgiref.sync import sync_to_async
-
 from airflow.hooks.base import BaseHook
+from asgiref.sync import sync_to_async
+from requests import exceptions as requests_exceptions
 
 
 class FivetranHook(BaseHook):
@@ -142,16 +139,14 @@ class FivetranHook(BaseHook):
                     # In this case, the user probably made a mistake.
                     # Don't retry.
                     raise AirflowException(
-                        f"Response: {e.response.content}, "
-                        f"Status Code: {e.response.status_code}"
+                        f"Response: {e.response.content}, " f"Status Code: {e.response.status_code}"
                     )
 
                 self._log_request_error(attempt_num, e)
 
             if attempt_num == self.retry_limit:
                 raise AirflowException(
-                    f"API request to Fivetran failed {self.retry_limit} times."
-                    " Giving up."
+                    f"API request to Fivetran failed {self.retry_limit} times." " Giving up."
                 )
 
             attempt_num += 1
@@ -165,10 +160,7 @@ class FivetranHook(BaseHook):
         )
 
     def _connector_ui_url(self, service_name, schema_name):
-        return (
-            f"https://fivetran.com/dashboard/connectors/"
-            f"{service_name}/{schema_name}"
-        )
+        return f"https://fivetran.com/dashboard/connectors/" f"{service_name}/{schema_name}"
 
     def _connector_ui_url_logs(self, service_name, schema_name):
         return self._connector_ui_url(service_name, schema_name) + "/logs"
@@ -224,10 +216,7 @@ class FivetranHook(BaseHook):
         if connector_id == "":
             raise ValueError("No value specified for connector_id")
         if metadata not in metadata_values:
-            raise ValueError(
-                f"Got {metadata} for param 'metadata', expected one"
-                f" of: {metadata_values}"
-            )
+            raise ValueError(f"Got {metadata} for param 'metadata', expected one" f" of: {metadata_values}")
         endpoint = self.api_metadata_path_connectors + connector_id + "/" + metadata
         resp = self._do_api_call(("GET", endpoint))
         return resp["data"]
@@ -278,13 +267,8 @@ class FivetranHook(BaseHook):
                 f"status: {setup_state}\nPlease see: "
                 f"{self._connector_ui_url_setup(service_name, schema_name)}"
             )
-        self.log.info(
-            f"Connector type: {service_name}, connector schema: {schema_name}"
-        )
-        self.log.info(
-            f"Connectors logs at "
-            f"{self._connector_ui_url_logs(service_name, schema_name)}"
-        )
+        self.log.info(f"Connector type: {service_name}, connector schema: {schema_name}")
+        self.log.info(f"Connectors logs at " f"{self._connector_ui_url_logs(service_name, schema_name)}")
         return True
 
     def set_schedule_type(self, connector_id, schedule_type):
@@ -297,9 +281,7 @@ class FivetranHook(BaseHook):
         :type schedule_type: str
         """
         endpoint = self.api_path_connectors + connector_id
-        return self._do_api_call(
-            ("PATCH", endpoint), json.dumps({"schedule_type": schedule_type})
-        )
+        return self._do_api_call(("PATCH", endpoint), json.dumps({"schedule_type": schedule_type}))
 
     def prep_connector(self, connector_id, schedule_type):
         """
@@ -344,7 +326,8 @@ class FivetranHook(BaseHook):
 
         last_sync = (
             succeeded_at
-            if failed_at_time is None or self._parse_timestamp(succeeded_at) > self._parse_timestamp(failed_at)
+            if failed_at_time is None
+            or self._parse_timestamp(succeeded_at) > self._parse_timestamp(failed_at)
             else failed_at
         )
         return last_sync
@@ -406,27 +389,18 @@ class FivetranHook(BaseHook):
 
         # if sync in resheduled start, wait for time recommended by Fivetran
         # or manually specified, then restart sync
-        if (
-            sync_state == "rescheduled"
-            and connector_details["schedule_type"] == "manual"
-        ):
-            self.log.info(
-                f'Connector is in "rescheduled" state and needs to be manually restarted'
-            )
+        if sync_state == "rescheduled" and connector_details["schedule_type"] == "manual":
+            self.log.info(f'Connector is in "rescheduled" state and needs to be manually restarted')
             self.pause_and_restart(
-                connector_id,
-                connector_details["status"]["rescheduled_for"],
-                reschedule_time
-              )
+                connector_id, connector_details["status"]["rescheduled_for"], reschedule_time
+            )
             return False
 
         # Check if sync started by FivetranOperator has finished
         # indicated by new 'succeeded_at' timestamp
         if current_completed_at > previous_completed_at:
             self.log.info(
-                'Connector "{}": succeeded_at: {}'.format(
-                    connector_id, succeeded_at.to_iso8601_string()
-                )
+                'Connector "{}": succeeded_at: {}'.format(connector_id, succeeded_at.to_iso8601_string())
             )
             return True
         else:
@@ -468,11 +442,7 @@ class FivetranHook(BaseHook):
         :type api_time: str
         :rtype: Pendulum.DateTime
         """
-        return (
-            pendulum.parse(api_time)
-            if api_time is not None
-            else pendulum.from_timestamp(-1)
-        )
+        return pendulum.parse(api_time) if api_time is not None else pendulum.from_timestamp(-1)
 
     def test_connection(self):
         """

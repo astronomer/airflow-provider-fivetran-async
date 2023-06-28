@@ -1,12 +1,11 @@
 import time
+from datetime import datetime, timedelta
+
 from airflow import DAG
+from airflow.operators.python import PythonOperator
 
 from fivetran_provider_async.operators import FivetranOperator
 from fivetran_provider_async.sensors import FivetranSensor
-from airflow.operators.python import PythonOperator
-
-from datetime import datetime, timedelta
-
 
 default_args = {
     "owner": "Airflow",
@@ -28,9 +27,7 @@ with dag:
         connector_id="{{ var.value.connector_id }}",
     )
 
-    delay_task = PythonOperator(
-        task_id="delay_python_task", python_callable=lambda: time.sleep(60)
-    )
+    delay_task = PythonOperator(task_id="delay_python_task", python_callable=lambda: time.sleep(60))
 
     fivetran_sensor = FivetranSensor(
         task_id="fivetran-sensor",

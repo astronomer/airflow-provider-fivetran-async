@@ -18,9 +18,7 @@ class RegistryLink(BaseOperatorLink):
     def get_link(self, operator, dttm):
         """Get link to registry page."""
 
-        registry_link = (
-            "https://registry.astronomer.io/providers/{provider}/modules/{operator}"
-        )
+        registry_link = "https://registry.astronomer.io/providers/{provider}/modules/{operator}"
         return registry_link.format(provider="fivetran", operator="fivetranoperator")
 
 
@@ -65,7 +63,7 @@ class FivetranOperator(BaseOperator):
         fivetran_retry_delay: int = 1,
         poll_frequency: int = 15,
         schedule_type: str = "manual",
-        **kwargs
+        **kwargs,
     ):
         super().__init__(**kwargs)
         self.fivetran_conn_id = fivetran_conn_id

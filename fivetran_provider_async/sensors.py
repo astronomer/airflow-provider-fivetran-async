@@ -1,7 +1,7 @@
 from typing import Any, Dict, Optional
 
-from airflow.sensors.base import BaseSensorOperator
 from airflow.exceptions import AirflowException
+from airflow.sensors.base import BaseSensorOperator
 from airflow.utils.context import Context
 from airflow.utils.decorators import apply_defaults
 
@@ -59,7 +59,7 @@ class FivetranSensor(BaseSensorOperator):
         fivetran_retry_delay: int = 1,
         xcom: str = "",
         reschedule_time: int = 0,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> None:
         super().__init__(**kwargs)
         self.fivetran_conn_id = fivetran_conn_id
@@ -84,9 +84,7 @@ class FivetranSensor(BaseSensorOperator):
     def poke(self, context):
         hook = self._get_hook()
         if self.previous_completed_at is None:
-            self.previous_completed_at = hook.get_last_sync(
-                self.connector_id, self.xcom
-            )
+            self.previous_completed_at = hook.get_last_sync(self.connector_id, self.xcom)
         return hook.get_sync_status(self.connector_id, self.previous_completed_at, self.reschedule_time)
 
 

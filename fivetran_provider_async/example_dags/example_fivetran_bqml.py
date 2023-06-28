@@ -1,16 +1,16 @@
-from airflow import DAG
+from datetime import datetime, timedelta
 
-from airflow.providers.ssh.operators.ssh import SSHOperator
+from airflow import DAG
 from airflow.operators.python_operator import BranchPythonOperator
-from fivetran_provider_async.operators import FivetranOperator
-from fivetran_provider_async.sensors import FivetranSensor
 from airflow.providers.google.cloud.hooks.compute_ssh import ComputeEngineSSHHook
 from airflow.providers.google.cloud.operators.bigquery import (
     BigQueryExecuteQueryOperator,
     BigQueryGetDataOperator,
 )
+from airflow.providers.ssh.operators.ssh import SSHOperator
 
-from datetime import datetime, timedelta
+from fivetran_provider_async.operators import FivetranOperator
+from fivetran_provider_async.sensors import FivetranSensor
 
 # EDIT WITH YOUR PROJECT ID & DATASET NAME
 PROJECT_ID = "YOUR PROJECT ID"
@@ -101,9 +101,7 @@ with dag:
         ssh_conn_id="dbtvm",
     )
 
-    ml_branch = BranchPythonOperator(
-        task_id="ml_branch", python_callable=ml_branch, provide_context=True
-    )
+    ml_branch = BranchPythonOperator(task_id="ml_branch", python_callable=ml_branch, provide_context=True)
 
     train_model = BigQueryExecuteQueryOperator(
         task_id="train_model", sql=TRAINING_QUERY, use_legacy_sql=False

@@ -1,11 +1,10 @@
+from datetime import datetime, timedelta
+
 from airflow import DAG
 from airflow.providers.ssh.operators.ssh import SSHOperator
 
 from fivetran_provider_async.operators import FivetranOperator
 from fivetran_provider_async.sensors import FivetranSensor
-
-from datetime import datetime, timedelta
-
 
 default_args = {
     "owner": "Airflow",
@@ -18,7 +17,6 @@ with DAG(
     schedule_interval=timedelta(days=1),
     catchup=False,
 ) as dag:
-
     linkedin_sync = FivetranOperator(
         task_id="linkedin-ads-sync",
         connector_id="{{ var.value.linkedin_connector_id }}",
