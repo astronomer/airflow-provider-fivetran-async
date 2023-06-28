@@ -25,6 +25,8 @@ class FivetranOperatorAsync(FivetranOperator):
     :param poll_frequency: Time in seconds that the job should wait in between each try.
     :param reschedule_wait_time: Optional, if connector is in reset state,
             number of seconds to wait before restarting the sync.
+    :param deferrable: Optional, defaults to True. If set to False, the operator will
+            wait for the sync to complete and not enter a deferred state.
     """
 
     def __init__(
@@ -38,6 +40,7 @@ class FivetranOperatorAsync(FivetranOperator):
         poll_frequency: int = 15,
         schedule_type: str = "manual",
         reschedule_wait_time: int = 0,
+        deferrable: bool = True,
         **kwargs,
     ):
         self.connector_id = connector_id
@@ -49,6 +52,8 @@ class FivetranOperatorAsync(FivetranOperator):
         self.poll_frequency = poll_frequency
         self.schedule_type = schedule_type
         self.reschedule_wait_time = reschedule_wait_time
+        self.deferrable = deferrable
+
         super().__init__(
             connector_id=self.connector_id,
             run_name=self.run_name,
@@ -67,18 +72,19 @@ class FivetranOperatorAsync(FivetranOperator):
         hook.prep_connector(self.connector_id, self.schedule_type)
         hook.start_fivetran_sync(self.connector_id)
 
-        # Defer and poll the sync status on the Triggerer
-        self.defer(
-            timeout=self.execution_timeout,
-            trigger=FivetranTrigger(
-                task_id=self.task_id,
-                fivetran_conn_id=self.fivetran_conn_id,
-                connector_id=self.connector_id,
-                poke_interval=self.poll_frequency,
-                reschedule_wait_time=self.reschedule_wait_time,
-            ),
-            method_name="execute_complete",
-        )
+        if self.deferrable:
+            # Defer and poll the sync status on the Triggerer
+            self.defer(
+                timeout=self.execution_timeout,
+                trigger=FivetranTrigger(
+                    task_id=self.task_id,
+                    fivetran_conn_id=self.fivetran_conn_id,
+                    connector_id=self.connector_id,
+                    poke_interval=self.poll_frequency,
+                    reschedule_wait_time=self.reschedule_wait_time,
+                ),
+                method_name="execute_complete",
+            )
 
     def execute_complete(self, context: "Context", event: Optional[Dict[Any, Any]] = None) -> None:
         """

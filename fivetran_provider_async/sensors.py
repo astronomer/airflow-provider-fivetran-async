@@ -29,6 +29,8 @@ class FivetranSensorAsync(FivetranSensor):
     :param fivetran_retry_delay: Time to wait before retrying API request
     :param reschedule_wait_time: Optional, if connector is in reset state
             number of seconds to wait before restarting, else Fivetran suggestion used
+    :param deferrable: Optional, defaults to True. If set to False, the operator will
+            wait for the sync to complete and not enter a deferred state.
     """
 
     @apply_defaults
@@ -41,6 +43,7 @@ class FivetranSensorAsync(FivetranSensor):
         fivetran_retry_delay: int = 1,
         xcom: str = "",
         reschedule_wait_time: int = 0,
+        deferrable: bool = True,
         **kwargs: Any,
     ) -> None:
         self.fivetran_conn_id = fivetran_conn_id
@@ -52,6 +55,7 @@ class FivetranSensorAsync(FivetranSensor):
         self.hook = None
         self.xcom = xcom
         self.reschedule_wait_time = reschedule_wait_time
+        self.deferrable = deferrable
         super().__init__(
             connector_id=self.connector_id,
             fivetran_conn_id=self.fivetran_conn_id,
@@ -64,19 +68,20 @@ class FivetranSensorAsync(FivetranSensor):
 
     def execute(self, context: Dict[str, Any]) -> None:
         """Check for the target_status and defers using the trigger"""
-        self.defer(
-            timeout=self.execution_timeout,
-            trigger=FivetranTrigger(
-                task_id=self.task_id,
-                fivetran_conn_id=self.fivetran_conn_id,
-                connector_id=self.connector_id,
-                previous_completed_at=self.previous_completed_at,
-                xcom=self.xcom,
-                poke_interval=self.poke_interval,
-                reschedule_wait_time=self.reschedule_wait_time,
-            ),
-            method_name="execute_complete",
-        )
+        if self.deferrable:
+            self.defer(
+                timeout=self.execution_timeout,
+                trigger=FivetranTrigger(
+                    task_id=self.task_id,
+                    fivetran_conn_id=self.fivetran_conn_id,
+                    connector_id=self.connector_id,
+                    previous_completed_at=self.previous_completed_at,
+                    xcom=self.xcom,
+                    poke_interval=self.poke_interval,
+                    reschedule_wait_time=self.reschedule_wait_time,
+                ),
+                method_name="execute_complete",
+            )
 
     def execute_complete(self, context: "Context", event: Optional[Dict[Any, Any]] = None) -> None:
         """
