@@ -2,7 +2,6 @@ from datetime import datetime, timedelta
 
 from airflow import DAG
 from airflow.operators.python_operator import BranchPythonOperator
-from airflow.providers.google.cloud.hooks.compute_ssh import ComputeEngineSSHHook
 from airflow.providers.google.cloud.operators.bigquery import (
     BigQueryExecuteQueryOperator,
     BigQueryGetDataOperator,

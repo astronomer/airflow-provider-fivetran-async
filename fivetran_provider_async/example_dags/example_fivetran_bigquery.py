@@ -1,5 +1,5 @@
-from airflow import DAG, AirflowException
-from airflow.operators.dummy_operator import DummyOperator
+from airflow import DAG
+from airflow.operators.empty import EmptyOperator
 from airflow.providers.google.cloud.operators.bigquery import BigQueryValueCheckOperator
 from airflow.providers.google.cloud.sensors.bigquery import BigQueryTableExistenceSensor
 from airflow.utils.dates import datetime
@@ -82,7 +82,7 @@ with DAG(
         use_legacy_sql=False,
     )
 
-    done = DummyOperator(task_id="done")
+    done = EmptyOperator(task_id="done")
 
     fivetran_sync_start >> fivetran_sync_wait >> validate_bigquery
     validate_bigquery >> check_bq_row_count >> done

@@ -95,6 +95,7 @@ class FivetranHook(BaseHook):
     def _do_api_call(self, endpoint_info, json=None):
         """
         Utility function to perform an API call with retries
+
         :param endpoint_info: Tuple of method and endpoint
         :type endpoint_info: tuple[string, string]
         :param json: Parameters for this API call.
@@ -171,6 +172,7 @@ class FivetranHook(BaseHook):
     def get_connector(self, connector_id) -> dict:
         """
         Fetches the detail of a connector.
+
         :param connector_id: Fivetran connector_id, found in connector settings
             page in the Fivetran user interface.
         :type connector_id: str
@@ -186,6 +188,7 @@ class FivetranHook(BaseHook):
     def get_connector_schemas(self, connector_id) -> dict:
         """
         Fetches schema information of the connector.
+
         :param connector_id: Fivetran connector_id, found in connector settings
             page in the Fivetran user interface.
         :type connector_id: str
@@ -204,6 +207,7 @@ class FivetranHook(BaseHook):
 
         The Fivetran metadata API is currently in beta and available to
         all Fivetran users on the enterprise plan and above.
+
         :param connector_id: Fivetran connector_id, found in connector settings
             page in the Fivetran user interface.
         :type connector_id: str
@@ -253,6 +257,7 @@ class FivetranHook(BaseHook):
         """
         Ensures connector configuration has been completed successfully and is in
             a functional state.
+
         :param connector_id: Fivetran connector_id, found in connector settings
             page in the Fivetran user interface.
         :type connector_id: str
@@ -267,17 +272,19 @@ class FivetranHook(BaseHook):
                 f"status: {setup_state}\nPlease see: "
                 f"{self._connector_ui_url_setup(service_name, schema_name)}"
             )
-        self.log.info(f"Connector type: {service_name}, connector schema: {schema_name}")
-        self.log.info(f"Connectors logs at " f"{self._connector_ui_url_logs(service_name, schema_name)}")
+        self.log.info("Connector type: %s, connector schema: %s", service_name, schema_name)
+        self.log.info("Connectors logs at %s", self._connector_ui_url_logs(service_name, schema_name))
         return True
 
     def set_schedule_type(self, connector_id, schedule_type):
         """
         Set connector sync mode to switch sync control between API and UI.
+
         :param connector_id: Fivetran connector_id, found in connector settings
             page in the Fivetran user interface.
         :type connector_id: str
-        :param schedule_type: "manual" (schedule controlled via Airlow) or "auto" (schedule controlled via Fivetran)
+        :param schedule_type: "manual" (schedule controlled via Airlow) or
+            "auto" (schedule controlled via Fivetran)
         :type schedule_type: str
         """
         endpoint = self.api_path_connectors + connector_id
@@ -287,6 +294,7 @@ class FivetranHook(BaseHook):
         """
         Prepare the connector to run in Airflow by checking that it exists and is a good state,
             then update connector sync schedule type if changed.
+
         :param connector_id: Fivetran connector_id, found in connector settings
             page in the Fivetran user interface.
         :type connector_id: str
@@ -312,16 +320,16 @@ class FivetranHook(BaseHook):
         succeeded_at = connector_details["succeeded_at"]
         failed_at = connector_details["failed_at"]
         endpoint = self.api_path_connectors + connector_id
-        if self._do_api_call(("GET", endpoint))["data"]["paused"] == True:
+        if self._do_api_call(("GET", endpoint))["data"]["paused"] is True:
             self._do_api_call(("PATCH", endpoint), json.dumps({"paused": False}))
-            if succeeded_at == None and failed_at == None:
+            if succeeded_at is None and failed_at is None:
                 succeeded_at = str(pendulum.now())
         self._do_api_call(("POST", endpoint + "/force"))
 
         failed_at_time = None
         try:
             failed_at_time = self._parse_timestamp(failed_at)
-        except:
+        except Exception:
             self.log.error("Pendulum.parsing.exception occured")
 
         last_sync = (
@@ -336,6 +344,7 @@ class FivetranHook(BaseHook):
         """
         Get the last time Fivetran connector completed a sync.
             Used with FivetranSensor to monitor sync completion status.
+
         :param connector_id: Fivetran connector_id, found in connector settings
             page in the Fivetran user interface.
         :type connector_id: str
@@ -356,6 +365,7 @@ class FivetranHook(BaseHook):
     def get_sync_status(self, connector_id, previous_completed_at, reschedule_time=0):
         """
         For sensor, return True if connector's 'succeeded_at' field has updated.
+
         :param connector_id: Fivetran connector_id, found in connector settings
             page in the Fivetran user interface.
         :type connector_id: str
@@ -385,12 +395,12 @@ class FivetranHook(BaseHook):
             )
 
         sync_state = connector_details["status"]["sync_state"]
-        self.log.info(f'Connector "{connector_id}": sync_state = {sync_state}')
+        self.log.info("Connector %s: sync_state = %s", connector_id, sync_state)
 
         # if sync in resheduled start, wait for time recommended by Fivetran
         # or manually specified, then restart sync
         if sync_state == "rescheduled" and connector_details["schedule_type"] == "manual":
-            self.log.info(f'Connector is in "rescheduled" state and needs to be manually restarted')
+            self.log.info('Connector is in "rescheduled" state and needs to be manually restarted')
             self.pause_and_restart(
                 connector_id, connector_details["status"]["rescheduled_for"], reschedule_time
             )
@@ -399,9 +409,7 @@ class FivetranHook(BaseHook):
         # Check if sync started by FivetranOperator has finished
         # indicated by new 'succeeded_at' timestamp
         if current_completed_at > previous_completed_at:
-            self.log.info(
-                'Connector "{}": succeeded_at: {}'.format(connector_id, succeeded_at.to_iso8601_string())
-            )
+            self.log.info("Connector %s: succeeded_at: %s, connector_id", succeeded_at.to_iso8601_string())
             return True
         else:
             return False
@@ -411,6 +419,7 @@ class FivetranHook(BaseHook):
         While a connector is syncing, if it falls into a reschedule state,
         wait for a time either specified by the user of recommended by Fivetran,
         Then restart a sync
+
         :param connector_id: Fivetran connector_id, found in connector settings
             page in the Fivetran user interface.
         :type connector_id: str
@@ -422,13 +431,13 @@ class FivetranHook(BaseHook):
         :type reschedule_time: int
         """
         if reschedule_time:
-            self.log.info(f'Starting connector again in "{reschedule_time}" seconds')
+            self.log.info("Starting connector again in %s seconds", reschedule_time)
             time.sleep(reschedule_time)
         else:
             wait_time = (
                 self._parse_timestamp(reschedule_for).add(minutes=1) - pendulum.now(tz="UTC")
             ).seconds
-            self.log.info(f'Starting connector again in "{wait_time}" seconds')
+            self.log.info("Starting connector again in %s seconds", wait_time)
             time.sleep(wait_time)
 
         self.log.info("Restarting connector now")
@@ -438,6 +447,7 @@ class FivetranHook(BaseHook):
         """
         Returns either the pendulum-parsed actual timestamp or
             a very out-of-date timestamp if not set
+
         :param api_time: timestamp format as returned by the Fivetran API.
         :type api_time: str
         :rtype: Pendulum.DateTime
