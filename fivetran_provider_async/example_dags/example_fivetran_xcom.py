@@ -25,6 +25,7 @@ with dag:
         task_id="fivetran-operator",
         fivetran_conn_id="fivetran_default",
         connector_id="{{ var.value.connector_id }}",
+        deferrable=False,
     )
 
     delay_task = PythonOperator(task_id="delay_python_task", python_callable=lambda: time.sleep(60))
@@ -35,6 +36,7 @@ with dag:
         connector_id="{{ var.value.connector_id }}",
         poke_interval=5,
         xcom="{{ task_instance.xcom_pull('fivetran-operator', key='return_value') }}",
+        deferrable=False,
     )
 
     fivetran_operator >> delay_task >> fivetran_sensor
