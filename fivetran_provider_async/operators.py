@@ -31,6 +31,8 @@ class FivetranOperator(BaseOperator):
     airflow trigger.`FivetranOperator` requires that you specify the `connector_id` of
     the sync job to start. You can find `connector_id` in the Settings page of the connector
     you configured in the `Fivetran dashboard <https://fivetran.com/dashboard/connectors>`_.
+    If you do not want to run `FivetranOperator` in async mode you can set `deferrable` to
+    False in operator.
 
     :param fivetran_conn_id: `Conn ID` of the Connection to be used to configure the hook.
     :param fivetran_retry_limit: # of retries when encountering API errors

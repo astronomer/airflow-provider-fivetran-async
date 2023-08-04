@@ -21,6 +21,8 @@ class FivetranSensor(BaseSensorOperator):
     connectors. `FivetranSensor` requires that you specify the `connector_id` of the sync
     job to start. You can find `connector_id` in the Settings page of the connector you configured in the
     `Fivetran dashboard <https://fivetran.com/dashboard/connectors>`_.
+    If you do not want to run `FivetranSensor` in async mode you can set `deferrable` to
+    False in sensor.
 
 
     :param fivetran_conn_id: `Conn ID` of the Connection to be used to configure
