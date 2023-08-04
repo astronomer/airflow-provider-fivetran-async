@@ -1,8 +1,12 @@
-from typing import Any, Dict, Optional
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
 
 from airflow.exceptions import AirflowException
 from airflow.sensors.base import BaseSensorOperator
-from airflow.utils.context import Context
+
+if TYPE_CHECKING:
+    from airflow.utils.context import Context
 
 from fivetran_provider_async.hooks import FivetranHook
 from fivetran_provider_async.triggers import FivetranTrigger
@@ -10,11 +14,11 @@ from fivetran_provider_async.triggers import FivetranTrigger
 
 class FivetranSensor(BaseSensorOperator):
     """
-    `FivetranSensorAsync` asynchronously monitors a Fivetran sync job for completion.
-    Monitoring with `FivetranSensorAsync` allows you to trigger downstream processes only
+    `FivetranSensor` asynchronously monitors a Fivetran sync job for completion.
+    Monitoring with `FivetranSensor` allows you to trigger downstream processes only
     when the Fivetran sync jobs have completed, ensuring data consistency. You can
-    use multiple instances of `FivetranSensorAsync` to monitor multiple Fivetran
-    connectors. `FivetranSensorAsync` requires that you specify the `connector_id` of the sync
+    use multiple instances of `FivetranSensor` to monitor multiple Fivetran
+    connectors. `FivetranSensor` requires that you specify the `connector_id` of the sync
     job to start. You can find `connector_id` in the Settings page of the connector you configured in the
     `Fivetran dashboard <https://fivetran.com/dashboard/connectors>`_.
 
@@ -29,7 +33,7 @@ class FivetranSensor(BaseSensorOperator):
     :param fivetran_retry_delay: Time to wait before retrying API request
     :param reschedule_wait_time: Optional, if connector is in reset state
             number of seconds to wait before restarting, else Fivetran suggestion used
-    :param deferrable: Run sensor in deferrable mode
+    :param deferrable: Run sensor in deferrable mode. default is True.
     """
 
     template_fields = ["connector_id", "xcom"]
@@ -60,7 +64,7 @@ class FivetranSensor(BaseSensorOperator):
         self.deferrable = deferrable
         super().__init__(**kwargs)
 
-    def execute(self, context: Dict[str, Any]) -> None:
+    def execute(self, context: Context) -> None:
         """Check for the target_status and defers using the trigger"""
         if not self.deferrable:
             super().execute(context=context)
@@ -94,7 +98,7 @@ class FivetranSensor(BaseSensorOperator):
             self.previous_completed_at = hook.get_last_sync(self.connector_id, self.xcom)
         return hook.get_sync_status(self.connector_id, self.previous_completed_at, self.reschedule_time)
 
-    def execute_complete(self, context: "Context", event: Optional[Dict[Any, Any]] = None) -> None:
+    def execute_complete(self, context: Context, event: dict[Any, Any] | None = None) -> None:
         """
         Callback for when the trigger fires - returns immediately.
         Relies on trigger to throw an exception, otherwise it assumes execution was
@@ -111,7 +115,8 @@ class FivetranSensor(BaseSensorOperator):
 
 
 class FivetranSensorAsync(FivetranSensor):
-    # Define which fields get jinjaified
+    """This sensor has been deprecated. Please use `FivetranSensor`."""
+
     template_fields = ["connector_id", "xcom"]
 
     def __init__(self, *args, **kwargs: Any) -> None:

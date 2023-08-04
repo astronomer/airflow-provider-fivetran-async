@@ -20,27 +20,23 @@ with DAG(
     linkedin_sync = FivetranOperator(
         task_id="linkedin-ads-sync",
         connector_id="{{ var.value.linkedin_connector_id }}",
-        deferrable=False,
     )
 
     linkedin_sensor = FivetranSensor(
         task_id="linkedin-sensor",
         connector_id="{{ var.value.linkedin_connector_id }}",
         poke_interval=600,
-        deferrable=False,
     )
 
     twitter_sync = FivetranOperator(
         task_id="twitter-ads-sync",
         connector_id="{{ var.value.twitter_connector_id }}",
-        deferrable=False,
     )
 
     twitter_sensor = FivetranSensor(
         task_id="twitter-sensor",
         connector_id="{{ var.value.twitter_connector_id }}",
         poke_interval=600,
-        deferrable=False,
     )
 
     dbt_run = SSHOperator(

@@ -1,10 +1,12 @@
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+from typing import TYPE_CHECKING, Any, Dict, Optional
 
 from airflow.exceptions import AirflowException
 from airflow.models import BaseOperator, BaseOperatorLink
-from airflow.utils.context import Context
+
+if TYPE_CHECKING:
+    from airflow.utils.context import Context
 
 from fivetran_provider_async.hooks import FivetranHook
 from fivetran_provider_async.triggers import FivetranTrigger
@@ -25,8 +27,8 @@ class RegistryLink(BaseOperatorLink):
 
 class FivetranOperator(BaseOperator):
     """
-    `FivetranOperatorAsync` submits a Fivetran sync job , and polls for its status on the
-    airflow trigger.`FivetranOperatorAsync` requires that you specify the `connector_id` of
+    `FivetranOperator` submits a Fivetran sync job , and polls for its status on the
+    airflow trigger.`FivetranOperator` requires that you specify the `connector_id` of
     the sync job to start. You can find `connector_id` in the Settings page of the connector
     you configured in the `Fivetran dashboard <https://fivetran.com/dashboard/connectors>`_.
 
@@ -40,7 +42,7 @@ class FivetranOperator(BaseOperator):
     :param poll_frequency: Time in seconds that the job should wait in between each try.
     :param reschedule_wait_time: Optional, if connector is in reset state,
             number of seconds to wait before restarting the sync.
-    :param deferrable: Run operator in deferrable mode
+    :param deferrable: Run operator in deferrable mode. Default is True.
     """
 
     operator_extra_links = (RegistryLink(),)
@@ -73,7 +75,7 @@ class FivetranOperator(BaseOperator):
         self.deferrable = deferrable
         super().__init__(**kwargs)
 
-    def execute(self, context: Dict[str, Any]) -> None | str:
+    def execute(self, context: Context) -> None | str:
         """Start the sync using synchronous hook"""
         hook = self._get_hook()
         hook.prep_connector(self.connector_id, self.schedule_type)
@@ -102,7 +104,7 @@ class FivetranOperator(BaseOperator):
             retry_delay=self.fivetran_retry_delay,
         )
 
-    def execute_complete(self, context: "Context", event: Optional[Dict[Any, Any]] = None) -> None:
+    def execute_complete(self, context: Context, event: Optional[Dict[Any, Any]] = None) -> None:
         """
         Callback for when the trigger fires - returns immediately.
         Relies on trigger to throw an exception, otherwise it assumes execution was
@@ -188,6 +190,8 @@ class FivetranOperator(BaseOperator):
 
 
 class FivetranOperatorAsync(FivetranOperator):
+    """This operator has been deprecated. Please use `FivetranOperator`."""
+
     def __init__(self, *args, **kwargs):
         import warnings
 

@@ -72,7 +72,6 @@ with dag:
         task_id="linkedin-sync",
         fivetran_conn_id="fivetran_default",
         connector_id="{{ var.value.linkedin_connector_id }}",
-        deferrable=False,
     )
 
     linkedin_sensor = FivetranSensor(
@@ -80,14 +79,12 @@ with dag:
         fivetran_conn_id="fivetran_default",
         connector_id="{{ var.value.linkedin_connector_id }}",
         poke_interval=5,
-        deferrable=False,
     )
 
     twitter_sync = FivetranOperator(
         task_id="twitter-sync",
         fivetran_conn_id="fivetran_default",
         connector_id="{{ var.value.twitter_connector_id }}",
-        deferrable=False,
     )
 
     twitter_sensor = FivetranSensor(
@@ -95,7 +92,6 @@ with dag:
         fivetran_conn_id="fivetran_default",
         connector_id="{{ var.value.twitter_connector_id }}",
         poke_interval=5,
-        deferrable=False,
     )
 
     dbt_run = SSHOperator(

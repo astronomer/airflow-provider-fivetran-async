@@ -49,7 +49,6 @@ with DAG(
         task_id="fivetran-task",
         fivetran_conn_id="fivetran_default",
         connector_id="{{ var.value.connector_id }}",
-        deferrable=False,
     )
 
     fivetran_sync_wait = FivetranSensor(
@@ -57,7 +56,6 @@ with DAG(
         fivetran_conn_id="fivetran_default",
         connector_id="{{ var.value.connector_id }}",
         poke_interval=5,
-        deferrable=False,
     )
 
     """
