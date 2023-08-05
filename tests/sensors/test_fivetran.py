@@ -56,9 +56,11 @@ def context():
 
 
 class TestFivetranSensor:
-    def test_fivetran_sensor_async(self):
+    @mock.patch("fivetran_provider_async.sensors.FivetranSensor.poke")
+    def test_fivetran_sensor_async(self, mock_poke):
         """Asserts that a task is deferred and a FivetranTrigger will be fired
         when the FivetranSensorAsync is executed."""
+        mock_poke.return_value = False
         task = FivetranSensor(
             task_id=TASK_ID,
             fivetran_conn_id="fivetran_default",
@@ -69,9 +71,11 @@ class TestFivetranSensor:
             task.execute(context)
         assert isinstance(exc.value.trigger, FivetranTrigger), "Trigger is not a FivetranTrigger"
 
-    def test_fivetran_sensor_async_with_response_wait_time(self):
+    @mock.patch("fivetran_provider_async.sensors.FivetranSensor.poke")
+    def test_fivetran_sensor_async_with_response_wait_time(self, mock_poke):
         """Asserts that a task is deferred and a FivetranTrigger will be fired
         when the FivetranSensorAsync is executed when reschedule_wait_time is specified."""
+        mock_poke.return_value = False
         task = FivetranSensor(
             task_id=TASK_ID,
             fivetran_conn_id="fivetran_default",
