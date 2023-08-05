@@ -70,7 +70,7 @@ class FivetranSensor(BaseSensorOperator):
         """Check for the target_status and defers using the trigger"""
         if not self.deferrable:
             super().execute(context=context)
-        else:
+        elif not self.poke(context):
             self.defer(
                 timeout=self.execution_timeout,
                 trigger=FivetranTrigger(

@@ -86,18 +86,20 @@ class FivetranOperator(BaseOperator):
         if not self.deferrable:
             return last_sync
         else:
-            # Defer and poll the sync status on the Triggerer
-            self.defer(
-                timeout=self.execution_timeout,
-                trigger=FivetranTrigger(
-                    task_id=self.task_id,
-                    fivetran_conn_id=self.fivetran_conn_id,
-                    connector_id=self.connector_id,
-                    poke_interval=self.poll_frequency,
-                    reschedule_wait_time=self.reschedule_wait_time,
-                ),
-                method_name="execute_complete",
-            )
+            previous_completed_at = hook.get_last_sync(self.connector_id)
+            completed = hook.get_sync_status(self.connector_id, previous_completed_at)
+            if not completed:
+                self.defer(
+                    timeout=self.execution_timeout,
+                    trigger=FivetranTrigger(
+                        task_id=self.task_id,
+                        fivetran_conn_id=self.fivetran_conn_id,
+                        connector_id=self.connector_id,
+                        poke_interval=self.poll_frequency,
+                        reschedule_wait_time=self.reschedule_wait_time,
+                    ),
+                    method_name="execute_complete",
+                )
 
     def _get_hook(self) -> FivetranHook:
         return FivetranHook(
