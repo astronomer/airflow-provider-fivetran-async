@@ -15,7 +15,7 @@ class FivetranTrigger(BaseTrigger):
 
     :param task_id: Reference to task id of the Dag
     :param connector_id: Reference to the Fivetran connector id being used
-    :param fiventran_conn_id: Reference to Fivetran connection id
+    :param fivetran_conn_id: Reference to Fivetran connection id
     :param previous_completed_at: The last time the connector ran, collected on Sensor
         initialization.
     :param xcom: If used, FivetranSensorAsync receives timestamp of previously
