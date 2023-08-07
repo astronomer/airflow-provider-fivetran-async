@@ -6,7 +6,7 @@ import pytest
 import requests_mock
 from airflow.exceptions import AirflowException, TaskDeferred
 
-from fivetran_provider_async.operators import FivetranOperator, FivetranOperatorAsync
+from fivetran_provider_async.operators import FivetranOperator
 from tests.common.static import (
     MOCK_FIVETRAN_DESTINATIONS_RESPONSE_PAYLOAD_SHEETS,
     MOCK_FIVETRAN_GROUPS_RESPONSE_PAYLOAD_SHEETS,
@@ -64,7 +64,7 @@ def context():
 
 
 @mock.patch.dict("os.environ", AIRFLOW_CONN_CONN_FIVETRAN="http://API_KEY:API_SECRET@")
-class TestFivetranOperatorAsync(unittest.TestCase):
+class TestFivetranOperator(unittest.TestCase):
     @requests_mock.mock()
     def test_fivetran_op_async_execute_success(self, m):
         """Tests that task gets deferred after job submission"""
@@ -78,7 +78,7 @@ class TestFivetranOperatorAsync(unittest.TestCase):
             json=MOCK_FIVETRAN_RESPONSE_PAYLOAD_SHEETS,
         )
 
-        task = FivetranOperatorAsync(
+        task = FivetranOperator(
             task_id="fivetran_op_async",
             fivetran_conn_id="conn_fivetran",
             connector_id="interchangeable_revenge",
@@ -99,7 +99,7 @@ class TestFivetranOperatorAsync(unittest.TestCase):
             json=MOCK_FIVETRAN_RESPONSE_PAYLOAD_SHEETS,
         )
 
-        task = FivetranOperatorAsync(
+        task = FivetranOperator(
             task_id="fivetran_op_async",
             fivetran_conn_id="conn_fivetran",
             connector_id="interchangeable_revenge",
@@ -111,7 +111,7 @@ class TestFivetranOperatorAsync(unittest.TestCase):
 
     def test_fivetran_op_async_execute_complete_error(self):
         """Tests that execute_complete method raises exception in case of error"""
-        task = FivetranOperatorAsync(
+        task = FivetranOperator(
             task_id="fivetran_op_async",
             fivetran_conn_id="conn_fivetran",
             connector_id="interchangeable_revenge",
@@ -123,7 +123,7 @@ class TestFivetranOperatorAsync(unittest.TestCase):
 
     def test_fivetran_op_async_execute_complete_success(self):
         """Tests that execute_complete method returns expected result and that it prints expected log"""
-        task = FivetranOperatorAsync(
+        task = FivetranOperator(
             task_id="fivetran_op_async",
             fivetran_conn_id="conn_fivetran",
             connector_id="interchangeable_revenge",
@@ -172,7 +172,7 @@ class TestFivetranOperatorAsync(unittest.TestCase):
             json=MOCK_FIVETRAN_GROUPS_RESPONSE_PAYLOAD_SHEETS,
         )
 
-        operator = FivetranOperatorAsync(
+        operator = FivetranOperator(
             task_id="fivetran-task",
             fivetran_conn_id="conn_fivetran",
             connector_id="interchangeable_revenge",
@@ -185,39 +185,3 @@ class TestFivetranOperatorAsync(unittest.TestCase):
         assert schema_field.name == "column_1_dest"
         assert schema_field.type == "VARCHAR(256)"
         assert schema_field.description is None
-
-
-# Mock the `conn_fivetran` Airflow connection (note the `@` after `API_SECRET`)
-@mock.patch.dict("os.environ", AIRFLOW_CONN_CONN_FIVETRAN="http://API_KEY:API_SECRET@")
-class TestFivetranOperator(unittest.TestCase):
-    """
-    Test functions for Fivetran Operator.
-
-    Mocks responses from Fivetran API.
-    """
-
-    @requests_mock.mock()
-    def test_fivetran_operator(self, m):
-        m.get(
-            "https://api.fivetran.com/v1/connectors/interchangeable_revenge",
-            json=MOCK_FIVETRAN_RESPONSE_PAYLOAD,
-        )
-        m.patch(
-            "https://api.fivetran.com/v1/connectors/interchangeable_revenge",
-            json=MOCK_FIVETRAN_RESPONSE_PAYLOAD,
-        )
-        m.post(
-            "https://api.fivetran.com/v1/connectors/interchangeable_revenge/force",
-            json=MOCK_FIVETRAN_RESPONSE_PAYLOAD,
-        )
-
-        operator = FivetranOperator(
-            task_id="fivetran-task",
-            fivetran_conn_id="conn_fivetran",
-            connector_id="interchangeable_revenge",
-        )
-
-        result = operator.execute({})
-        log.info(result)
-
-        assert result is not None

@@ -1,12 +1,10 @@
 import logging
-import unittest
 from unittest import mock
 
 import pytest
-import requests_mock
 from airflow.exceptions import AirflowException, TaskDeferred
 
-from fivetran_provider_async.sensors import FivetranSensor, FivetranSensorAsync
+from fivetran_provider_async.sensors import FivetranSensor
 from fivetran_provider_async.triggers import FivetranTrigger
 
 TASK_ID = "fivetran_sensor_check"
@@ -57,11 +55,13 @@ def context():
     yield context
 
 
-class TestFivetranSensorAsync:
-    def test_fivetran_sensor_async(self):
+class TestFivetranSensor:
+    @mock.patch("fivetran_provider_async.sensors.FivetranSensor.poke")
+    def test_fivetran_sensor_async(self, mock_poke):
         """Asserts that a task is deferred and a FivetranTrigger will be fired
         when the FivetranSensorAsync is executed."""
-        task = FivetranSensorAsync(
+        mock_poke.return_value = False
+        task = FivetranSensor(
             task_id=TASK_ID,
             fivetran_conn_id="fivetran_default",
             connector_id="test_connector",
@@ -71,10 +71,12 @@ class TestFivetranSensorAsync:
             task.execute(context)
         assert isinstance(exc.value.trigger, FivetranTrigger), "Trigger is not a FivetranTrigger"
 
-    def test_fivetran_sensor_async_with_response_wait_time(self):
+    @mock.patch("fivetran_provider_async.sensors.FivetranSensor.poke")
+    def test_fivetran_sensor_async_with_response_wait_time(self, mock_poke):
         """Asserts that a task is deferred and a FivetranTrigger will be fired
         when the FivetranSensorAsync is executed when reschedule_wait_time is specified."""
-        task = FivetranSensorAsync(
+        mock_poke.return_value = False
+        task = FivetranSensor(
             task_id=TASK_ID,
             fivetran_conn_id="fivetran_default",
             connector_id="test_connector",
@@ -87,7 +89,7 @@ class TestFivetranSensorAsync:
 
     def test_fivetran_sensor_async_execute_failure(self, context):
         """Tests that an AirflowException is raised in case of error event"""
-        task = FivetranSensorAsync(
+        task = FivetranSensor(
             task_id=TASK_ID,
             fivetran_conn_id="fivetran_default",
             connector_id="test_connector",
@@ -101,7 +103,7 @@ class TestFivetranSensorAsync:
 
     def test_fivetran_sensor_async_execute_complete(self):
         """Asserts that logging occurs as expected"""
-        task = FivetranSensorAsync(
+        task = FivetranSensor(
             task_id=TASK_ID,
             fivetran_conn_id="fivetran_default",
             connector_id="test_connector",
@@ -112,25 +114,3 @@ class TestFivetranSensorAsync:
                 context=None, event={"status": "success", "message": "Fivetran connector finished syncing"}
             )
         mock_log_info.assert_called_with("Fivetran connector finished syncing")
-
-
-# Mock the `conn_fivetran` Airflow connection (note the `@` after `API_SECRET`)
-@mock.patch.dict("os.environ", AIRFLOW_CONN_CONN_FIVETRAN="http://API_KEY:API_SECRET@")
-class TestFivetranSensor(unittest.TestCase):
-    """
-    Test functions for Fivetran Operator.
-
-    Mocks responses from Fivetran API.
-    """
-
-    @mock.patch.object(FivetranSensor, "poke", "returned_sync_status")
-    @requests_mock.mock()
-    def test_del(self, m):
-        sensor = FivetranSensor(
-            task_id="my_fivetran_sensor",
-            fivetran_conn_id="conn_fivetran",
-            connector_id="interchangeable_revenge",
-        )
-
-        log.info(sensor.poke)
-        assert sensor.poke == "returned_sync_status"
