@@ -1,6 +1,11 @@
 # Changelog
 
-## 1.1.1 (2022-08-07)
+## 1.1.2 (2023-08-10)
+
+### Bug fixes
+- Remove uses of fivetran_provider [#46](https://github.com/astronomer/airflow-provider-fivetran-async/pull/46)
+
+## 1.1.1 (2023-08-07)
 
 ### Feature
 - Add Python3.11 support [#37](https://github.com/astronomer/airflow-provider-fivetran-async/pull/37)
