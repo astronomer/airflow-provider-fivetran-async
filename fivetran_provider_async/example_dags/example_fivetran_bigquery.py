@@ -3,8 +3,8 @@ from airflow.operators.empty import EmptyOperator
 from airflow.providers.google.cloud.operators.bigquery import BigQueryValueCheckOperator
 from airflow.providers.google.cloud.sensors.bigquery import BigQueryTableExistenceSensor
 from airflow.utils.dates import datetime
-from fivetran_provider.operators.fivetran import FivetranOperator
 
+from fivetran_provider_async.operators import FivetranOperator
 from fivetran_provider_async.sensors import FivetranSensor
 
 TABLE = "forestfires"
