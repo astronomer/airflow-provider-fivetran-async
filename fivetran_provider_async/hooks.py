@@ -92,13 +92,15 @@ class FivetranHook(BaseHook):
         self.retry_limit = retry_limit
         self.retry_delay = retry_delay
 
-    def _do_api_call(self, endpoint_info, json=None):
+    def _do_api_call(self, endpoint_info, json=None, headers=None):
         """
         Utility function to perform an API call with retries
 
         :param endpoint_info: Tuple of method and endpoint
         :type endpoint_info: tuple[string, string]
         :param json: Parameters for this API call.
+        :type json: dict
+        :param headers: Optional headers for the API call.
         :type json: dict
         :return: If the api call returns a OK status code,
             this function returns the response in JSON. Otherwise,
@@ -110,8 +112,9 @@ class FivetranHook(BaseHook):
             self.fivetran_conn = self.get_connection(self.conn_id)
         auth = (self.fivetran_conn.login, self.fivetran_conn.password)
         url = f"{self.api_protocol}://{self.api_host}/{endpoint}"
-
-        headers = {"User-Agent": self.api_user_agent + self._get_airflow_version()}
+        if headers is None:
+            headers = {}
+        headers.update({"User-Agent": self.api_user_agent + self._get_airflow_version()}
 
         if method == "GET":
             request_func = requests.get
@@ -183,7 +186,7 @@ class FivetranHook(BaseHook):
         if connector_id == "":
             raise ValueError("No value specified for connector_id")
         endpoint = self.api_path_connectors + connector_id
-        resp = self._do_api_call(("GET", endpoint))
+        resp = self._do_api_call(("GET", endpoint), headers={"Accept": "application/json;version=1"})
         return resp["data"]
 
     def get_connector_schemas(self, connector_id) -> dict:
@@ -289,7 +292,7 @@ class FivetranHook(BaseHook):
         :type schedule_type: str
         """
         endpoint = self.api_path_connectors + connector_id
-        return self._do_api_call(("PATCH", endpoint), json.dumps({"schedule_type": schedule_type}))
+        return self._do_api_call(("PATCH", endpoint), json=json.dumps({"schedule_type": schedule_type}))
 
     def prep_connector(self, connector_id, schedule_type):
         """
@@ -491,14 +494,16 @@ class FivetranHookAsync(FivetranHook):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
-    async def _do_api_call_async(self, endpoint_info, json=None):
+    async def _do_api_call_async(self, endpoint_info, json=None, headers=None):
         method, endpoint = endpoint_info
 
         if not self.fivetran_conn:
             self.fivetran_conn = await sync_to_async(self.get_connection)(self.conn_id)
         auth = (self.fivetran_conn.login, self.fivetran_conn.password)
         url = f"{self.api_protocol}://{self.api_host}/{endpoint}"
-        headers = {"User-Agent": self.api_user_agent}
+        if headers is None:
+            headers = {}
+        headers.update({"User-Agent": self.api_user_agent + self._get_airflow_version()})
 
         async with aiohttp.ClientSession() as session:
             if method == "GET":
@@ -551,7 +556,7 @@ class FivetranHookAsync(FivetranHook):
         if connector_id == "":
             raise ValueError("No value specified for connector_id")
         endpoint = self.api_path_connectors + connector_id
-        resp = await self._do_api_call_async(("GET", endpoint))
+        resp = await self._do_api_call_async(("GET", endpoint), headers={"Accept": "application/json;version=1"})
         return resp["data"]
 
     async def get_sync_status_async(self, connector_id, previous_completed_at, reschedule_wait_time=0):
