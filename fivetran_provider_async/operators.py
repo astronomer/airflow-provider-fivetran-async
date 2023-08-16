@@ -8,6 +8,8 @@ from airflow.models import BaseOperator, BaseOperatorLink
 if TYPE_CHECKING:
     from airflow.utils.context import Context
 
+from __init__ import __version__
+
 from fivetran_provider_async.hooks import FivetranHook
 from fivetran_provider_async.triggers import FivetranTrigger
 from fivetran_provider_async.utils.operator_utils import datasets
@@ -21,8 +23,13 @@ class RegistryLink(BaseOperatorLink):
     def get_link(self, operator, dttm):
         """Get link to registry page."""
 
-        registry_link = "https://registry.astronomer.io/providers/{provider}/modules/{operator}"
-        return registry_link.format(provider="fivetran", operator="fivetranoperator")
+        registry_link = (
+            "https://registry.astronomer.io/providers/airflow-provider-fivetran-async/"
+            "versions/{version}/modules/FivetranOperator"
+        )
+        return registry_link.format(
+            provider="airflow-provider-fivetran-async", operator="FivetranOperator", version=__version__
+        )
 
 
 class FivetranOperator(BaseOperator):
