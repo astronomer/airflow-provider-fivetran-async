@@ -8,8 +8,7 @@ from airflow.models import BaseOperator, BaseOperatorLink
 if TYPE_CHECKING:
     from airflow.utils.context import Context
 
-from __init__ import __version__
-
+from fivetran_provider_async import __version__
 from fivetran_provider_async.hooks import FivetranHook
 from fivetran_provider_async.triggers import FivetranTrigger
 from fivetran_provider_async.utils.operator_utils import datasets
