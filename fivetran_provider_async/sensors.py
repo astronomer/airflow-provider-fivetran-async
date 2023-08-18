@@ -14,16 +14,25 @@ from fivetran_provider_async.triggers import FivetranTrigger
 
 class FivetranSensor(BaseSensorOperator):
     """
-    `FivetranSensor` asynchronously monitors a Fivetran sync job for completion.
+    `FivetranSensor` asynchronously monitors for a Fivetran sync job to complete
+    after the sensor starts running.
+
     Monitoring with `FivetranSensor` allows you to trigger downstream processes only
     when the Fivetran sync jobs have completed, ensuring data consistency. You can
     use multiple instances of `FivetranSensor` to monitor multiple Fivetran
-    connectors. `FivetranSensor` requires that you specify the `connector_id` of the sync
-    job to start. You can find `connector_id` in the Settings page of the connector you configured in the
-    `Fivetran dashboard <https://fivetran.com/dashboard/connectors>`_.
-    If you do not want to run `FivetranSensor` in async mode you can set `deferrable` to
-    False in sensor.
+    connectors.
 
+    `FivetranSensor` starts monitoring for a new sync to complete starting from
+    the clock time the sensor is triggered. This sensor does not take into
+    account the DagRun's `logical_date` or `data_interval_end`.
+
+    `FivetranSensor` requires that you specify the `connector_id` of the sync
+    job to start. You can find `connector_id` in the Settings page of the
+    connector you configured in the
+    `Fivetran dashboard <https://fivetran.com/dashboard/connectors>`_.
+
+    If you do not want to run `FivetranSensor` in async mode, you can set
+    `deferrable` to False in sensor.
 
     :param fivetran_conn_id: `Conn ID` of the Connection to be used to configure
         the hook.
