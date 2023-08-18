@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+from functools import cached_property
 from typing import TYPE_CHECKING, Any, Dict, Optional
 
-from airflow.exceptions import AirflowException
+from airflow.exceptions import AirflowException, AirflowProviderDeprecationWarning
 from airflow.models import BaseOperator, BaseOperatorLink
 
 if TYPE_CHECKING:
@@ -79,7 +80,7 @@ class FivetranOperator(BaseOperator):
 
     def execute(self, context: Context) -> None | str:
         """Start the sync using synchronous hook"""
-        hook = self._get_hook()
+        hook = self.hook
         hook.prep_connector(self.connector_id, self.schedule_type)
         last_sync = hook.start_fivetran_sync(self.connector_id)
 
@@ -100,8 +101,21 @@ class FivetranOperator(BaseOperator):
                     ),
                     method_name="execute_complete",
                 )
+            return None
 
     def _get_hook(self) -> FivetranHook:
+        import warnings
+
+        warnings.warn(
+            "self._get_hook() has been deprecated. Please use `self.hook`",
+            AirflowProviderDeprecationWarning,
+            stacklevel=2,
+        )
+        return self.hook
+
+    @cached_property
+    def hook(self) -> FivetranHook:
+        """Create and return a FivetranHook."""
         return FivetranHook(
             self.fivetran_conn_id,
             retry_limit=self.fivetran_retry_limit,
@@ -138,7 +152,7 @@ class FivetranOperator(BaseOperator):
 
         # Should likely use the sync hook here to ensure that OpenLineage data is
         # returned before the timeout.
-        hook = self._get_hook()
+        hook = self.hook
         connector_response = hook.get_connector(self.connector_id)
         groups_response = hook.get_groups(connector_response["group_id"])
         destinations_response = hook.get_destinations(connector_response["group_id"])
@@ -203,6 +217,6 @@ class FivetranOperatorAsync(FivetranOperator):
 
         warnings.warn(
             "FivetranOperatorAsync has been deprecated. Please use `FivetranOperator`.",
-            DeprecationWarning,
+            AirflowProviderDeprecationWarning,
             stacklevel=2,
         )

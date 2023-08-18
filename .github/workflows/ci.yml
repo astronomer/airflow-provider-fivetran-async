@@ -28,6 +28,7 @@ jobs:
       - run: pip install -U pip wheel
       - run: pip install -e '.[tests]'
       - run: pip install -e '.[openlineage]'
+      - run: mypy fivetran_provider_async/ --exclude "fivetran_provider_async/example_dags/*"
       - run: pytest --junit-xml=test-report/report.xml tests
 
   build-n-publish:

@@ -1,12 +1,14 @@
 from __future__ import annotations
 
+from functools import cached_property
 from typing import TYPE_CHECKING, Any
 
-from airflow.exceptions import AirflowException
+from airflow.exceptions import AirflowException, AirflowProviderDeprecationWarning
 from airflow.sensors.base import BaseSensorOperator
 
 if TYPE_CHECKING:
     from airflow.utils.context import Context
+    import pendulum
 
 from fivetran_provider_async.hooks import FivetranHook
 from fivetran_provider_async.triggers import FivetranTrigger
@@ -65,10 +67,9 @@ class FivetranSensor(BaseSensorOperator):
         self.fivetran_conn_id = fivetran_conn_id
         self.connector_id = connector_id
         self.poke_interval = poke_interval
-        self.previous_completed_at = None
+        self.previous_completed_at: pendulum.DateTime | None = None
         self.fivetran_retry_limit = fivetran_retry_limit
         self.fivetran_retry_delay = fivetran_retry_delay
-        self.hook = None
         self.xcom = xcom
         self.reschedule_wait_time = reschedule_wait_time
         self.reschedule_time = reschedule_time
@@ -95,19 +96,29 @@ class FivetranSensor(BaseSensorOperator):
             )
 
     def _get_hook(self) -> FivetranHook:
-        if self.hook is None:
-            self.hook = FivetranHook(
-                self.fivetran_conn_id,
-                retry_limit=self.fivetran_retry_limit,
-                retry_delay=self.fivetran_retry_delay,
-            )
+        import warnings
+
+        warnings.warn(
+            "self._get_hook() has been deprecated. Please use `self.hook`",
+            AirflowProviderDeprecationWarning,
+            stacklevel=2,
+        )
         return self.hook
 
-    def poke(self, context):
-        hook = self._get_hook()
+    @cached_property
+    def hook(self) -> FivetranHook:
+        """Create and return a FivetranHook."""
+        return FivetranHook(
+            self.fivetran_conn_id,
+            retry_limit=self.fivetran_retry_limit,
+            retry_delay=self.fivetran_retry_delay,
+        )
+
+    def poke(self, context: Context):
         if self.previous_completed_at is None:
-            self.previous_completed_at = hook.get_last_sync(self.connector_id, self.xcom)
-        return hook.get_sync_status(self.connector_id, self.previous_completed_at, self.reschedule_time)
+            self.previous_completed_at = self.hook.get_last_sync(self.connector_id, self.xcom)
+
+        return self.hook.get_sync_status(self.connector_id, self.previous_completed_at, self.reschedule_time)
 
     def execute_complete(self, context: Context, event: dict[Any, Any] | None = None) -> None:
         """
@@ -130,13 +141,13 @@ class FivetranSensorAsync(FivetranSensor):
 
     template_fields = ["connector_id", "xcom"]
 
-    def __init__(self, *args, **kwargs: Any) -> None:
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         import warnings
 
         super().__init__(*args, **kwargs)
 
         warnings.warn(
             "FivetranSensorAsync has been deprecated. Please use `FivetranSensor`.",
-            DeprecationWarning,
+            AirflowProviderDeprecationWarning,
             stacklevel=2,
         )
