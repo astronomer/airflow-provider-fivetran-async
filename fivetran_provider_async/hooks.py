@@ -49,8 +49,8 @@ class FivetranHook(BaseHook):
     api_path_destinations = "v1/destinations/"
     api_path_groups = "v1/groups/"
 
-    @staticmethod
-    def get_ui_field_behaviour() -> Dict:
+    @classmethod
+    def get_ui_field_behaviour(cls) -> Dict:
         """Returns custom field behaviour"""
         return {
             "hidden_fields": ["schema", "port", "extra", "host"],
