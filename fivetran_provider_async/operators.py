@@ -3,7 +3,7 @@ from __future__ import annotations
 from functools import cached_property
 from typing import TYPE_CHECKING, Any, Dict, Optional
 
-from airflow.exceptions import AirflowException, AirflowProviderDeprecationWarning
+from airflow.exceptions import AirflowException
 from airflow.models import BaseOperator, BaseOperatorLink
 
 if TYPE_CHECKING:
@@ -102,16 +102,6 @@ class FivetranOperator(BaseOperator):
                     method_name="execute_complete",
                 )
             return None
-
-    def _get_hook(self) -> FivetranHook:
-        import warnings
-
-        warnings.warn(
-            "self._get_hook() has been deprecated. Please use `self.hook`",
-            AirflowProviderDeprecationWarning,
-            stacklevel=2,
-        )
-        return self.hook
 
     @cached_property
     def hook(self) -> FivetranHook:
@@ -217,6 +207,6 @@ class FivetranOperatorAsync(FivetranOperator):
 
         warnings.warn(
             "FivetranOperatorAsync has been deprecated. Please use `FivetranOperator`.",
-            AirflowProviderDeprecationWarning,
+            DeprecationWarning,
             stacklevel=2,
         )

@@ -10,7 +10,7 @@ import aiohttp
 import pendulum
 import requests
 from aiohttp import ClientResponseError
-from airflow.exceptions import AirflowException, AirflowProviderDeprecationWarning
+from airflow.exceptions import AirflowException
 from airflow.hooks.base import BaseHook
 from airflow.utils.helpers import is_container
 from asgiref.sync import sync_to_async
@@ -69,7 +69,7 @@ class FivetranHook(BaseHook):
         """
         Fetch and return the current Airflow version
         from aws provider
-        https://github.com/apache/airflow/blob/main/airflow/providers/amazon/aws/hooks/base_aws.py#L536
+        https://github.com/apache/airflow/blob/ae25a52ae342c9e0bc3afdb21d613447c3687f6c/airflow/providers/amazon/aws/hooks/base_aws.py#L536
         """
         try:
             # This can be a circular import under specific configurations.
@@ -134,7 +134,7 @@ class FivetranHook(BaseHook):
             warnings.warn(
                 "The API for _do_api_call() has changed to closer match the"
                 " requests.request() API. Please update your code accordingly.",
-                AirflowProviderDeprecationWarning,
+                DeprecationWarning,
                 stacklevel=2,
             )
             method, endpoint = method  # type: ignore[misc]
@@ -512,7 +512,7 @@ class FivetranHookAsync(FivetranHook):
             warnings.warn(
                 "The API for _do_api_call_async() has changed to closer match the"
                 " aiohttp.ClientSession.request() API. Please update your code accordingly.",
-                AirflowProviderDeprecationWarning,
+                DeprecationWarning,
                 stacklevel=2,
             )
             method, endpoint = method  # type: ignore[misc]

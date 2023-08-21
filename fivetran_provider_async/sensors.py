@@ -3,7 +3,7 @@ from __future__ import annotations
 from functools import cached_property
 from typing import TYPE_CHECKING, Any
 
-from airflow.exceptions import AirflowException, AirflowProviderDeprecationWarning
+from airflow.exceptions import AirflowException
 from airflow.sensors.base import BaseSensorOperator
 
 if TYPE_CHECKING:
@@ -95,16 +95,6 @@ class FivetranSensor(BaseSensorOperator):
                 method_name="execute_complete",
             )
 
-    def _get_hook(self) -> FivetranHook:
-        import warnings
-
-        warnings.warn(
-            "self._get_hook() has been deprecated. Please use `self.hook`",
-            AirflowProviderDeprecationWarning,
-            stacklevel=2,
-        )
-        return self.hook
-
     @cached_property
     def hook(self) -> FivetranHook:
         """Create and return a FivetranHook."""
@@ -148,6 +138,6 @@ class FivetranSensorAsync(FivetranSensor):
 
         warnings.warn(
             "FivetranSensorAsync has been deprecated. Please use `FivetranSensor`.",
-            AirflowProviderDeprecationWarning,
+            DeprecationWarning,
             stacklevel=2,
         )
