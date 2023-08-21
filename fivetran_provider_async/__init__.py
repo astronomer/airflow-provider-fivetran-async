@@ -7,8 +7,8 @@ log = logging.getLogger(__name__)
 
 
 try:
-    from openlineage.airflow.extractors.base import (
-        OperatorLineage,  # type: ignore[import]
+    from openlineage.airflow.extractors.base import (  # type: ignore[import]
+        OperatorLineage,
     )
     from openlineage.client.facet import (
         DataSourceDatasetFacet,
