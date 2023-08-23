@@ -23,6 +23,8 @@ def _get_table_id(schemas_api_table_name, schemas_api_table, tables_api_tables, 
     for table_api_table in tables_api_tables["items"]:
         if table_api_table[f"name_in_{loc}"] == schema_api_table_name:
             return table_api_table["id"]
+    else:
+        raise ValueError(f"{schema_api_table_name} not found in tables_api_tables['items']")
 
 
 def _get_fields(table_id, columns, loc):

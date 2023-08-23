@@ -317,7 +317,7 @@ class TestFivetranHookAsync:
         mock_api_call_async_response.return_value = MOCK_FIVETRAN_RESPONSE_PAYLOAD_SHEETS
 
         result = hook.pause_and_restart(
-            connector_id="interchangeable_revenge", reschedule_for="manual", reschedule_wait_time=60
+            connector_id="interchangeable_revenge", reschedule_for="manual", reschedule_wait_time=5
         )
         assert result is True
 
@@ -353,7 +353,7 @@ class TestFivetranHookAsync:
             return {"status": "success"}
 
         mock_session.return_value.__aexit__.return_value = mock_fun
-        mock_session.return_value.__aenter__.return_value.get.return_value.json.return_value = {
+        mock_session.return_value.__aenter__.return_value.request.return_value.json.return_value = {
             "status": "success"
         }
 
@@ -376,7 +376,7 @@ class TestFivetranHookAsync:
             return {"status": "success"}
 
         mock_session.return_value.__aexit__.return_value = mock_fun
-        mock_session.return_value.__aenter__.return_value.patch.return_value.json.return_value = {
+        mock_session.return_value.__aenter__.return_value.request.return_value.json.return_value = {
             "status": "success"
         }
 
@@ -399,7 +399,7 @@ class TestFivetranHookAsync:
             return {"status": "success"}
 
         mock_session.return_value.__aexit__.return_value = mock_fun
-        mock_session.return_value.__aenter__.return_value.post.return_value.json.return_value = {
+        mock_session.return_value.__aenter__.return_value.request.return_value.json.return_value = {
             "status": "success"
         }
 
@@ -414,25 +414,11 @@ class TestFivetranHookAsync:
     @pytest.mark.asyncio
     @mock.patch("fivetran_provider_async.hooks.aiohttp.ClientSession")
     @mock.patch("fivetran_provider_async.hooks.FivetranHookAsync.get_connection")
-    async def test_do_api_call_async_unexpected_method_error(self, mock_get_connection, mock_session):
-        """Tests that _do_api_call_async method raises exception when a wrong request is sent"""
-        hook = FivetranHookAsync(fivetran_conn_id="conn_fivetran")
-
-        hook.fivetran_conn = mock_get_connection
-        hook.fivetran_conn.login = LOGIN
-        hook.fivetran_conn.password = PASSWORD
-        with pytest.raises(AirflowException) as exc:
-            await hook._do_api_call_async(("UNKNOWN", "v1/connectors/test"))
-        assert str(exc.value) == "Unexpected HTTP Method: UNKNOWN"
-
-    @pytest.mark.asyncio
-    @mock.patch("fivetran_provider_async.hooks.aiohttp.ClientSession")
-    @mock.patch("fivetran_provider_async.hooks.FivetranHookAsync.get_connection")
     async def test_do_api_call_async_with_non_retryable_client_response_error(
         self, mock_get_connection, mock_session
     ):
         """Tests that _do_api_call_async method returns expected response for a non retryable error"""
-        mock_session.return_value.__aenter__.return_value.patch.return_value.json.side_effect = (
+        mock_session.return_value.__aenter__.return_value.request.return_value.json.side_effect = (
             ClientResponseError(
                 request_info=RequestInfo(url="example.com", method="PATCH", headers=multidict.CIMultiDict()),
                 status=400,
@@ -457,7 +443,7 @@ class TestFivetranHookAsync:
         self, mock_get_connection, mock_session
     ):
         """Tests that _do_api_call_async method raises exception for a retryable error"""
-        mock_session.return_value.__aenter__.return_value.patch.return_value.json.side_effect = (
+        mock_session.return_value.__aenter__.return_value.request.return_value.json.side_effect = (
             ClientResponseError(
                 request_info=RequestInfo(url="example.com", method="PATCH", headers=multidict.CIMultiDict()),
                 status=500,

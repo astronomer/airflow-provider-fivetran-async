@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 import asyncio
-import json
 import time
+from datetime import datetime
 from time import sleep
-from typing import Any, Dict, cast
+from typing import TYPE_CHECKING, Any, Dict
 
 import aiohttp
 import pendulum
@@ -10,8 +12,12 @@ import requests
 from aiohttp import ClientResponseError
 from airflow.exceptions import AirflowException
 from airflow.hooks.base import BaseHook
+from airflow.utils.helpers import is_container
 from asgiref.sync import sync_to_async
 from requests import exceptions as requests_exceptions
+
+if TYPE_CHECKING:
+    from airflow.models.connection import Connection
 
 
 class FivetranHook(BaseHook):
@@ -43,8 +49,8 @@ class FivetranHook(BaseHook):
     api_path_destinations = "v1/destinations/"
     api_path_groups = "v1/groups/"
 
-    @staticmethod
-    def get_ui_field_behaviour() -> Dict:
+    @classmethod
+    def get_ui_field_behaviour(cls) -> Dict:
         """Returns custom field behaviour"""
         return {
             "hidden_fields": ["schema", "port", "extra", "host"],
@@ -63,7 +69,7 @@ class FivetranHook(BaseHook):
         """
         Fetch and return the current Airflow version
         from aws provider
-        https://github.com/apache/airflow/blob/main/airflow/providers/amazon/aws/hooks/base_aws.py#L486
+        https://github.com/apache/airflow/blob/ae25a52ae342c9e0bc3afdb21d613447c3687f6c/airflow/providers/amazon/aws/hooks/base_aws.py#L536
         """
         try:
             # This can be a circular import under specific configurations.
@@ -78,7 +84,7 @@ class FivetranHook(BaseHook):
     def __init__(
         self,
         fivetran_conn_id: str = "fivetran",
-        fivetran_conn=None,
+        fivetran_conn: Connection | None = None,
         timeout_seconds: int = 180,
         retry_limit: int = 3,
         retry_delay: float = 1.0,
@@ -92,48 +98,66 @@ class FivetranHook(BaseHook):
         self.retry_limit = retry_limit
         self.retry_delay = retry_delay
 
-    def _do_api_call(self, endpoint_info, json=None):
+    def _prepare_api_call_kwargs(self, method: str, endpoint: str, **kwargs: Any) -> dict[str, Any]:
+        """Add additional data to the API call."""
+        if self.fivetran_conn is None:
+            self.fivetran_conn = self.get_connection(self.conn_id)
+
+        auth = (self.fivetran_conn.login, self.fivetran_conn.password)
+
+        kwargs.setdefault("auth", auth)
+        kwargs.setdefault("headers", {})
+
+        kwargs["headers"].setdefault("User-Agent", self.api_user_agent + self._get_airflow_version())
+
+        if method in ("POST", "PATCH"):
+            kwargs["headers"].setdefault("Content-Type", "application/json;version=2")
+
+        return kwargs
+
+    def _do_api_call(
+        self, method: str, endpoint: str = None, **kwargs: Any  # type: ignore[assignment]
+    ) -> dict[str, Any]:
         """
         Utility function to perform an API call with retries
 
-        :param endpoint_info: Tuple of method and endpoint
-        :type endpoint_info: tuple[string, string]
-        :param json: Parameters for this API call.
-        :type json: dict
+        :param method: Method for the API call
+        :param endpoint: Endpoint of the Fivetran API to be hit
+        :param kwargs: kwargs to be passed to requests.request()
         :return: If the api call returns a OK status code,
-            this function returns the response in JSON. Otherwise,
+            this function returns the response as a dict. Otherwise,
             we throw an AirflowException.
-        :rtype: dict
         """
-        method, endpoint = endpoint_info
+        if is_container(method) and len(method) == 2:
+            import warnings
+
+            warnings.warn(
+                "The API for _do_api_call() has changed to closer match the"
+                " requests.request() API. Please update your code accordingly.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            method, endpoint = method  # type: ignore[misc]
+        elif endpoint is None:
+            raise TypeError(
+                f"{self.__class__.__name__}._do_api_call() missing 1 required"
+                f" positional argument: 'endpoint'"
+            )
+
+        if TYPE_CHECKING:
+            assert endpoint is not None
+
         if self.fivetran_conn is None:
             self.fivetran_conn = self.get_connection(self.conn_id)
-        auth = (self.fivetran_conn.login, self.fivetran_conn.password)
+
         url = f"{self.api_protocol}://{self.api_host}/{endpoint}"
 
-        headers = {"User-Agent": self.api_user_agent + self._get_airflow_version()}
-
-        if method == "GET":
-            request_func = requests.get
-        elif method == "POST":
-            request_func = requests.post
-            headers.update({"Content-Type": "application/json;version=2"})
-        elif method == "PATCH":
-            request_func = requests.patch
-            headers.update({"Content-Type": "application/json;version=2"})
-        else:
-            raise AirflowException("Unexpected HTTP Method: " + method)
+        kwargs = self._prepare_api_call_kwargs(method, endpoint, **kwargs)
 
         attempt_num = 1
         while True:
             try:
-                response = request_func(
-                    url,
-                    data=json if method in ("POST", "PATCH") else None,
-                    params=json if method in ("GET") else None,
-                    auth=auth,
-                    headers=headers,
-                )
+                response = requests.request(method, url, **kwargs)
                 response.raise_for_status()
                 return response.json()
             except requests_exceptions.RequestException as e:
@@ -144,7 +168,7 @@ class FivetranHook(BaseHook):
                         f"Response: {e.response.content}, " f"Status Code: {e.response.status_code}"
                     )
 
-                self._log_request_error(attempt_num, e)
+                self._log_request_error(attempt_num, str(e))
 
             if attempt_num == self.retry_limit:
                 raise AirflowException(
@@ -161,48 +185,44 @@ class FivetranHook(BaseHook):
             error,
         )
 
-    def _connector_ui_url(self, service_name, schema_name):
-        return f"https://fivetran.com/dashboard/connectors/" f"{service_name}/{schema_name}"
+    def _connector_ui_url(self, service_name: str, schema_name: str) -> str:
+        return f"https://fivetran.com/dashboard/connectors/{service_name}/{schema_name}"
 
-    def _connector_ui_url_logs(self, service_name, schema_name):
+    def _connector_ui_url_logs(self, service_name: str, schema_name: str) -> str:
         return self._connector_ui_url(service_name, schema_name) + "/logs"
 
-    def _connector_ui_url_setup(self, service_name, schema_name):
+    def _connector_ui_url_setup(self, service_name: str, schema_name: str) -> str:
         return self._connector_ui_url(service_name, schema_name) + "/setup"
 
-    def get_connector(self, connector_id) -> dict:
+    def get_connector(self, connector_id: str) -> dict[str, Any]:
         """
         Fetches the detail of a connector.
 
         :param connector_id: Fivetran connector_id, found in connector settings
             page in the Fivetran user interface.
-        :type connector_id: str
         :return: connector details
-        :rtype: Dict
         """
         if connector_id == "":
             raise ValueError("No value specified for connector_id")
         endpoint = self.api_path_connectors + connector_id
-        resp = self._do_api_call(("GET", endpoint))
+        resp = self._do_api_call("GET", endpoint)
         return resp["data"]
 
-    def get_connector_schemas(self, connector_id) -> dict:
+    def get_connector_schemas(self, connector_id: str) -> dict[str, Any]:
         """
         Fetches schema information of the connector.
 
         :param connector_id: Fivetran connector_id, found in connector settings
             page in the Fivetran user interface.
-        :type connector_id: str
         :return: schema details
-        :rtype: Dict
         """
         if connector_id == "":
             raise ValueError("No value specified for connector_id")
         endpoint = self.api_path_connectors + connector_id + "/schemas"
-        resp = self._do_api_call(("GET", endpoint))
+        resp = self._do_api_call("GET", endpoint)
         return resp["data"]
 
-    def get_metadata(self, connector_id, metadata) -> dict:
+    def get_metadata(self, connector_id: str, metadata: str) -> dict[str, Any]:
         """
         Fetches metadata for a given metadata string and connector.
 
@@ -211,11 +231,8 @@ class FivetranHook(BaseHook):
 
         :param connector_id: Fivetran connector_id, found in connector settings
             page in the Fivetran user interface.
-        :type connector_id: str
         :param metadata: The string to return the type of metadata from the API
-        :type metadata: str
         :return: table or column metadata details
-        :rtype: Dict
         """
         metadata_values = ("tables", "columns")
         if connector_id == "":
@@ -223,45 +240,42 @@ class FivetranHook(BaseHook):
         if metadata not in metadata_values:
             raise ValueError(f"Got {metadata} for param 'metadata', expected one" f" of: {metadata_values}")
         endpoint = self.api_metadata_path_connectors + connector_id + "/" + metadata
-        resp = self._do_api_call(("GET", endpoint))
+        resp = self._do_api_call("GET", endpoint)
         return resp["data"]
 
-    def get_destinations(self, group_id) -> dict:
+    def get_destinations(self, group_id: str) -> dict:
         """
         Fetches destination information for the given group.
         :param group_id: The Fivetran group ID, returned by a connector API call.
-        :type group_id: str
         :return: destination details
         :rtype: Dict
         """
         if group_id == "":
             raise ValueError("No value specified for group_id")
         endpoint = self.api_path_destinations + group_id
-        resp = self._do_api_call(("GET", endpoint))
+        resp = self._do_api_call("GET", endpoint)
         return resp["data"]
 
-    def get_groups(self, group_id) -> dict:
+    def get_groups(self, group_id: str) -> dict:
         """
         Fetches destination information for the given group.
         :param group_id: The Fivetran group ID, returned by a connector API call.
-        :type group_id: str
         :return: group details
-        :rtype: Dict
         """
         if group_id == "":
             raise ValueError("No value specified for connector_id")
         endpoint = self.api_path_groups + group_id
-        resp = self._do_api_call(("GET", endpoint))
+        resp = self._do_api_call("GET", endpoint)
         return resp["data"]
 
-    def check_connector(self, connector_id):
+    def check_connector(self, connector_id: str) -> dict[str, Any]:
         """
         Ensures connector configuration has been completed successfully and is in
             a functional state.
 
         :param connector_id: Fivetran connector_id, found in connector settings
             page in the Fivetran user interface.
-        :type connector_id: str
+        :return: API call response
         """
         connector_details = self.get_connector(connector_id)
         service_name = connector_details["service"]
@@ -275,57 +289,53 @@ class FivetranHook(BaseHook):
             )
         self.log.info("Connector type: %s, connector schema: %s", service_name, schema_name)
         self.log.info("Connectors logs at %s", self._connector_ui_url_logs(service_name, schema_name))
-        return True
+        return connector_details
 
-    def set_schedule_type(self, connector_id, schedule_type):
+    def set_schedule_type(self, connector_id: str, schedule_type: str) -> dict[str, Any]:
         """
         Set connector sync mode to switch sync control between API and UI.
 
         :param connector_id: Fivetran connector_id, found in connector settings
             page in the Fivetran user interface.
-        :type connector_id: str
         :param schedule_type: "manual" (schedule controlled via Airlow) or
             "auto" (schedule controlled via Fivetran)
-        :type schedule_type: str
+        :return: API call response
         """
         endpoint = self.api_path_connectors + connector_id
-        return self._do_api_call(("PATCH", endpoint), json.dumps({"schedule_type": schedule_type}))
+        return self._do_api_call("PATCH", endpoint, json={"schedule_type": schedule_type})
 
-    def prep_connector(self, connector_id, schedule_type):
+    def prep_connector(self, connector_id: str, schedule_type: str) -> None:
         """
         Prepare the connector to run in Airflow by checking that it exists and is a good state,
             then update connector sync schedule type if changed.
 
         :param connector_id: Fivetran connector_id, found in connector settings
             page in the Fivetran user interface.
-        :type connector_id: str
         :param schedule_type: Fivetran connector schedule type
-        :type schedule_type: str
         """
-        self.check_connector(connector_id)
+        connector_details = self.check_connector(connector_id)
         if schedule_type not in {"manual", "auto"}:
             raise ValueError('schedule_type must be either "manual" or "auto"')
-        if self.get_connector(connector_id)["schedule_type"] != schedule_type:
-            return self.set_schedule_type(connector_id, schedule_type)
-        return True
+        if connector_details["schedule_type"] != schedule_type:
+            self.set_schedule_type(connector_id, schedule_type)
+        else:
+            self.log.debug("Schedule type for %s was already %s", connector_id, schedule_type)
 
-    def start_fivetran_sync(self, connector_id):
+    def start_fivetran_sync(self, connector_id: str) -> str:
         """
         :param connector_id: Fivetran connector_id, found in connector settings
             page in the Fivetran user interface.
-        :type connector_id: str
         :return: Timestamp of previously completed sync
-        :rtype: str
         """
         connector_details = self.get_connector(connector_id)
         succeeded_at = connector_details["succeeded_at"]
         failed_at = connector_details["failed_at"]
         endpoint = self.api_path_connectors + connector_id
-        if self._do_api_call(("GET", endpoint))["data"]["paused"] is True:
-            self._do_api_call(("PATCH", endpoint), json.dumps({"paused": False}))
+        if self._do_api_call("GET", endpoint)["data"]["paused"] is True:
+            self._do_api_call("PATCH", endpoint, json={"paused": False})
             if succeeded_at is None and failed_at is None:
                 succeeded_at = str(pendulum.now())
-        self._do_api_call(("POST", endpoint + "/force"))
+        self._do_api_call("POST", endpoint + "/force")
 
         failed_at_time = None
         try:
@@ -341,16 +351,14 @@ class FivetranHook(BaseHook):
         )
         return last_sync
 
-    def get_last_sync(self, connector_id, xcom=""):
+    def get_last_sync(self, connector_id: str, xcom: str = "") -> pendulum.DateTime:
         """
         Get the last time Fivetran connector completed a sync.
             Used with FivetranSensor to monitor sync completion status.
 
         :param connector_id: Fivetran connector_id, found in connector settings
             page in the Fivetran user interface.
-        :type connector_id: str
         :param xcom: Timestamp as string pull from FivetranOperator via XCOM
-        :type xcom: str
         :return: Timestamp of last completed sync
         :rtype: Pendulum.DateTime
         """
@@ -363,19 +371,18 @@ class FivetranHook(BaseHook):
             last_sync = succeeded_at if succeeded_at > failed_at else failed_at
         return last_sync
 
-    def get_sync_status(self, connector_id, previous_completed_at, reschedule_time=0):
+    def get_sync_status(
+        self, connector_id: str, previous_completed_at: pendulum.DateTime, reschedule_time: int = 0
+    ) -> bool:
         """
         For sensor, return True if connector's 'succeeded_at' field has updated.
 
         :param connector_id: Fivetran connector_id, found in connector settings
             page in the Fivetran user interface.
-        :type connector_id: str
         :param previous_completed_at: The last time the connector ran, collected on Sensor
             initialization.
-        :type previous_completed_at: pendulum.datetime.DateTime
         :param reschedule_time: Optional, if connector is in reset state
             number of seconds to wait before restarting, else Fivetran suggestion used
-        :type reschedule_time: int
         """
         # @todo Need logic here to tell if the sync is not running at all and not
         # likely to run in the near future.
@@ -415,7 +422,7 @@ class FivetranHook(BaseHook):
         else:
             return False
 
-    def pause_and_restart(self, connector_id, reschedule_for, reschedule_time):
+    def pause_and_restart(self, connector_id: str, reschedule_for: str, reschedule_time: int) -> str:
         """
         While a connector is syncing, if it falls into a reschedule state,
         wait for a time either specified by the user of recommended by Fivetran,
@@ -423,13 +430,10 @@ class FivetranHook(BaseHook):
 
         :param connector_id: Fivetran connector_id, found in connector settings
             page in the Fivetran user interface.
-        :type connector_id: str
         :param reschedule_for: From connector details, if schedule_type is manual,
             then the connector expects triggering the event at the designated UTC time
-        :type reschedule_for: str
         :param reschedule_time: Optional, if connector is in reset state
             number of seconds to wait before restarting, else Fivetran suggestion used
-        :type reschedule_time: int
         """
         if reschedule_time:
             self.log.info("Starting connector again in %s seconds", reschedule_time)
@@ -491,39 +495,47 @@ class FivetranHookAsync(FivetranHook):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
-    async def _do_api_call_async(self, endpoint_info, json=None):
-        method, endpoint = endpoint_info
+    def _prepare_api_call_kwargs(self, method: str, endpoint: str, **kwargs: Any) -> dict[str, Any]:
+        kwargs = super()._prepare_api_call_kwargs(method, endpoint, **kwargs)
+        auth = kwargs.get("auth")
+        if auth is not None and is_container(auth) and 2 <= len(auth) <= 3:
+            kwargs["auth"] = aiohttp.BasicAuth(*auth)
+        return kwargs
 
-        if not self.fivetran_conn:
+    async def _do_api_call_async(
+        self, method: str, endpoint: str = None, **kwargs: Any  # type: ignore[assignment]
+    ) -> dict[str, Any]:
+        # Check for previous implementation:
+        if is_container(method) and len(method) == 2:
+            import warnings
+
+            warnings.warn(
+                "The API for _do_api_call_async() has changed to closer match the"
+                " aiohttp.ClientSession.request() API. Please update your code accordingly.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            method, endpoint = method  # type: ignore[misc]
+        elif endpoint is None:
+            raise TypeError(
+                f"{self.__class__.__name__}._do_api_call_async() missing 1 required"
+                f" positional argument: 'endpoint'"
+            )
+
+        if self.fivetran_conn is None:
             self.fivetran_conn = await sync_to_async(self.get_connection)(self.conn_id)
-        auth = (self.fivetran_conn.login, self.fivetran_conn.password)
+
         url = f"{self.api_protocol}://{self.api_host}/{endpoint}"
-        headers = {"User-Agent": self.api_user_agent}
+
+        kwargs = self._prepare_api_call_kwargs(method, endpoint, **kwargs)
 
         async with aiohttp.ClientSession() as session:
-            if method == "GET":
-                request_func = session.get
-            elif method == "POST":
-                request_func = session.post
-                headers.update({"Content-Type": "application/json;version=2"})
-            elif method == "PATCH":
-                request_func = session.patch
-                headers.update({"Content-Type": "application/json;version=2"})
-            else:
-                raise AirflowException("Unexpected HTTP Method: " + method)
-
             attempt_num = 1
             while True:
                 try:
-                    response = await request_func(
-                        url,
-                        data=json if method in ("POST", "PATCH") else None,
-                        params=json if method == "GET" else None,
-                        auth=aiohttp.BasicAuth(login=auth[0], password=auth[1]),
-                        headers=headers,
-                    )
+                    response = await session.request(method, url, **kwargs)
                     response.raise_for_status()
-                    return cast(Dict[str, Any], await response.json())
+                    return await response.json()
                 except ClientResponseError as e:
                     if not _retryable_error_async(e):
                         # In this case, the user probably made a mistake.
@@ -551,10 +563,14 @@ class FivetranHookAsync(FivetranHook):
         if connector_id == "":
             raise ValueError("No value specified for connector_id")
         endpoint = self.api_path_connectors + connector_id
-        resp = await self._do_api_call_async(("GET", endpoint))
+        resp = await self._do_api_call_async(
+            "GET", endpoint, headers={"Accept": "application/json;version=2"}
+        )
         return resp["data"]
 
-    async def get_sync_status_async(self, connector_id, previous_completed_at, reschedule_wait_time=0):
+    async def get_sync_status_async(
+        self, connector_id: str, previous_completed_at: pendulum.DateTime, reschedule_wait_time: int = 0
+    ):
         """
         For sensor, return True if connector's 'succeeded_at' field has updated.
 
@@ -609,7 +625,7 @@ class FivetranHookAsync(FivetranHook):
             job_status = "pending"
             return job_status
 
-    def pause_and_restart(self, connector_id, reschedule_for, reschedule_wait_time):
+    def pause_and_restart(self, connector_id: str, reschedule_for: str, reschedule_wait_time: int = 0) -> str:
         """
         While a connector is syncing, if it falls into a reschedule state,
         wait for a time either specified by the user of recommended by Fivetran,
@@ -645,17 +661,20 @@ class FivetranHookAsync(FivetranHook):
         self.log.info("Restarting connector now")
         return self.start_fivetran_sync(connector_id)
 
-    def _parse_timestamp(self, api_time):
+    def _parse_timestamp(self, api_time: datetime | str | None) -> pendulum.DateTime:
         """
         Returns either the pendulum-parsed actual timestamp or a very out-of-date timestamp if not set.
 
         :param api_time: timestamp format as returned by the Fivetran API.
-        :type api_time: str
-        :rtype: Pendulum.DateTime
         """
-        return pendulum.parse(api_time) if api_time is not None else pendulum.from_timestamp(-1)
+        if isinstance(api_time, datetime):
+            return pendulum.instance(api_time)
+        elif isinstance(api_time, str):
+            return pendulum.parse(api_time)  # type: ignore[return-value]
+        else:
+            return pendulum.from_timestamp(-1)
 
-    async def get_last_sync_async(self, connector_id, xcom=""):
+    async def get_last_sync_async(self, connector_id: str, xcom: str = "") -> pendulum.DateTime:
         """
         Get the last time Fivetran connector completed a sync.
         Used with FivetranSensorAsync to monitor sync completion status.
@@ -683,12 +702,11 @@ def _retryable_error_async(exception: ClientResponseError) -> bool:
     return exception.status >= 500
 
 
-def _retryable_error(exception) -> bool:
-    return (
-        isinstance(
-            exception,
-            (requests_exceptions.ConnectionError, requests_exceptions.Timeout),
-        )
-        or exception.response is not None
-        and exception.response.status_code >= 500
+def _retryable_error(exception: Exception) -> bool:
+    return isinstance(
+        exception,
+        (requests_exceptions.ConnectionError, requests_exceptions.Timeout),
+    ) or (
+        getattr(exception, "response", None) is not None
+        and getattr(exception, "response").status_code >= 500  # noqa: B009
     )
