@@ -25,7 +25,7 @@ class RegistryLink(BaseOperatorLink):
 
         return (
             f"https://registry.astronomer.io/providers/airflow-provider-fivetran-async/versions/"
-            f"{__version__}/modules/FivetranOperator"
+            f"{__version__}/modules/{operator.operator_name}"
         )
 
 
