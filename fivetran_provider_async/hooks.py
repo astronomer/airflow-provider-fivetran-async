@@ -460,16 +460,18 @@ class FivetranHook(BaseHook):
         self.log.info("Restarting connector now")
         return self.start_fivetran_sync(connector_id)
 
-    def _parse_timestamp(self, api_time):
+    def _parse_timestamp(self, api_time: datetime | str | None) -> pendulum.DateTime:
         """
-        Returns either the pendulum-parsed actual timestamp or
-            a very out-of-date timestamp if not set
+        Returns either the pendulum-parsed actual timestamp or a very out-of-date timestamp if not set.
 
         :param api_time: timestamp format as returned by the Fivetran API.
-        :type api_time: str
-        :rtype: Pendulum.DateTime
         """
-        return pendulum.parse(api_time) if api_time is not None else pendulum.from_timestamp(-1)
+        if isinstance(api_time, datetime):
+            return pendulum.instance(api_time)
+        elif api_time is None:
+            return pendulum.from_timestamp(-1)
+        else:
+            return pendulum.parse(api_time)  # type: ignore[return-value]
 
     def test_connection(self):
         """
@@ -636,19 +638,6 @@ class FivetranHookAsync(FivetranHook):
         else:
             job_status = "pending"
             return job_status
-
-    def _parse_timestamp(self, api_time: datetime | str | None) -> pendulum.DateTime:
-        """
-        Returns either the pendulum-parsed actual timestamp or a very out-of-date timestamp if not set.
-
-        :param api_time: timestamp format as returned by the Fivetran API.
-        """
-        if isinstance(api_time, datetime):
-            return pendulum.instance(api_time)
-        elif isinstance(api_time, str):
-            return pendulum.parse(api_time)  # type: ignore[return-value]
-        else:
-            return pendulum.from_timestamp(-1)
 
     async def get_last_sync_async(self, connector_id: str, xcom: str = "") -> pendulum.DateTime:
         """
