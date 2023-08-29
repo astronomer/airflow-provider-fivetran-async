@@ -376,6 +376,8 @@ class FivetranHook(BaseHook):
         connector_id: str,
         previous_completed_at: pendulum.DateTime,
         reschedule_wait_time: int | None = None,
+        *,
+        reschedule_time: int | None = None,  # deprecated!
     ) -> bool:
         """
         For sensor, return True if connector's 'succeeded_at' field has updated.
@@ -386,7 +388,18 @@ class FivetranHook(BaseHook):
             initialization.
         :param reschedule_wait_time: Optional, if connector is in reset state
             number of seconds to wait before restarting, else Fivetran suggestion used
+        :param reschedule_time: Deprecated
         """
+        if reschedule_time is not None:
+            import warnings
+
+            warnings.warn(
+                "`reschedule_time` arg is deprecated. Please use `reschedule_wait_time` instead.",
+                stacklevel=2,
+            )
+            if reschedule_wait_time is None:
+                reschedule_wait_time = reschedule_time
+
         # @todo Need logic here to tell if the sync is not running at all and not
         # likely to run in the near future.
         connector_details = self.get_connector(connector_id)
@@ -428,7 +441,12 @@ class FivetranHook(BaseHook):
             return False
 
     def pause_and_restart(
-        self, connector_id: str, reschedule_for: str, reschedule_wait_time: int | None = None
+        self,
+        connector_id: str,
+        reschedule_for: str,
+        reschedule_wait_time: int | None = None,
+        *,
+        reschedule_time: int | None = None,  # deprecated!
     ) -> str:
         """
         While a connector is syncing, if it falls into a reschedule state,
@@ -441,7 +459,18 @@ class FivetranHook(BaseHook):
             then the connector expects triggering the event at the designated UTC time
         :param reschedule_wait_time: Optional, if connector is in reset state
             number of seconds to wait before restarting, else Fivetran suggestion used
+        :param reschedule_time: Deprecated
         """
+        if reschedule_time is not None:
+            import warnings
+
+            warnings.warn(
+                "`reschedule_time` arg is deprecated. Please use `reschedule_wait_time` instead.",
+                stacklevel=2,
+            )
+            if reschedule_wait_time is None:
+                reschedule_wait_time = reschedule_time
+
         if reschedule_wait_time is not None:
             self.log.info("Starting connector again in %s seconds", reschedule_wait_time)
             time.sleep(reschedule_wait_time)
