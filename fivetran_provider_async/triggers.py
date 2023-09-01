@@ -33,7 +33,7 @@ class FivetranTrigger(BaseTrigger):
         previous_completed_at: pendulum.DateTime | None = None,
         xcom: str = "",
         poke_interval: float = 4.0,
-        reschedule_wait_time: int = 0,
+        reschedule_wait_time: int | None = None,
     ):
         super().__init__()
         self.task_id = task_id

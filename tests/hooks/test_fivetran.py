@@ -242,7 +242,7 @@ class TestFivetranHookAsync:
         expected_result,
     ):
         """Tests that get_sync_status_async method return success or pending depending on whether
-        current_completed_at > previous_completed_at with reschedule_time specified by user and
+        current_completed_at > previous_completed_at with reschedule_wait_time specified by user and
         schedule_type as manual in API response."""
         mock_start_fivetran_sync.return_value = pendulum.datetime(2021, 3, 21, 21, 55)
         hook = FivetranHookAsync(fivetran_conn_id="conn_fivetran")

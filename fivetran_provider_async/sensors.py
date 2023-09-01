@@ -59,8 +59,7 @@ class FivetranSensor(BaseSensorOperator):
         fivetran_retry_limit: int = 3,
         fivetran_retry_delay: int = 1,
         xcom: str = "",
-        reschedule_wait_time: int = 0,
-        reschedule_time: int = 0,
+        reschedule_wait_time: int | None = None,
         deferrable: bool = True,
         **kwargs: Any,
     ) -> None:
@@ -71,8 +70,19 @@ class FivetranSensor(BaseSensorOperator):
         self.fivetran_retry_limit = fivetran_retry_limit
         self.fivetran_retry_delay = fivetran_retry_delay
         self.xcom = xcom
+
+        if "reschedule_time" in kwargs:
+            import warnings
+
+            warnings.warn(
+                "kwarg `reschedule_time` is deprecated." " Please use `reschedule_wait_time` instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            if reschedule_wait_time is None:
+                reschedule_wait_time = kwargs.pop("reschedule_time", None)
+
         self.reschedule_wait_time = reschedule_wait_time
-        self.reschedule_time = reschedule_time
         self.deferrable = deferrable
         super().__init__(**kwargs)
 
@@ -108,7 +118,9 @@ class FivetranSensor(BaseSensorOperator):
         if self.previous_completed_at is None:
             self.previous_completed_at = self.hook.get_last_sync(self.connector_id, self.xcom)
 
-        return self.hook.get_sync_status(self.connector_id, self.previous_completed_at, self.reschedule_time)
+        return self.hook.get_sync_status(
+            self.connector_id, self.previous_completed_at, self.reschedule_wait_time
+        )
 
     def execute_complete(self, context: Context, event: dict[Any, Any] | None = None) -> None:
         """
