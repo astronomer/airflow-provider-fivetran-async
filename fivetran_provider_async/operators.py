@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 from functools import cached_property
+from time import sleep
 from typing import TYPE_CHECKING, Any, Dict, Optional
 
+import pendulum
 from airflow.exceptions import AirflowException
 from airflow.models import BaseOperator, BaseOperatorLink
 
@@ -48,6 +50,7 @@ class FivetranOperator(BaseOperator):
     :param poll_frequency: Time in seconds that the job should wait in between each try.
     :param reschedule_wait_time: Optional, if connector is in reset state,
             number of seconds to wait before restarting the sync.
+    :param wait_for_completion: Wait for Fivetran sync to complete to finish the task.
     :param deferrable: Run operator in deferrable mode. Default is True.
     """
 
@@ -59,7 +62,6 @@ class FivetranOperator(BaseOperator):
         self,
         connector_id: str,
         run_name: Optional[str] = None,
-        timeout_seconds: Optional[int] = None,
         fivetran_conn_id: str = "fivetran",
         fivetran_retry_limit: int = 3,
         fivetran_retry_delay: int = 1,
@@ -67,17 +69,30 @@ class FivetranOperator(BaseOperator):
         schedule_type: str = "manual",
         reschedule_wait_time: int = 0,
         deferrable: bool = True,
+        wait_for_completion: bool = True,
         **kwargs,
-    ):
+    ) -> None:
         self.connector_id = connector_id
         self.fivetran_conn_id = fivetran_conn_id
         self.run_name = run_name
-        self.timeout_seconds = timeout_seconds
+
+        if "timeout_seconds" in kwargs:
+            import warnings
+
+            warnings.warn(
+                "kwarg `timeout_seconds` is deprecated. Please use `execution_timeout` instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            if "execution_timeout" not in kwargs:
+                kwargs["execution_timeout"] = kwargs.pop("timeout_seconds", None)
+
         self.fivetran_retry_limit = fivetran_retry_limit
         self.fivetran_retry_delay = fivetran_retry_delay
         self.poll_frequency = poll_frequency
         self.schedule_type = schedule_type
         self.reschedule_wait_time = reschedule_wait_time
+        self.wait_for_completion = wait_for_completion
         self.deferrable = deferrable
         super().__init__(**kwargs)
 
@@ -87,11 +102,20 @@ class FivetranOperator(BaseOperator):
         hook.prep_connector(self.connector_id, self.schedule_type)
         last_sync = hook.start_fivetran_sync(self.connector_id)
 
-        if not self.deferrable:
+        if not self.wait_for_completion:
             return last_sync
+
+        if not self.deferrable:
+            self._wait_synchronously(pendulum.parse(last_sync))  # type: ignore[arg-type]
+            return None
         else:
             previous_completed_at = hook.get_last_sync(self.connector_id)
-            completed = hook.get_sync_status(self.connector_id, previous_completed_at)
+            completed = hook.is_synced_after_target_time(
+                self.connector_id,
+                previous_completed_at,
+                propagate_failures_forward=False,
+                always_wait_when_syncing=True,
+            )
             if not completed:
                 self.defer(
                     timeout=self.execution_timeout,
@@ -105,6 +129,25 @@ class FivetranOperator(BaseOperator):
                     method_name="execute_complete",
                 )
             return None
+
+    def _wait_synchronously(self, last_sync: pendulum.DateTime) -> None:
+        """
+        Wait for the task synchronously.
+
+        It is recommended that you do not use this, and instead set
+        `deferrable=True` and use a Triggerer if you want to wait for the task
+        to complete.
+        """
+        while True:
+            is_completed = self.hook.is_synced_after_target_time(
+                self.connector_id, last_sync, propagate_failures_forward=False, always_wait_when_syncing=True
+            )
+            if is_completed:
+                return None
+            else:
+                self.log.info("sync is still running...")
+                self.log.info("sleeping for %s seconds.", self.poll_frequency)
+                sleep(self.poll_frequency)
 
     @cached_property
     def hook(self) -> FivetranHook:

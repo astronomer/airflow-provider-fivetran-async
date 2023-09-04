@@ -34,7 +34,7 @@ with dag:
         fivetran_conn_id="fivetran_default",
         connector_id="{{ var.value.connector_id }}",
         poke_interval=5,
-        xcom="{{ task_instance.xcom_pull('fivetran-operator', key='return_value') }}",
+        completed_after_time="{{ task_instance.xcom_pull('fivetran-operator', key='return_value') }}",
     )
 
     fivetran_operator >> delay_task >> fivetran_sensor

@@ -34,7 +34,7 @@ with dag:
         task_id="fivetran_async_sensor",
         connector_id="bronzing_largely",
         poke_interval=5,
-        xcom="{{ task_instance.xcom_pull('fivetran_sync_op', key='return_value') }}",
+        completed_after_time="{{ task_instance.xcom_pull('fivetran_sync_op', key='return_value') }}",
     )
 
     fivetran_async_op >> fivetran_sync_op >> fivetran_async_sensor

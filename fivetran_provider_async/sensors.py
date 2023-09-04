@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+from datetime import datetime
 from functools import cached_property
 from typing import TYPE_CHECKING, Any
 
 from airflow.exceptions import AirflowException
 from airflow.sensors.base import BaseSensorOperator
+from airflow.utils import timezone
 
 if TYPE_CHECKING:
     from airflow.utils.context import Context
@@ -24,9 +26,16 @@ class FivetranSensor(BaseSensorOperator):
     use multiple instances of `FivetranSensor` to monitor multiple Fivetran
     connectors.
 
-    `FivetranSensor` starts monitoring for a new sync to complete starting from
-    the clock time the sensor is triggered. This sensor does not take into
-    account the DagRun's `logical_date` or `data_interval_end`.
+    By default, `FivetranSensor` starts monitoring for a new sync to complete
+    starting from the clock time the sensor is triggered. Alternatively, you can
+    specify the `completed_after_time`, in which case the sensor will wait for
+    a success which occurred after this timestamp.
+
+    This sensor does not take into account when a Fivetran sync job is started;
+    it only looks at when it completes. For example, if the Fivetran sync job
+    starts at `2020-01-01 02:55:00` and ends at `2020-01-01 03:05:00`, and the
+    `completed_after_time` is `2020-01-01 03:00:00`, then the sensor will
+    stop waiting at `03:05:00`.
 
     `FivetranSensor` requires that you specify the `connector_id` of the sync
     job to start. You can find `connector_id` in the Settings page of the
@@ -41,15 +50,32 @@ class FivetranSensor(BaseSensorOperator):
     :param connector_id: ID of the Fivetran connector to sync, found on the
         Connector settings page in the Fivetran Dashboard.
     :param poke_interval: Time in seconds that the job should wait in
-        between each tries
+        between each try
     :param fivetran_retry_limit: # of retries when encountering API errors
     :param fivetran_retry_delay: Time to wait before retrying API request
-    :param reschedule_wait_time: Optional, if connector is in reset state
-            number of seconds to wait before restarting, else Fivetran suggestion used
+    :param completed_after_time: Optional. The time we are comparing the
+        Fivetran `succeeded_at` and `failed_at` timestamps to. This field
+        is templated; common use cases may be to use XCOM or to use
+        "{{ data_interval_end }}". If left as None, then the Sensor will
+        set the `completed_after_time` to be the latest completed time,
+        meaning the Sensor will pass only when a new sync succeeds after
+        the time this Sensor started executing.
+    :param reschedule_wait_time: Optional. If connector is in a rescheduled
+        state, this will be the number of seconds to wait before restarting. If
+        None, then Fivetran's suggestion is used instead.
+    :param always_wait_when_syncing: If True, then this method will
+        always return False when the connector's sync_state is "syncing",
+        no matter what.
+    :param propagate_failures_forward: If True, then this method will always
+        raise an AirflowException when the most recent connector status is
+        a failure and there are no successes dated after the target time.
+        Specifically, this makes it so that
+        `completed_after_time > failed_at > succeeded_at` is considered a
+        fail condition.
     :param deferrable: Run sensor in deferrable mode. default is True.
     """
 
-    template_fields = ["connector_id", "xcom"]
+    template_fields = ["connector_id", "completed_after_time"]
 
     def __init__(
         self,
@@ -58,8 +84,10 @@ class FivetranSensor(BaseSensorOperator):
         poke_interval: int = 60,
         fivetran_retry_limit: int = 3,
         fivetran_retry_delay: int = 1,
-        xcom: str = "",
+        completed_after_time: str | datetime | None = None,
         reschedule_wait_time: int | None = None,
+        always_wait_when_syncing: bool = True,
+        propagate_failures_forward: bool = False,
         deferrable: bool = True,
         **kwargs: Any,
     ) -> None:
@@ -69,13 +97,39 @@ class FivetranSensor(BaseSensorOperator):
         self.previous_completed_at: pendulum.DateTime | None = None
         self.fivetran_retry_limit = fivetran_retry_limit
         self.fivetran_retry_delay = fivetran_retry_delay
-        self.xcom = xcom
+
+        if "xcom" in kwargs:
+            import warnings
+
+            warnings.warn(
+                "kwarg `xcom` is deprecated. Please use `completed_after_time` instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            if completed_after_time is None:
+                completed_after_time = kwargs.pop("xcom", None)
+
+        # (Similar parsing logic as airflow.sensors.date_time.DateTimeSensor, except allow None.)
+        # self.completed_after_time can't be a datetime object as it is a template_field
+        if isinstance(completed_after_time, datetime):
+            self.completed_after_time = completed_after_time.isoformat()
+        elif isinstance(completed_after_time, str):
+            self.completed_after_time = completed_after_time
+        elif completed_after_time is None:
+            self.completed_after_time = ""
+        else:
+            raise TypeError(
+                "Expected None, str, or datetime.datetime type for completed_after_time."
+                f" Got {type(completed_after_time)}"
+            )
+
+        self._completed_after_time_rendered: datetime | None = None
 
         if "reschedule_time" in kwargs:
             import warnings
 
             warnings.warn(
-                "kwarg `reschedule_time` is deprecated." " Please use `reschedule_wait_time` instead.",
+                "kwarg `reschedule_time` is deprecated. Please use `reschedule_wait_time` instead.",
                 DeprecationWarning,
                 stacklevel=2,
             )
@@ -83,6 +137,8 @@ class FivetranSensor(BaseSensorOperator):
                 reschedule_wait_time = kwargs.pop("reschedule_time", None)
 
         self.reschedule_wait_time = reschedule_wait_time
+        self.always_wait_when_syncing = always_wait_when_syncing
+        self.propagate_failures_forward = propagate_failures_forward
         self.deferrable = deferrable
         super().__init__(**kwargs)
 
@@ -98,7 +154,7 @@ class FivetranSensor(BaseSensorOperator):
                     fivetran_conn_id=self.fivetran_conn_id,
                     connector_id=self.connector_id,
                     previous_completed_at=self.previous_completed_at,
-                    xcom=self.xcom,
+                    xcom=self.completed_after_time,
                     poke_interval=self.poke_interval,
                     reschedule_wait_time=self.reschedule_wait_time,
                 ),
@@ -114,12 +170,41 @@ class FivetranSensor(BaseSensorOperator):
             retry_delay=self.fivetran_retry_delay,
         )
 
-    def poke(self, context: Context):
-        if self.previous_completed_at is None:
-            self.previous_completed_at = self.hook.get_last_sync(self.connector_id, self.xcom)
+    @property
+    def xcom(self) -> str:
+        import warnings
 
-        return self.hook.get_sync_status(
-            self.connector_id, self.previous_completed_at, self.reschedule_wait_time
+        warnings.warn(
+            "`xcom` attribute is deprecated. Use `completed_after_time` attribute instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.completed_after_time
+
+    @xcom.setter
+    def xcom(self, value: str) -> None:
+        import warnings
+
+        warnings.warn(
+            "`xcom` attribute is deprecated. Use `completed_after_time` attribute instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        self.completed_after_time = value
+
+    def poke(self, context: Context):
+        if self._completed_after_time_rendered is None:
+            if not self.completed_after_time:
+                self._completed_after_time_rendered = self.hook.get_last_sync(self.connector_id)
+            else:
+                self._completed_after_time_rendered = timezone.parse(self.completed_after_time)
+
+        return self.hook.is_synced_after_target_time(
+            connector_id=self.connector_id,
+            completed_after_time=self._completed_after_time_rendered,
+            reschedule_wait_time=self.reschedule_wait_time,
+            always_wait_when_syncing=self.always_wait_when_syncing,
+            propagate_failures_forward=self.propagate_failures_forward,
         )
 
     def execute_complete(self, context: Context, event: dict[Any, Any] | None = None) -> None:
