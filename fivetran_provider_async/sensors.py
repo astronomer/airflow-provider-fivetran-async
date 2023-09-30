@@ -86,7 +86,7 @@ class FivetranSensor(BaseSensorOperator):
         fivetran_retry_delay: int = 1,
         completed_after_time: str | datetime | None = None,
         reschedule_wait_time: int | None = None,
-        always_wait_when_syncing: bool = True,
+        always_wait_when_syncing: bool = False,
         propagate_failures_forward: bool = False,
         deferrable: bool = True,
         **kwargs: Any,

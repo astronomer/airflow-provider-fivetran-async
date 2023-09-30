@@ -402,7 +402,7 @@ class FivetranHook(BaseHook):
         connector_id: str,
         completed_after_time: datetime,
         reschedule_wait_time: int | None = None,
-        always_wait_when_syncing: bool = True,
+        always_wait_when_syncing: bool = False,
         propagate_failures_forward: bool = True,
     ) -> bool:
         """
@@ -447,7 +447,7 @@ class FivetranHook(BaseHook):
         connector_details: dict[str, Any],
         completed_after_time: datetime,
         reschedule_wait_time: int | None = None,
-        always_wait_when_syncing: bool = True,
+        always_wait_when_syncing: bool = False,
         propagate_failures_forward: bool = True,
     ):
         succeeded_at = self._parse_timestamp(connector_details["succeeded_at"])
@@ -691,7 +691,7 @@ class FivetranHookAsync(FivetranHook):
         connector_id: str,
         completed_after_time: datetime,
         reschedule_wait_time: int | None = None,
-        always_wait_when_syncing: bool = True,
+        always_wait_when_syncing: bool = False,
         propagate_failures_forward: bool = True,
     ) -> str:
         """
