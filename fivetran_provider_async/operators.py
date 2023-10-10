@@ -143,7 +143,7 @@ class FivetranOperator(BaseOperator):
                 self.connector_id, last_sync, propagate_failures_forward=False, always_wait_when_syncing=True
             )
             if is_completed:
-                return None
+                return
             else:
                 self.log.info("sync is still running...")
                 self.log.info("sleeping for %s seconds.", self.poll_frequency)
