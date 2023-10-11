@@ -730,8 +730,7 @@ class FivetranHookAsync(FivetranHook):
         )
         if is_completed:
             return "success"
-        else:
-            return "pending"
+        return "pending"
 
     async def get_last_sync_async(self, connector_id: str, xcom: str = "") -> pendulum.DateTime:
         """
