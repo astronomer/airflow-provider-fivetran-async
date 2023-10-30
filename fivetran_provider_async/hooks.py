@@ -164,8 +164,9 @@ class FivetranHook(BaseHook):
                 if not _retryable_error(e):
                     # In this case, the user probably made a mistake.
                     # Don't retry.
+                    assert e.response is not None
                     raise AirflowException(
-                        f"Response: {e.response.content}, " f"Status Code: {e.response.status_code}"
+                        f"Response: {e.response.content.decode()}, " f"Status Code: {e.response.status_code}"
                     )
 
                 self._log_request_error(attempt_num, str(e))
