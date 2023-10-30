@@ -435,7 +435,7 @@ class FivetranHook(BaseHook):
         # Check if sync started by FivetranOperator has finished
         # indicated by new 'succeeded_at' timestamp
         if current_completed_at > previous_completed_at:
-            self.log.info("Connector %s: succeeded_at: %s, connector_id", succeeded_at.to_iso8601_string())
+            self.log.info("Connector %s: succeeded_at: %s", connector_id, succeeded_at.to_iso8601_string())
             return True
         else:
             return False
