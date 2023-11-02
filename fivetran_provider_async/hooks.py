@@ -450,7 +450,7 @@ class FivetranHook(BaseHook):
         reschedule_wait_time: int | None = None,
         always_wait_when_syncing: bool = False,
         propagate_failures_forward: bool = True,
-    ):
+    ) -> bool:
         succeeded_at = self._parse_timestamp(connector_details["succeeded_at"])
         failed_at = self._parse_timestamp(connector_details["failed_at"])
 
