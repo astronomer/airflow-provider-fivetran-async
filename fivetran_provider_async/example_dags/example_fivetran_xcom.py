@@ -25,6 +25,7 @@ with dag:
         task_id="fivetran-operator",
         fivetran_conn_id="fivetran_default",
         connector_id="{{ var.value.connector_id }}",
+        wait_for_completion=False,
     )
 
     delay_task = PythonOperator(task_id="delay_python_task", python_callable=lambda: time.sleep(60))

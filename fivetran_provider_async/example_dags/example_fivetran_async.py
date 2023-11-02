@@ -3,7 +3,6 @@ from datetime import datetime, timedelta
 from airflow import DAG
 
 from fivetran_provider_async.operators import FivetranOperator
-from fivetran_provider_async.sensors import FivetranSensor
 
 default_args = {
     "owner": "Airflow",
@@ -19,22 +18,20 @@ dag = DAG(
 )
 
 with dag:
+    # Both of these tasks will start a Fivetran sync,
+    # and will wait for the Fivetran sync to complete before marking
+    # the task as success.
+
+    # However, the async operator uses the triggerer instance to do this,
+    # which frees up a worker slot.
+
     fivetran_async_op = FivetranOperator(
         task_id="fivetran_async_op",
         connector_id="bronzing_largely",
     )
 
     fivetran_sync_op = FivetranOperator(
-        task_id="fivetran_sync_op",
-        connector_id="bronzing_largely",
-        deferrable=False,
+        task_id="fivetran_sync_op", connector_id="bronzing_largely", deferrable=False
     )
 
-    fivetran_async_sensor = FivetranSensor(
-        task_id="fivetran_async_sensor",
-        connector_id="bronzing_largely",
-        poke_interval=5,
-        completed_after_time="{{ task_instance.xcom_pull('fivetran_sync_op', key='return_value') }}",
-    )
-
-    fivetran_async_op >> fivetran_sync_op >> fivetran_async_sensor
+    fivetran_async_op >> fivetran_sync_op
