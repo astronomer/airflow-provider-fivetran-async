@@ -164,9 +164,9 @@ class FivetranHook(BaseHook):
                 if not _retryable_error(e):
                     # In this case, the user probably made a mistake.
                     # Don't retry.
-                    assert e.response is not None  # mypy
+                    assert e.response is not None
                     raise AirflowException(
-                        f"Response: {e.response.content!r}, " f"Status Code: {e.response.status_code}"
+                        f"Response: {e.response.content.decode()}, " f"Status Code: {e.response.status_code}"
                     )
 
                 self._log_request_error(attempt_num, str(e))
@@ -476,9 +476,7 @@ class FivetranHook(BaseHook):
         # Check if sync started by FivetranOperator has finished
         # indicated by new 'succeeded_at' timestamp
         if succeeded_at > completed_after_time:
-            self.log.info(
-                "Connector %s: succeeded_at: %s, connector_id", connector_id, succeeded_at.to_iso8601_string()
-            )
+            self.log.info("Connector %s: succeeded_at: %s", connector_id, succeeded_at.to_iso8601_string())
             return True
 
         # if sync in rescheduled start, wait for time recommended by Fivetran
