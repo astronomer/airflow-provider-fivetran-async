@@ -50,8 +50,8 @@ class FivetranOperator(BaseOperator):
     :param poll_frequency: Time in seconds that the job should wait in between each try.
     :param reschedule_wait_time: Optional, if connector is in reset state,
             number of seconds to wait before restarting the sync.
-    :param wait_for_completion: Wait for Fivetran sync to complete to finish the task.
     :param deferrable: Run operator in deferrable mode. Default is True.
+    :param wait_for_completion: Wait for Fivetran sync to complete to finish the task.
     """
 
     operator_extra_links = (RegistryLink(),)
