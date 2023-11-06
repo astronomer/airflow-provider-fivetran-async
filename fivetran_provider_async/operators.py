@@ -241,18 +241,3 @@ class FivetranOperator(BaseOperator):
 
     def get_openlineage_facets_on_complete(self, task_instance):
         return self.get_openlineage_facets_on_start()
-
-
-class FivetranOperatorAsync(FivetranOperator):
-    """This operator has been deprecated. Please use `FivetranOperator`."""
-
-    def __init__(self, *args, **kwargs):
-        import warnings
-
-        super().__init__(*args, **kwargs)
-
-        warnings.warn(
-            "FivetranOperatorAsync has been deprecated. Please use `FivetranOperator`.",
-            DeprecationWarning,
-            stacklevel=2,
-        )

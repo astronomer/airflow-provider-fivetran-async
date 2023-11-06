@@ -221,20 +221,3 @@ class FivetranSensor(BaseSensorOperator):
                 self.log.info(
                     event["message"],
                 )
-
-
-class FivetranSensorAsync(FivetranSensor):
-    """This sensor has been deprecated. Please use `FivetranSensor`."""
-
-    template_fields = ["connector_id", "xcom"]
-
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        import warnings
-
-        super().__init__(*args, **kwargs)
-
-        warnings.warn(
-            "FivetranSensorAsync has been deprecated. Please use `FivetranSensor`.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
