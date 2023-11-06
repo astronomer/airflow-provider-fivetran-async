@@ -7,6 +7,8 @@
 - FivetranHook.prep_connector now returns None instead of Literal[True] by @dwreeves in https://github.com/astronomer/airflow-provider-fivetran-async/pull/54
 - For users using the sync hook directly to call either get_sync_status or call_and_restart, they will experience breakage if they are using reschedule_time=
 and for users who manually set =0, they will also experience breakage by @dwreeves in https://github.com/astronomer/airflow-provider-fivetran-async/pull/57
+- Remove deprecated `hook-class-names` from `get_provider_info` return value dict by @pankajastro in https://github.com/astronomer/airflow-provider-fivetran-async/pull/62
+- Remove deprecated FivetranOperatorAsync and FivetranSensorAsync by @pankajastro in https://github.com/astronomer/airflow-provider-fivetran-async/pull/68
 
 ### Feature
 - API Changes to FivetranSensor for supporting backfills by @dwreeves in https://github.com/astronomer/airflow-provider-fivetran-async/pull/58
