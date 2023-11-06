@@ -5,7 +5,6 @@ import logging
 
 log = logging.getLogger(__name__)
 
-
 try:
     from openlineage.airflow.extractors.base import (  # type: ignore[import]
         OperatorLineage,
@@ -29,7 +28,16 @@ def get_provider_info():
         "package-name": "airflow-provider-fivetran-async",
         "name": "Fivetran Async Provider",
         "description": "A Fivetran Async provider for Apache Airflow.",
-        "hook-class-names": ["fivetran_provider_async.hooks.FivetranHookAsync"],
+        "connection-types": [
+            {
+                "hook-class-name": "fivetran_provider_async.hooks.FivetranHookAsync",
+                "connection-type": "Fivetran",
+            },
+            {
+                "hook-class-name": "fivetran_provider_async.hooks.FivetranHook",
+                "connection-type": "Fivetran",
+            },
+        ],
         "extra-links": ["fivetran_provider_async.operators.RegistryLink"],
         "versions": [__version__],
     }
