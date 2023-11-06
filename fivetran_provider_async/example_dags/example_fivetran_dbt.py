@@ -4,7 +4,6 @@ from airflow import DAG
 from airflow.providers.ssh.operators.ssh import SSHOperator
 
 from fivetran_provider_async.operators import FivetranOperator
-from fivetran_provider_async.sensors import FivetranSensor
 
 default_args = {
     "owner": "Airflow",
@@ -22,21 +21,9 @@ with DAG(
         connector_id="{{ var.value.linkedin_connector_id }}",
     )
 
-    linkedin_sensor = FivetranSensor(
-        task_id="linkedin-sensor",
-        connector_id="{{ var.value.linkedin_connector_id }}",
-        poke_interval=600,
-    )
-
     twitter_sync = FivetranOperator(
         task_id="twitter-ads-sync",
         connector_id="{{ var.value.twitter_connector_id }}",
-    )
-
-    twitter_sensor = FivetranSensor(
-        task_id="twitter-sensor",
-        connector_id="{{ var.value.twitter_connector_id }}",
-        poke_interval=600,
     )
 
     dbt_run = SSHOperator(
@@ -45,6 +32,4 @@ with DAG(
         ssh_conn_id="dbtvm",
     )
 
-    linkedin_sync >> linkedin_sensor
-    twitter_sync >> twitter_sensor
-    [linkedin_sensor, twitter_sensor] >> dbt_run
+    [linkedin_sync, twitter_sync] >> dbt_run

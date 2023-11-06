@@ -186,30 +186,20 @@ class TestFivetranHookAsync:
         result = await hook.get_sync_status_async(
             connector_id="interchangeable_revenge",
             previous_completed_at=mock_previous_completed_at,
-            reschedule_wait_time=60,
+            reschedule_wait_time=5,
         )
         assert result == expected_result
 
     @pytest.mark.asyncio
-    @pytest.mark.parametrize(
-        "mock_previous_completed_at, expected_result",
-        [
-            (
-                pendulum.datetime(2021, 3, 23),  # current_completed_at > previous_completed_at
-                "success",
-            ),
-            (
-                pendulum.datetime(2021, 3, 23, 21, 55),  # current_completed_at < previous_completed_at
-                "pending",
-            ),
-        ],
-    )
     @mock.patch("fivetran_provider_async.hooks.FivetranHookAsync._do_api_call_async")
     async def test_fivetran_hook_get_sync_status_async_with_reschedule_mode_error_for_wait_time(
-        self, mock_api_call_async_response, mock_previous_completed_at, expected_result
+        self, mock_api_call_async_response
     ):
         """Tests that get_sync_status_async method return error with rescheduled_for in Fivetran API response
         along with schedule_type as manual and negative wait time."""
+
+        # current_completed_at < previous_completed_at
+        mock_previous_completed_at = pendulum.datetime(2021, 3, 23, 21, 55)
         hook = FivetranHookAsync(fivetran_conn_id="conn_fivetran")
         mock_api_call_async_response.return_value = MOCK_FIVETRAN_RESPONSE_PAYLOAD_SHEETS_RESCHEDULE_MODE
         with pytest.raises(ValueError, match="Sync connector manually."):
@@ -217,6 +207,29 @@ class TestFivetranHookAsync:
                 connector_id="interchangeable_revenge",
                 previous_completed_at=mock_previous_completed_at,
             )
+
+    @pytest.mark.asyncio
+    @mock.patch("fivetran_provider_async.hooks.FivetranHookAsync._do_api_call_async")
+    async def test_fivetran_hook_get_sync_status_async_with_reschedule_mode_returns_success(
+        self,
+        mock_api_call_async_response,
+    ):
+        """
+        Tests that get_sync_status_async method returns success when
+        current_completed_at > previous_completed_at.
+        (The hook returns success because data is not being blocked up to the target completed time.)
+        """
+
+        # current_completed_at > previous_completed_at
+        mock_previous_completed_at = pendulum.datetime(2021, 3, 23)
+
+        hook = FivetranHookAsync(fivetran_conn_id="conn_fivetran")
+        mock_api_call_async_response.return_value = MOCK_FIVETRAN_RESPONSE_PAYLOAD_SHEETS_RESCHEDULE_MODE
+        result = await hook.get_sync_status_async(
+            connector_id="interchangeable_revenge",
+            previous_completed_at=mock_previous_completed_at,
+        )
+        assert result == "success"
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
@@ -250,7 +263,7 @@ class TestFivetranHookAsync:
         result = await hook.get_sync_status_async(
             connector_id="interchangeable_revenge",
             previous_completed_at=mock_previous_completed_at,
-            reschedule_wait_time=10,
+            reschedule_wait_time=3,
         )
 
         assert result == expected_result
@@ -294,16 +307,82 @@ class TestFivetranHookAsync:
     @pytest.mark.asyncio
     @mock.patch("fivetran_provider_async.hooks.FivetranHookAsync._do_api_call_async")
     async def test_fivetran_hook_get_sync_status_async_exception(self, mock_api_call_async_response):
-        """Tests that get_sync_status_async method raises exception  when failed_at > previous_completed_at"""
+        """
+        Tests that get_sync_status_async method raises exception
+        when failed_at > previous_completed_at > succeeded_at
+        """
         mock_previous_completed_at = pendulum.datetime(2021, 3, 21, 21, 55)
         hook = FivetranHookAsync(fivetran_conn_id="conn_fivetran")
-        mock_api_call_async_response.return_value = MOCK_FIVETRAN_RESPONSE_PAYLOAD_SHEETS
+
+        # Set `failed_at` value so that failed_at > completed_after_time > succeeded_at
+        mock_fivetran_payload_sheets_modified = MOCK_FIVETRAN_RESPONSE_PAYLOAD_SHEETS.copy()
+        mock_fivetran_payload_sheets_modified["data"] = mock_fivetran_payload_sheets_modified["data"].copy()
+        mock_fivetran_payload_sheets_modified["data"]["failed_at"] = "2021-03-23T20:55:12.670390Z"
+        mock_fivetran_payload_sheets_modified["data"]["succeeded_at"] = "2021-03-19T20:55:12.670390Z"
+
+        mock_api_call_async_response.return_value = mock_fivetran_payload_sheets_modified
 
         with pytest.raises(AirflowException) as exc:
             await hook.get_sync_status_async(
                 connector_id="interchangeable_revenge", previous_completed_at=mock_previous_completed_at
             )
         assert "Fivetran sync for connector interchangeable_revenge failed" in str(exc.value)
+
+    @pytest.mark.asyncio
+    @mock.patch("fivetran_provider_async.hooks.FivetranHookAsync._do_api_call_async")
+    async def test_fivetran_hook_is_synced_async_propagate_errors_forward_exception(
+        self, mock_api_call_async_response
+    ):
+        """
+        Tests that get_sync_status_async method raises exception
+        when completed_after_time > failed_at > succeeded_at
+        and propagate_failures_forward=True
+        """
+        mock_completed_after_time = pendulum.datetime(2021, 3, 21, 21, 55)
+        hook = FivetranHookAsync(fivetran_conn_id="conn_fivetran")
+
+        # Set `failed_at` value so that completed_after_time > failed_at > succeeded_at
+        mock_fivetran_payload_sheets_modified = MOCK_FIVETRAN_RESPONSE_PAYLOAD_SHEETS.copy()
+        mock_fivetran_payload_sheets_modified["data"] = mock_fivetran_payload_sheets_modified["data"].copy()
+        mock_fivetran_payload_sheets_modified["data"]["failed_at"] = "2021-03-20T20:55:12.670390Z"
+        mock_fivetran_payload_sheets_modified["data"]["succeeded_at"] = "2021-03-19T20:55:12.670390Z"
+
+        mock_api_call_async_response.return_value = mock_fivetran_payload_sheets_modified
+
+        with pytest.raises(AirflowException) as exc:
+            await hook.is_synced_after_target_time_async(
+                connector_id="interchangeable_revenge",
+                completed_after_time=mock_completed_after_time,
+                propagate_failures_forward=True,
+            )
+        assert "Fivetran sync for connector interchangeable_revenge failed" in str(exc.value)
+
+    @pytest.mark.asyncio
+    @mock.patch("fivetran_provider_async.hooks.FivetranHookAsync._do_api_call_async")
+    async def test_fivetran_hook_is_synced_async_propagate_errors_forward_is_false(
+        self, mock_api_call_async_response
+    ):
+        """
+        Tests that get_sync_status_async method returns "pending"
+        when completed_after_time > failed_at > succeeded_at
+        and propagate_failures_forward=False
+        """
+        mock_completed_after_time = pendulum.datetime(2021, 3, 24, 21, 55)
+        hook = FivetranHookAsync(fivetran_conn_id="conn_fivetran")
+
+        # Set `failed_at` value so that completed_after_time > failed_at > succeeded_at
+        mock_fivetran_payload_sheets_modified = MOCK_FIVETRAN_RESPONSE_PAYLOAD_SHEETS.copy()
+        mock_fivetran_payload_sheets_modified["data"] = mock_fivetran_payload_sheets_modified["data"].copy()
+        mock_fivetran_payload_sheets_modified["data"]["failed_at"] = "2021-03-23T20:59:12.670390Z"
+
+        mock_api_call_async_response.return_value = mock_fivetran_payload_sheets_modified
+
+        result = await hook.is_synced_after_target_time_async(
+            connector_id="interchangeable_revenge",
+            completed_after_time=mock_completed_after_time,
+            propagate_failures_forward=False,
+        )
+        assert result == "pending"
 
     @pytest.mark.asyncio
     @mock.patch("fivetran_provider_async.hooks.FivetranHookAsync.start_fivetran_sync")

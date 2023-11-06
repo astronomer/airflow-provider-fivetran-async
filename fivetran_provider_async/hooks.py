@@ -359,11 +359,19 @@ class FivetranHook(BaseHook):
 
         :param connector_id: Fivetran connector_id, found in connector settings
             page in the Fivetran user interface.
-        :param xcom: Timestamp as string pull from FivetranOperator via XCOM
+        :param xcom: Deprecated. Timestamp as string pull from FivetranOperator via XCOM
         :return: Timestamp of last completed sync
         :rtype: Pendulum.DateTime
         """
         if xcom:
+            import warnings
+
+            warnings.warn(
+                "Param `xcom` is deprecated. Timestamps should be rendered in the Operator, Sensor,"
+                " or Triggerer instead",
+                stacklevel=2,
+            )
+
             last_sync = self._parse_timestamp(xcom)
         else:
             connector_details = self.get_connector(connector_id)
@@ -373,56 +381,105 @@ class FivetranHook(BaseHook):
         return last_sync
 
     def get_sync_status(
+        self, connector_id: str, previous_completed_at: pendulum.DateTime, reschedule_time: int | None = None
+    ) -> bool:
+        import warnings
+
+        warnings.warn(
+            "`get_sync_status()` is deprecated. Please use `is_synced_after_target_time()` instead.",
+            stacklevel=2,
+        )
+
+        return self.is_synced_after_target_time(
+            connector_id=connector_id,
+            completed_after_time=previous_completed_at,
+            reschedule_wait_time=reschedule_time,
+            always_wait_when_syncing=False,
+            propagate_failures_forward=False,
+        )
+
+    def is_synced_after_target_time(
         self,
         connector_id: str,
-        previous_completed_at: pendulum.DateTime,
+        completed_after_time: datetime,
         reschedule_wait_time: int | None = None,
-        *,
-        reschedule_time: int | None = None,  # deprecated!
+        always_wait_when_syncing: bool = False,
+        propagate_failures_forward: bool = True,
     ) -> bool:
         """
         For sensor, return True if connector's 'succeeded_at' field has updated.
 
         :param connector_id: Fivetran connector_id, found in connector settings
             page in the Fivetran user interface.
-        :param previous_completed_at: The last time the connector ran, collected on Sensor
-            initialization.
-        :param reschedule_wait_time: Optional, if connector is in reset state
-            number of seconds to wait before restarting, else Fivetran suggestion used
-        :param reschedule_time: Deprecated
+        :param completed_after_time: The time we are comparing the Fivetran
+            `succeeded_at` and `failed_at` timestamps to. The method returns
+            True when both the last `succeeded_at` exceeds the
+            `completed_after_time` and other conditions (determined by other
+            params to this method) are met.
+        :param reschedule_wait_time: Optional. If connector is in a
+            rescheduled state, this will be the number of seconds to wait
+            before restarting. If None, then Fivetran's suggestion is used
+            instead.
+        :param always_wait_when_syncing: If True, then this method will
+            always return False when the connector's sync_state is "syncing",
+            no matter what.
+        :param propagate_failures_forward: If True, then this method will always
+            raise an AirflowException when the most recent connector status is
+            a failure and there are no successes dated after the target time.
+            Specifically, this makes it so that
+            `completed_after_time > failed_at > succeeded_at` is considered a
+            fail condition.
         """
-        if reschedule_time is not None:
-            import warnings
-
-            warnings.warn(
-                "`reschedule_time` arg is deprecated. Please use `reschedule_wait_time` instead.",
-                stacklevel=2,
-            )
-            if reschedule_wait_time is None:
-                reschedule_wait_time = reschedule_time
-
         # @todo Need logic here to tell if the sync is not running at all and not
         # likely to run in the near future.
         connector_details = self.get_connector(connector_id)
+        return self._determine_if_synced_from_connector_details(
+            connector_id=connector_id,
+            connector_details=connector_details,
+            completed_after_time=completed_after_time,
+            reschedule_wait_time=reschedule_wait_time,
+            always_wait_when_syncing=always_wait_when_syncing,
+            propagate_failures_forward=propagate_failures_forward,
+        )
+
+    def _determine_if_synced_from_connector_details(
+        self,
+        connector_id: str,
+        connector_details: dict[str, Any],
+        completed_after_time: datetime,
+        reschedule_wait_time: int | None = None,
+        always_wait_when_syncing: bool = False,
+        propagate_failures_forward: bool = True,
+    ) -> bool:
         succeeded_at = self._parse_timestamp(connector_details["succeeded_at"])
         failed_at = self._parse_timestamp(connector_details["failed_at"])
-        current_completed_at = succeeded_at if succeeded_at > failed_at else failed_at
-
-        # The only way to tell if a sync failed is to check if its latest
-        # failed_at value is greater than then last known "sync completed at" value.
-        if failed_at > previous_completed_at:
-            service_name = connector_details["service"]
-            schema_name = connector_details["schema"]
-            raise AirflowException(
-                f'Fivetran sync for connector "{connector_id}" failed; '
-                f"please see logs at "
-                f"{self._connector_ui_url_logs(service_name, schema_name)}"
-            )
 
         sync_state = connector_details["status"]["sync_state"]
         self.log.info("Connector %s: sync_state = %s", connector_id, sync_state)
 
-        # if sync in resheduled start, wait for time recommended by Fivetran
+        if always_wait_when_syncing and sync_state == "syncing":
+            return False
+
+        # The only way to tell if a sync failed is to check if its latest
+        # failed_at value is greater than then last known "sync completed at" value.
+        if failed_at > completed_after_time > succeeded_at or (
+            completed_after_time > failed_at > succeeded_at and propagate_failures_forward
+        ):
+            service_name = connector_details["service"]
+            schema_name = connector_details["schema"]
+            raise AirflowException(
+                f"Fivetran sync for connector {connector_id} failed; "
+                f"please see logs at "
+                f"{self._connector_ui_url_logs(service_name, schema_name)}"
+            )
+
+        # Check if sync started by FivetranOperator has finished
+        # indicated by new 'succeeded_at' timestamp
+        if succeeded_at > completed_after_time:
+            self.log.info("Connector %s: succeeded_at: %s", connector_id, succeeded_at.to_iso8601_string())
+            return True
+
+        # if sync in rescheduled start, wait for time recommended by Fivetran
         # or manually specified, then restart sync
         if sync_state == "rescheduled" and connector_details["schedule_type"] == "manual":
             self.log.info('Connector is in "rescheduled" state and needs to be manually restarted')
@@ -433,13 +490,7 @@ class FivetranHook(BaseHook):
             )
             return False
 
-        # Check if sync started by FivetranOperator has finished
-        # indicated by new 'succeeded_at' timestamp
-        if current_completed_at > previous_completed_at:
-            self.log.info("Connector %s: succeeded_at: %s", connector_id, succeeded_at.to_iso8601_string())
-            return True
-        else:
-            return False
+        return False
 
     def pause_and_restart(
         self,
@@ -617,57 +668,67 @@ class FivetranHookAsync(FivetranHook):
         connector_id: str,
         previous_completed_at: pendulum.DateTime,
         reschedule_wait_time: int | None = None,
-    ):
+    ) -> str:
+        import warnings
+
+        warnings.warn(
+            "`get_sync_status_async()` is deprecated."
+            " Please use `is_synced_after_target_time_async()` instead.",
+            stacklevel=2,
+        )
+
+        return await self.is_synced_after_target_time_async(
+            connector_id=connector_id,
+            completed_after_time=previous_completed_at,
+            reschedule_wait_time=reschedule_wait_time,
+            always_wait_when_syncing=False,
+            propagate_failures_forward=False,
+        )
+
+    async def is_synced_after_target_time_async(
+        self,
+        connector_id: str,
+        completed_after_time: datetime,
+        reschedule_wait_time: int | None = None,
+        always_wait_when_syncing: bool = False,
+        propagate_failures_forward: bool = True,
+    ) -> str:
         """
         For sensor, return True if connector's 'succeeded_at' field has updated.
 
         :param connector_id: Fivetran connector_id, found in connector settings
             page in the Fivetran user interface.
-        :param previous_completed_at: The last time the connector ran, collected on Sensor
-            initialization.
-        :param reschedule_wait_time: Optional, if connector is in reset state,
-            number of seconds to wait before restarting the sync.
+        :param completed_after_time: The time we are comparing the Fivetran
+            `succeeded_at` and `failed_at` timestamps to. The method returns
+            True when both the last `succeeded_at` exceeds the
+            `completed_after_time` and other conditions (determined by other
+            params to this method) are met.
+        :param reschedule_wait_time: Optional. If connector is in a
+            rescheduled state, this will be the number of seconds to wait
+            before restarting. If None, then Fivetran's suggestion is used
+            instead.
+        :param always_wait_when_syncing: If True, then this method will
+            always return False when the connector's sync_state is "syncing",
+            no matter what.
+        :param propagate_failures_forward: If True, then this method will always
+            raise an AirflowException when the most recent connector status is
+            a failure and there are no successes dated after the target time.
+            Specifically, this makes it so that
+            `completed_after_time > failed_at > succeeded_at` is considered a
+            fail condition.
         """
         connector_details = await self.get_connector_async(connector_id)
-        succeeded_at = self._parse_timestamp(connector_details["succeeded_at"])
-        failed_at = self._parse_timestamp(connector_details["failed_at"])
-        current_completed_at = succeeded_at if succeeded_at > failed_at else failed_at
-
-        # The only way to tell if a sync failed is to check if its latest
-        # failed_at value is greater than then last known "sync completed at" value.
-        if failed_at > previous_completed_at:
-            service_name = connector_details["service"]
-            schema_name = connector_details["schema"]
-            raise AirflowException(
-                f"Fivetran sync for connector {connector_id} failed; "
-                f"please see logs at "
-                f"{self._connector_ui_url_logs(service_name, schema_name)}"
-            )
-
-        sync_state = connector_details["status"]["sync_state"]
-        self.log.info('Connector "%s": sync_state = "%s"', connector_id, sync_state)
-
-        # if sync in rescheduled start, wait for time recommended by Fivetran
-        # or manually specified, then restart sync
-        if sync_state == "rescheduled" and connector_details["schedule_type"] == "manual":
-            self.log.info('Connector is in "rescheduled" state and needs to be manually restarted')
-            self.pause_and_restart(
-                connector_id=connector_id,
-                reschedule_for=connector_details["status"]["rescheduled_for"],
-                reschedule_wait_time=reschedule_wait_time,
-            )
-
-        # Check if sync started by airflow has finished
-        # indicated by new 'succeeded_at' timestamp
-        if current_completed_at > previous_completed_at:
-            self.log.info(
-                'Connector "%s": succeeded_at = "%s"', connector_id, succeeded_at.to_iso8601_string()
-            )
-            job_status = "success"
-            return job_status
-        else:
-            job_status = "pending"
-            return job_status
+        is_completed = self._determine_if_synced_from_connector_details(
+            connector_id=connector_id,
+            connector_details=connector_details,
+            completed_after_time=completed_after_time,
+            reschedule_wait_time=reschedule_wait_time,
+            always_wait_when_syncing=always_wait_when_syncing,
+            propagate_failures_forward=propagate_failures_forward,
+        )
+        if is_completed:
+            return "success"
+        return "pending"
 
     async def get_last_sync_async(self, connector_id: str, xcom: str = "") -> pendulum.DateTime:
         """
