@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.2.0 (2023-10-31)
+## 2.0.0 (2023-11-07)
 
 ### Breaking changes
 - FivetranHook.check_connector now returns the connector_details dict object by @dwreeves in https://github.com/astronomer/airflow-provider-fivetran-async/pull/54
