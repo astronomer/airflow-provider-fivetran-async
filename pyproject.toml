@@ -16,3 +16,6 @@ testpaths = [
 [tool.isort]
 profile = "black"
 multi_line_output = 3
+
+[tool.distutils.bdist_wheel]
+universal = true
