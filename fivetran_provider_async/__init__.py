@@ -30,10 +30,6 @@ def get_provider_info():
         "description": "A Fivetran Async provider for Apache Airflow.",
         "connection-types": [
             {
-                "hook-class-name": "fivetran_provider_async.hooks.FivetranHookAsync",
-                "connection-type": "Fivetran",
-            },
-            {
                 "hook-class-name": "fivetran_provider_async.hooks.FivetranHook",
                 "connection-type": "Fivetran",
             },
