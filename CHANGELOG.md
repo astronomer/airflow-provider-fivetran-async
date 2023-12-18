@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.0.1 (TBD)
+
+### Bug Fixes
+- Fix connection form rendering by @pankajastro in https://github.com/astronomer/airflow-provider-fivetran-async/pull/72
+- Remove redundant text from README by @pankajastro in https://github.com/astronomer/airflow-provider-fivetran-async/pull/73
+
 ## 2.0.0 (2023-11-07)
 
 ### Breaking changes
