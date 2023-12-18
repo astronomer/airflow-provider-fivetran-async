@@ -97,8 +97,6 @@ fivetran_op >> fivetran_sensor
 You may also specify the `FivetranSensor` without a `completed_after_time`.
 In this case, the sensor will make note of when the last completed time was, and will wait for a new completed time.
 
-Import into your DAG via:
-
 ## Examples
 
 See the [**examples**](https://github.com/astronomer/airflow-provider-fivetran-async/tree/main/fivetran_provider_async/example_dags) directory for an example DAG.
