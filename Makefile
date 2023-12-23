@@ -1,4 +1,4 @@
-.PHONY: dev logs stop clean build  build-run restart restart-all run-tests shell help
+.PHONY: dev logs stop clean build build-run restart restart-all run-tests shell help
 
 # If the first argument is "run"...
 ifeq (run-mypy,$(firstword $(MAKECMDGOALS)))
