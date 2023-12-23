@@ -1,7 +1,5 @@
 .PHONY: dev logs stop clean build  build-run restart restart-all run-tests shell help
 
-ASTRO_PROVIDER_VERSION ?= "dev"
-
 # If the first argument is "run"...
 ifeq (run-mypy,$(firstword $(MAKECMDGOALS)))
   # use the rest as arguments for "run"
