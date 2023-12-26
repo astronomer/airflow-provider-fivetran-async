@@ -1,7 +1,4 @@
-.PHONY: dev logs stop clean build build-emr_eks_container_example_dag-image build-aws build-google-cloud build-run docs
-.PHONY: restart restart-all run-tests run-static-checks run-mypy run-local-lineage-server test-rc-deps shell help
-
-ASTRO_PROVIDER_VERSION ?= "dev"
+.PHONY: dev logs stop clean build build-run restart restart-all run-tests shell help
 
 # If the first argument is "run"...
 ifeq (run-mypy,$(firstword $(MAKECMDGOALS)))
