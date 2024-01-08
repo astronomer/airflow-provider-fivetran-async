@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.0.1 (TBD)
+## 2.0.1 (2024-01-08)
 
 ### Bug Fixes
 - Fix connection form rendering by @pankajastro in https://github.com/astronomer/airflow-provider-fivetran-async/pull/72
