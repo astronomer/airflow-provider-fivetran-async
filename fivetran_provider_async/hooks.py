@@ -257,15 +257,23 @@ class FivetranHook(BaseHook):
         resp = self._do_api_call("GET", endpoint)
         return resp["data"]
 
-    def get_groups(self, group_id: str) -> dict:
+    def get_groups(self, group_id: str = "") -> dict:
         """
-        Fetches destination information for the given group.
-        :param group_id: The Fivetran group ID, returned by a connector API call.
+        Fetches information about groups.
+        :param group_id: The Fivetran group ID, if provided will restrict to that group.
         :return: group details
         """
-        if group_id == "":
-            raise ValueError("No value specified for connector_id")
         endpoint = self.api_path_groups + group_id
+        resp = self._do_api_call("GET", endpoint)
+        return resp["data"]
+
+    def get_connectors(self, group_id: str) -> dict:
+        """
+        Fetches connector information for the given group.
+        :param group_id: The Fivetran group ID, returned by a connector API call.
+        :return: connector details
+        """
+        endpoint = f"{self.api_path_groups}{group_id}/connectors"
         resp = self._do_api_call("GET", endpoint)
         return resp["data"]
 
