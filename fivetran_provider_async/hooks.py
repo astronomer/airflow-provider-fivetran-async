@@ -257,7 +257,7 @@ class FivetranHook(BaseHook):
         resp = self._do_api_call("GET", endpoint)
         return resp["data"]
 
-    def get_groups(self, group_id: str = "") -> iter[dict]|dict:
+    def get_groups(self, group_id: str = "") -> iter[dict] | dict:
         """
         Fetches information about groups.
         :param group_id: The Fivetran group ID, if provided will restrict to that group.
