@@ -131,13 +131,122 @@ MOCK_FIVETRAN_DESTINATIONS_RESPONSE_PAYLOAD = {
     },
 }
 
-MOCK_FIVETRAN_GROUPS_RESPONSE_PAYLOAD = {
+MOCK_FIVETRAN_GROUP_RESPONSE_PAYLOAD = {
     "code": "Success",
     "data": {
         "id": "rarer_gradient",
         "name": "GoogleSheets",
         "created_at": "2022-12-12T17:14:33.790844Z",
     },
+}
+
+MOCK_FIVETRAN_GROUPS_RESPONSE_PAYLOAD_1 = {
+    "code": "Success",
+    "data": {
+        "items": [
+            {
+                "id": "projected_sickle",
+                "name": "Staging",
+                "created_at": "2018-12-20T11:59:35.089589Z"
+            },
+            {
+                "id": "schoolmaster_heedless",
+                "name": "Production",
+                "created_at": "2019-01-08T19:53:52.185146Z"
+            }
+        ],
+        "next_cursor": "eyJza2lwIjoyfQ"
+    }
+}
+
+MOCK_FIVETRAN_GROUPS_RESPONSE_PAYLOAD_2 = {
+    "code": "Success",
+    "data": {
+        "items": [
+            {
+                "id": "rarer_gradient",
+                "name": "GoogleSheets",
+                "created_at": "2022-12-12T17:14:33.790844Z",
+            },
+        ]
+    }
+}
+
+MOCK_FIVETRAN_CONNECTORS_RESPONSE_PAYLOAD_1 = {
+    "code": "Success",
+    "data": {
+        "items": [
+            {
+                "id": "iodize_impressive",
+                "group_id": "rarer_gradient",
+                "service": "salesforce",
+                "service_version": 1,
+                "schema": "salesforce",
+                "connected_by": "concerning_batch",
+                "created_at": "2018-07-21T22:55:21.724201Z",
+                "succeeded_at": "2018-12-26T17:58:18.245Z",
+                "failed_at": "2018-08-24T15:24:58.872491Z",
+                "sync_frequency": 60,
+                "status": {
+                    "setup_state": "connected",
+                    "sync_state": "paused",
+                    "update_state": "delayed",
+                    "is_historical_sync": False,
+                    "tasks": [],
+                    "warnings": []
+                }
+            },
+            {
+                "id": "wicked_impressive",
+                "group_id": "rarer_gradient",
+                "service": "netsuite",
+                "service_version": 1,
+                "schema": "netsuite",
+                "connected_by": "concerning_batch",
+                "created_at": "2018-07-21T22:55:21.724201Z",
+                "succeeded_at": "2018-12-26T17:58:18.245Z",
+                "failed_at": "2018-08-24T15:24:58.872491Z",
+                "sync_frequency": 60,
+                "status": {
+                    "setup_state": "connected",
+                    "sync_state": "paused",
+                    "update_state": "delayed",
+                    "is_historical_sync": False,
+                    "tasks": [],
+                    "warnings": []
+                }
+            }
+        ],
+        "next_cursor": "eyJza2lwIjoxfQ"
+    }
+}
+
+MOCK_FIVETRAN_CONNECTORS_RESPONSE_PAYLOAD_2 = {
+    "code": "Success",
+    "data": {
+        "items": [
+            {
+                "id": "iodize_open",
+                "group_id": "rarer_gradient",
+                "service": "zuora",
+                "service_version": 1,
+                "schema": "zuora",
+                "connected_by": "concerning_batch",
+                "created_at": "2018-07-21T22:55:21.724201Z",
+                "succeeded_at": "2018-12-26T17:58:18.245Z",
+                "failed_at": "2018-08-24T15:24:58.872491Z",
+                "sync_frequency": 60,
+                "status": {
+                    "setup_state": "connected",
+                    "sync_state": "paused",
+                    "update_state": "delayed",
+                    "is_historical_sync": False,
+                    "tasks": [],
+                    "warnings": []
+                }
+            }
+        ]
+    }
 }
 
 
@@ -613,10 +722,10 @@ class TestFivetranHook(unittest.TestCase):
         assert result["service"] == "google_sheets"
 
     @requests_mock.mock()
-    def test_get_groups(self, m):
+    def test_get_group(self, m):
         m.get(
             "https://api.fivetran.com/v1/groups/rarer_gradient",
-            json=MOCK_FIVETRAN_GROUPS_RESPONSE_PAYLOAD,
+            json=MOCK_FIVETRAN_GROUP_RESPONSE_PAYLOAD,
         )
         hook = FivetranHook(
             fivetran_conn_id="conn_fivetran",
@@ -624,6 +733,42 @@ class TestFivetranHook(unittest.TestCase):
         result = hook.get_groups(group_id="rarer_gradient")
         assert result["id"] == "rarer_gradient"
         assert result["name"] == "GoogleSheets"
+
+    @requests_mock.mock()
+    def test_get_groups(self, m):
+        m.get(
+            "https://api.fivetran.com/v1/groups/",
+            json=MOCK_FIVETRAN_GROUPS_RESPONSE_PAYLOAD_1,
+        )
+        m.get(
+            "https://api.fivetran.com/v1/groups/?cursor=eyJza2lwIjoyfQ",
+            json=MOCK_FIVETRAN_GROUPS_RESPONSE_PAYLOAD_2,
+        )
+        hook = FivetranHook(
+            fivetran_conn_id="conn_fivetran",
+        )
+        results = list(hook.get_groups())
+        assert len(results) == 3
+        assert results[0]["id"] == "projected_sickle"
+        assert results[-1]["id"] == "rarer_gradient"
+
+    @requests_mock.mock()
+    def test_get_connectors(self, m):
+        m.get(
+            "https://api.fivetran.com/v1/groups/rarer_gradient/connectors/",
+            json=MOCK_FIVETRAN_CONNECTORS_RESPONSE_PAYLOAD_1,
+        )
+        m.get(
+            "https://api.fivetran.com/v1/groups/rarer_gradient/connectors/?cursor=eyJza2lwIjoxfQ",
+            json=MOCK_FIVETRAN_CONNECTORS_RESPONSE_PAYLOAD_2,
+        )
+        hook = FivetranHook(
+            fivetran_conn_id="conn_fivetran",
+        )
+        results = list(hook.get_connectors(group_id="rarer_gradient"))
+        assert len(results) == 3
+        assert results[0]["id"] == "iodize_impressive"
+        assert results[-1]["id"] == "iodize_open"
 
     @requests_mock.mock()
     def test_start_fivetran_sync(self, m):
