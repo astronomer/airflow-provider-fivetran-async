@@ -144,19 +144,15 @@ MOCK_FIVETRAN_GROUPS_RESPONSE_PAYLOAD_1 = {
     "code": "Success",
     "data": {
         "items": [
-            {
-                "id": "projected_sickle",
-                "name": "Staging",
-                "created_at": "2018-12-20T11:59:35.089589Z"
-            },
+            {"id": "projected_sickle", "name": "Staging", "created_at": "2018-12-20T11:59:35.089589Z"},
             {
                 "id": "schoolmaster_heedless",
                 "name": "Production",
-                "created_at": "2019-01-08T19:53:52.185146Z"
-            }
+                "created_at": "2019-01-08T19:53:52.185146Z",
+            },
         ],
-        "next_cursor": "eyJza2lwIjoyfQ"
-    }
+        "next_cursor": "eyJza2lwIjoyfQ",
+    },
 }
 
 MOCK_FIVETRAN_GROUPS_RESPONSE_PAYLOAD_2 = {
@@ -169,7 +165,7 @@ MOCK_FIVETRAN_GROUPS_RESPONSE_PAYLOAD_2 = {
                 "created_at": "2022-12-12T17:14:33.790844Z",
             },
         ]
-    }
+    },
 }
 
 MOCK_FIVETRAN_CONNECTORS_RESPONSE_PAYLOAD_1 = {
@@ -193,8 +189,8 @@ MOCK_FIVETRAN_CONNECTORS_RESPONSE_PAYLOAD_1 = {
                     "update_state": "delayed",
                     "is_historical_sync": False,
                     "tasks": [],
-                    "warnings": []
-                }
+                    "warnings": [],
+                },
             },
             {
                 "id": "wicked_impressive",
@@ -213,12 +209,12 @@ MOCK_FIVETRAN_CONNECTORS_RESPONSE_PAYLOAD_1 = {
                     "update_state": "delayed",
                     "is_historical_sync": False,
                     "tasks": [],
-                    "warnings": []
-                }
-            }
+                    "warnings": [],
+                },
+            },
         ],
-        "next_cursor": "eyJza2lwIjoxfQ"
-    }
+        "next_cursor": "eyJza2lwIjoxfQ",
+    },
 }
 
 MOCK_FIVETRAN_CONNECTORS_RESPONSE_PAYLOAD_2 = {
@@ -242,11 +238,11 @@ MOCK_FIVETRAN_CONNECTORS_RESPONSE_PAYLOAD_2 = {
                     "update_state": "delayed",
                     "is_historical_sync": False,
                     "tasks": [],
-                    "warnings": []
-                }
+                    "warnings": [],
+                },
             }
         ]
-    }
+    },
 }
 
 

@@ -269,12 +269,13 @@ class FivetranHook(BaseHook):
         resp = self._do_api_call("GET", endpoint)
         return resp["data"]
 
-
     def _get_groups(self) -> dict:
         endpoint = self.api_path_groups
         cursor = True
         while cursor:
-            resp = self._do_api_call("GET", endpoint, params={"cursor": cursor} if isinstance(cursor, str) else None)
+            resp = self._do_api_call(
+                "GET", endpoint, params={"cursor": cursor} if isinstance(cursor, str) else None
+            )
             cursor = resp["data"].get("next_cursor")
             for group in resp["data"]["items"]:
                 yield group
@@ -288,7 +289,9 @@ class FivetranHook(BaseHook):
         endpoint = f"{self.api_path_groups}{group_id}/connectors/"
         cursor = True
         while cursor:
-            resp = self._do_api_call("GET", endpoint, params={"cursor": cursor} if isinstance(cursor, str) else None)
+            resp = self._do_api_call(
+                "GET", endpoint, params={"cursor": cursor} if isinstance(cursor, str) else None
+            )
             cursor = resp["data"].get("next_cursor")
             for connector in resp["data"]["items"]:
                 yield connector
