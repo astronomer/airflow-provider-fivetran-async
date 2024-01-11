@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import asyncio
 import time
+from collections.abc import Iterator
 from datetime import datetime
 from time import sleep
 from typing import TYPE_CHECKING, Any, Dict
-from collections.abc import Iterator
 
 import aiohttp
 import pendulum
