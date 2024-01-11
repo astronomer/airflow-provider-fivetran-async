@@ -257,7 +257,7 @@ class FivetranHook(BaseHook):
         resp = self._do_api_call("GET", endpoint)
         return resp["data"]
 
-    def get_groups(self, group_id: str = "") -> dict:
+    def get_groups(self, group_id: str = "") -> iter[dict]|dict:
         """
         Fetches information about groups.
         :param group_id: The Fivetran group ID, if provided will restrict to that group.
@@ -269,7 +269,7 @@ class FivetranHook(BaseHook):
         resp = self._do_api_call("GET", endpoint)
         return resp["data"]
 
-    def _get_groups(self) -> dict:
+    def _get_groups(self) -> iter[dict]:
         endpoint = self.api_path_groups
         cursor = True
         while cursor:
@@ -280,7 +280,7 @@ class FivetranHook(BaseHook):
             for group in resp["data"]["items"]:
                 yield group
 
-    def get_connectors(self, group_id: str) -> dict:
+    def get_connectors(self, group_id: str) -> iter[dict]:
         """
         Fetches connector information for the given group, returns a generator that iterates through each connector.
         :param group_id: The Fivetran group ID, returned by a connector API call.
