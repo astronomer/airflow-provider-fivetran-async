@@ -718,20 +718,11 @@ class TestFivetranHook(unittest.TestCase):
         assert result["service"] == "google_sheets"
 
     @requests_mock.mock()
-    def test_get_group(self, m):
+    def test_get_groups(self, m):
         m.get(
             "https://api.fivetran.com/v1/groups/rarer_gradient",
             json=MOCK_FIVETRAN_GROUP_RESPONSE_PAYLOAD,
         )
-        hook = FivetranHook(
-            fivetran_conn_id="conn_fivetran",
-        )
-        result = hook.get_groups(group_id="rarer_gradient")
-        assert result["id"] == "rarer_gradient"
-        assert result["name"] == "GoogleSheets"
-
-    @requests_mock.mock()
-    def test_get_groups(self, m):
         m.get(
             "https://api.fivetran.com/v1/groups/",
             json=MOCK_FIVETRAN_GROUPS_RESPONSE_PAYLOAD_1,
@@ -743,6 +734,11 @@ class TestFivetranHook(unittest.TestCase):
         hook = FivetranHook(
             fivetran_conn_id="conn_fivetran",
         )
+
+        result = hook.get_groups(group_id="rarer_gradient")
+        assert result["id"] == "rarer_gradient"
+        assert result["name"] == "GoogleSheets"
+
         results = list(hook.get_groups())
         assert len(results) == 3
         assert results[0]["id"] == "projected_sickle"
