@@ -270,7 +270,7 @@ class FivetranHook(BaseHook):
         resp = self._do_api_call("GET", endpoint)
         return resp["data"]
 
-    def _get_groups(self) -> iter[dict]:
+    def _get_groups(self) -> Iterator[dict]:
         endpoint = self.api_path_groups
         cursor = True
         while cursor:
