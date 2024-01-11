@@ -5,6 +5,7 @@ import time
 from datetime import datetime
 from time import sleep
 from typing import TYPE_CHECKING, Any, Dict
+from collections.abc import Iterator
 
 import aiohttp
 import pendulum
@@ -257,7 +258,7 @@ class FivetranHook(BaseHook):
         resp = self._do_api_call("GET", endpoint)
         return resp["data"]
 
-    def get_groups(self, group_id: str = "") -> iter[dict] | dict:
+    def get_groups(self, group_id: str = "") -> Iterator[dict] | dict:
         """
         Fetches information about groups.
         :param group_id: The Fivetran group ID, if provided will restrict to that group.
@@ -280,7 +281,7 @@ class FivetranHook(BaseHook):
             for group in resp["data"]["items"]:
                 yield group
 
-    def get_connectors(self, group_id: str) -> iter[dict]:
+    def get_connectors(self, group_id: str) -> Iterator[dict]:
         """
         Fetches connector information for the given group, returns a generator that iterates through each connector.
         :param group_id: The Fivetran group ID, returned by a connector API call.
