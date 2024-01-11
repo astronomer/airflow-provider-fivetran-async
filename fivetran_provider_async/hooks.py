@@ -283,7 +283,8 @@ class FivetranHook(BaseHook):
 
     def get_connectors(self, group_id: str) -> Iterator[dict]:
         """
-        Fetches connector information for the given group, returns a generator that iterates through each connector.
+        Fetches connector information for the given group, and returns a generator that iterates through
+        each connector.
         :param group_id: The Fivetran group ID, returned by a connector API call.
         :yields: connector details
         """
