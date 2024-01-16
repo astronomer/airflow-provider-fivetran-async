@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import time
+from collections.abc import Iterator
 from datetime import datetime
 from time import sleep
 from typing import TYPE_CHECKING, Any, Dict
@@ -257,17 +258,45 @@ class FivetranHook(BaseHook):
         resp = self._do_api_call("GET", endpoint)
         return resp["data"]
 
-    def get_groups(self, group_id: str) -> dict:
+    def get_groups(self, group_id: str = "") -> Iterator[dict] | dict:
         """
-        Fetches destination information for the given group.
-        :param group_id: The Fivetran group ID, returned by a connector API call.
+        Fetches information about groups.
+        :param group_id: The Fivetran group ID, if provided will restrict to that group.
         :return: group details
         """
         if group_id == "":
-            raise ValueError("No value specified for connector_id")
+            return iter(self._get_groups())
         endpoint = self.api_path_groups + group_id
         resp = self._do_api_call("GET", endpoint)
         return resp["data"]
+
+    def _get_groups(self) -> Iterator[dict]:
+        endpoint = self.api_path_groups
+        cursor = True
+        while cursor:
+            resp = self._do_api_call(
+                "GET", endpoint, params={"cursor": cursor} if isinstance(cursor, str) else None
+            )
+            cursor = resp["data"].get("next_cursor")
+            for group in resp["data"]["items"]:
+                yield group
+
+    def get_connectors(self, group_id: str) -> Iterator[dict]:
+        """
+        Fetches connector information for the given group, and returns a generator that iterates through
+        each connector.
+        :param group_id: The Fivetran group ID, returned by a connector API call.
+        :yields: connector details
+        """
+        endpoint = f"{self.api_path_groups}{group_id}/connectors/"
+        cursor = True
+        while cursor:
+            resp = self._do_api_call(
+                "GET", endpoint, params={"cursor": cursor} if isinstance(cursor, str) else None
+            )
+            cursor = resp["data"].get("next_cursor")
+            for connector in resp["data"]["items"]:
+                yield connector
 
     def check_connector(self, connector_id: str) -> dict[str, Any]:
         """
