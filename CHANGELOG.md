@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.0.2 (TBD)
+## 2.0.2 (2024-01-17)
 
 ### Feature
 - Add methods for getting group and connector info by @johnhoran in https://github.com/astronomer/airflow-provider-fivetran-async/pull/80
