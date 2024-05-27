@@ -102,11 +102,11 @@ class TestFivetranOperator(unittest.TestCase):
 
         task = FivetranOperator(
             task_id="fivetran_op_async",
+            fivetran_conn_id="conn_fivetran",
             connector_id="interchangeable_revenge",
             reschedule_wait_time=60,
             schedule_type="manual",
         )
-        assert task.fivetran_conn_id == FivetranHook.default_conn_name
         with pytest.raises(TaskDeferred):
             task.execute(context)
 
@@ -186,3 +186,12 @@ class TestFivetranOperator(unittest.TestCase):
         assert schema_field.name == "column_1_dest"
         assert schema_field.type == "VARCHAR(256)"
         assert schema_field.description is None
+
+    def test_default_conn_name(self):
+        task = FivetranOperator(
+            task_id="fivetran_op_async",
+            connector_id="interchangeable_revenge",
+            reschedule_wait_time=60,
+            schedule_type="manual",
+        )
+        assert task.fivetran_conn_id == FivetranHook.default_conn_name
