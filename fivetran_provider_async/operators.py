@@ -62,7 +62,7 @@ class FivetranOperator(BaseOperator):
         self,
         connector_id: str,
         run_name: Optional[str] = None,
-        fivetran_conn_id: str = "fivetran",
+        fivetran_conn_id: str = "fivetran_default",
         fivetran_retry_limit: int = 3,
         fivetran_retry_delay: int = 1,
         poll_frequency: int = 15,
