@@ -762,7 +762,7 @@ class FivetranHookAsync(FivetranHook):
     async def get_last_sync_async(self, connector_id: str, xcom: str = "") -> pendulum.DateTime:
         """
         Get the last time Fivetran connector completed a sync.
-        Used with FivetranSensorAsync to monitor sync completion status.
+        Used with FivetranSensor to monitor sync completion status.
 
         :param connector_id: Fivetran connector_id, found in connector settings
             page in the Fivetran user interface.
