@@ -21,5 +21,4 @@ with dag:
         task_id="fivetran_task",
         fivetran_conn_id="fivetran_default",
         connector_id="{{ var.value.connector_id }}",
-        deferrable=False,
     )
