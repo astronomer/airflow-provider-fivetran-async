@@ -80,7 +80,7 @@ class FivetranSensor(BaseSensorOperator):
     def __init__(
         self,
         connector_id: str,
-        fivetran_conn_id: str = "fivetran",
+        fivetran_conn_id: str = "fivetran_default",
         poke_interval: int = 60,
         fivetran_retry_limit: int = 3,
         fivetran_retry_delay: int = 1,

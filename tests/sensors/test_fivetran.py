@@ -4,6 +4,7 @@ from unittest import mock
 import pytest
 from airflow.exceptions import AirflowException, TaskDeferred
 
+from fivetran_provider_async.hooks import FivetranHook
 from fivetran_provider_async.sensors import FivetranSensor
 from fivetran_provider_async.triggers import FivetranTrigger
 
@@ -63,13 +64,13 @@ class TestFivetranSensor:
         mock_poke.return_value = False
         task = FivetranSensor(
             task_id=TASK_ID,
-            fivetran_conn_id="fivetran_default",
             connector_id="test_connector",
             poke_interval=5,
         )
         with pytest.raises(TaskDeferred) as exc:
             task.execute(context)
         assert isinstance(exc.value.trigger, FivetranTrigger), "Trigger is not a FivetranTrigger"
+        assert task.fivetran_conn_id == FivetranHook.default_conn_name
 
     @mock.patch("fivetran_provider_async.sensors.FivetranSensor.poke")
     def test_fivetran_sensor_async_with_response_wait_time(self, mock_poke):

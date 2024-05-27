@@ -84,7 +84,7 @@ class FivetranHook(BaseHook):
 
     def __init__(
         self,
-        fivetran_conn_id: str = "fivetran",
+        fivetran_conn_id: str = "fivetran_default",
         fivetran_conn: Connection | None = None,
         timeout_seconds: int = 180,
         retry_limit: int = 3,

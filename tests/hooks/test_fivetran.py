@@ -251,10 +251,11 @@ class TestFivetranHookAsync:
     @mock.patch("fivetran_provider_async.hooks.FivetranHookAsync._do_api_call_async")
     async def test_fivetran_hook_get_connector_async(self, mock_api_call_async_response):
         """Tests that the get_connector_async method fetches the details of a connector"""
-        hook = FivetranHookAsync(fivetran_conn_id="conn_fivetran")
+        hook = FivetranHookAsync()
         mock_api_call_async_response.return_value = MOCK_FIVETRAN_RESPONSE_PAYLOAD_SHEETS
         result = await hook.get_connector_async(connector_id="interchangeable_revenge")
         assert result["status"]["setup_state"] == "connected"
+        assert hook.conn_id == hook.default_conn_name
 
     @pytest.mark.asyncio
     @mock.patch("fivetran_provider_async.hooks.FivetranHookAsync._do_api_call_async")

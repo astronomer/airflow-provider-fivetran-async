@@ -6,6 +6,7 @@ import pytest
 import requests_mock
 from airflow.exceptions import AirflowException, TaskDeferred
 
+from fivetran_provider_async.hooks import FivetranHook
 from fivetran_provider_async.operators import FivetranOperator
 from tests.common.static import (
     MOCK_FIVETRAN_DESTINATIONS_RESPONSE_PAYLOAD_SHEETS,
@@ -185,3 +186,12 @@ class TestFivetranOperator(unittest.TestCase):
         assert schema_field.name == "column_1_dest"
         assert schema_field.type == "VARCHAR(256)"
         assert schema_field.description is None
+
+    def test_default_conn_name(self):
+        task = FivetranOperator(
+            task_id="fivetran_op_async",
+            connector_id="interchangeable_revenge",
+            reschedule_wait_time=60,
+            schedule_type="manual",
+        )
+        assert task.fivetran_conn_id == FivetranHook.default_conn_name
