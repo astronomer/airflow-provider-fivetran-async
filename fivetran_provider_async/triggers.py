@@ -18,7 +18,7 @@ class FivetranTrigger(BaseTrigger):
     :param fivetran_conn_id: Reference to Fivetran connection id
     :param previous_completed_at: The last time the connector ran, collected on Sensor
         initialization.
-    :param xcom: If used, FivetranSensorAsync receives timestamp of previously
+    :param xcom: If used, FivetranSensor receives timestamp of previously
         completed sync
     :param poke_interval:  polling period in seconds to check for the status
     :param reschedule_wait_time: Optional, if connector is in reset state,
