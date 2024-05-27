@@ -6,6 +6,7 @@ import pytest
 import requests_mock
 from airflow.exceptions import AirflowException, TaskDeferred
 
+from fivetran_provider_async.hooks import FivetranHook
 from fivetran_provider_async.operators import FivetranOperator
 from tests.common.static import (
     MOCK_FIVETRAN_DESTINATIONS_RESPONSE_PAYLOAD_SHEETS,
@@ -80,9 +81,11 @@ class TestFivetranOperator(unittest.TestCase):
 
         task = FivetranOperator(
             task_id="fivetran_op_async",
-            fivetran_conn_id="conn_fivetran",
             connector_id="interchangeable_revenge",
         )
+
+        assert task.fivetran_conn_id == FivetranHook.default_conn_name
+
         with pytest.raises(TaskDeferred):
             task.execute(context)
 
