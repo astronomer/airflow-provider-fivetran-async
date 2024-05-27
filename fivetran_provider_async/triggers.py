@@ -85,11 +85,14 @@ class FivetranTrigger(BaseTrigger):
                             "return_value": self.previous_completed_at.to_iso8601_string(),
                         }
                     )
+                    return
                 elif res == "pending":
                     self.log.info("sync is still running...")
                     self.log.info("sleeping for %s seconds.", self.poke_interval)
                     await asyncio.sleep(self.poke_interval)
                 else:
                     yield TriggerEvent({"status": "error", "message": "error"})
+                    return
         except Exception as e:
             yield TriggerEvent({"status": "error", "message": str(e)})
+            return
