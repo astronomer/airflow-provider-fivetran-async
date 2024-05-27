@@ -6,7 +6,6 @@ import pytest
 from airflow.exceptions import AirflowException
 from airflow.triggers.base import TriggerEvent
 
-from fivetran_provider_async.hooks import FivetranHook
 from fivetran_provider_async.triggers import FivetranTrigger
 
 TASK_ID = "fivetran_sync_task"
@@ -113,10 +112,10 @@ async def test_fivetran_trigger_pending(mock_api_call_async_response, mock_get_s
         task_id=TASK_ID,
         poke_interval=POKE_INTERVAL,
         connector_id=CONNECTOR_ID,
+        fivetran_conn_id=FIVETRAN_CONN_ID,
         previous_completed_at=PREV_COMPLETED_AT,
     )
     task = asyncio.create_task(trigger.run().__anext__())
-    assert trigger.fivetran_conn_id == FivetranHook.default_conn_name
     await asyncio.sleep(0.5)
     # TriggerEvent was not returned
     assert task.done() is False

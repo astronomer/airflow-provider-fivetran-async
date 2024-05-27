@@ -81,11 +81,9 @@ class TestFivetranOperator(unittest.TestCase):
 
         task = FivetranOperator(
             task_id="fivetran_op_async",
+            fivetran_conn_id="conn_fivetran",
             connector_id="interchangeable_revenge",
         )
-
-        assert task.fivetran_conn_id == FivetranHook.default_conn_name
-
         with pytest.raises(TaskDeferred):
             task.execute(context)
 
@@ -104,11 +102,11 @@ class TestFivetranOperator(unittest.TestCase):
 
         task = FivetranOperator(
             task_id="fivetran_op_async",
-            fivetran_conn_id="conn_fivetran",
             connector_id="interchangeable_revenge",
             reschedule_wait_time=60,
             schedule_type="manual",
         )
+        assert task.fivetran_conn_id == FivetranHook.default_conn_name
         with pytest.raises(TaskDeferred):
             task.execute(context)
 
