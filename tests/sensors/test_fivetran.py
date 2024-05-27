@@ -59,7 +59,7 @@ class TestFivetranSensor:
     @mock.patch("fivetran_provider_async.sensors.FivetranSensor.poke")
     def test_fivetran_sensor_async(self, mock_poke):
         """Asserts that a task is deferred and a FivetranTrigger will be fired
-        when the FivetranSensorAsync is executed."""
+        when the FivetranSensor is executed."""
         mock_poke.return_value = False
         task = FivetranSensor(
             task_id=TASK_ID,
@@ -74,7 +74,7 @@ class TestFivetranSensor:
     @mock.patch("fivetran_provider_async.sensors.FivetranSensor.poke")
     def test_fivetran_sensor_async_with_response_wait_time(self, mock_poke):
         """Asserts that a task is deferred and a FivetranTrigger will be fired
-        when the FivetranSensorAsync is executed when reschedule_wait_time is specified."""
+        when the FivetranSensor is executed when reschedule_wait_time is specified."""
         mock_poke.return_value = False
         task = FivetranSensor(
             task_id=TASK_ID,
