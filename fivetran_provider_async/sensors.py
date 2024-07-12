@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from functools import cached_property
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Optional
 
 from airflow.exceptions import AirflowException
 from airflow.sensors.base import BaseSensorOperator
@@ -37,8 +37,9 @@ class FivetranSensor(BaseSensorOperator):
     `completed_after_time` is `2020-01-01 03:00:00`, then the sensor will
     stop waiting at `03:05:00`.
 
-    `FivetranSensor` requires that you specify the `connector_id` of the sync
-    job to start. You can find `connector_id` in the Settings page of the
+    `FivetranSensor` requires that you specify either the `connector_id` or 
+    both `connector_name` and `destination_name` of the sync job to start.
+    You can find `connector_id` in the Settings page of the
     connector you configured in the
     `Fivetran dashboard <https://fivetran.com/dashboard/connectors>`_.
 
@@ -47,8 +48,12 @@ class FivetranSensor(BaseSensorOperator):
 
     :param fivetran_conn_id: `Conn ID` of the Connection to be used to configure
         the hook.
-    :param connector_id: ID of the Fivetran connector to sync, found on the
+    :param connector_id: Optional. ID of the Fivetran connector to sync, found on the
         Connector settings page in the Fivetran Dashboard.
+    :param connector_name: Optional. Name of the Fivetran connector to sync, found on the
+        Connectors page in the Fivetran Dashboard.
+    :param destination_name: Optional. Destination of the Fivetran connector to sync, found on the
+        Connectors page in the Fivetran Dashboard.
     :param poke_interval: Time in seconds that the job should wait in
         between each try
     :param fivetran_retry_limit: # of retries when encountering API errors
@@ -79,7 +84,9 @@ class FivetranSensor(BaseSensorOperator):
 
     def __init__(
         self,
-        connector_id: str,
+        connector_id: Optional[str] = None,
+        connector_name: Optional[str] = None,
+        destination_name: Optional[str] = None,
         fivetran_conn_id: str = "fivetran_default",
         poke_interval: int = 60,
         fivetran_retry_limit: int = 3,
@@ -92,7 +99,9 @@ class FivetranSensor(BaseSensorOperator):
         **kwargs: Any,
     ) -> None:
         self.fivetran_conn_id = fivetran_conn_id
-        self.connector_id = connector_id
+        self._connector_id = connector_id
+        self.connector_name = connector_name
+        self.destination_name = destination_name
         self.poke_interval = poke_interval
         self.previous_completed_at: pendulum.DateTime | None = None
         self.fivetran_retry_limit = fivetran_retry_limit
@@ -169,6 +178,15 @@ class FivetranSensor(BaseSensorOperator):
             retry_limit=self.fivetran_retry_limit,
             retry_delay=self.fivetran_retry_delay,
         )
+
+    @cached_property
+    def connector_id(self) -> str:
+        if self._connector_id:
+            return self._connector_id
+        elif self.connector_name and self.destination_name:
+            return self.hook.get_connector_id(connector_name=self.connector_name, destination_name=self.destination_name)
+
+        raise ValueError("No value specified for connector_id or to both connector_name and destination_name")
 
     @property
     def xcom(self) -> str:
