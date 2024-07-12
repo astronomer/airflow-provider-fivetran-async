@@ -171,7 +171,9 @@ class FivetranOperator(BaseOperator):
         if self._connector_id:
             return self._connector_id
         elif self.connector_name and self.destination_name:
-            return self.hook.get_connector_id(connector_name=self.connector_name, destination_name=self.destination_name)
+            return self.hook.get_connector_id(
+                connector_name=self.connector_name, destination_name=self.destination_name
+            )
 
         raise ValueError("No value specified for connector_id or to both connector_name and destination_name")
 

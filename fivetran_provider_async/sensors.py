@@ -37,7 +37,7 @@ class FivetranSensor(BaseSensorOperator):
     `completed_after_time` is `2020-01-01 03:00:00`, then the sensor will
     stop waiting at `03:05:00`.
 
-    `FivetranSensor` requires that you specify either the `connector_id` or 
+    `FivetranSensor` requires that you specify either the `connector_id` or
     both `connector_name` and `destination_name` of the sync job to start.
     You can find `connector_id` in the Settings page of the
     connector you configured in the
@@ -184,7 +184,9 @@ class FivetranSensor(BaseSensorOperator):
         if self._connector_id:
             return self._connector_id
         elif self.connector_name and self.destination_name:
-            return self.hook.get_connector_id(connector_name=self.connector_name, destination_name=self.destination_name)
+            return self.hook.get_connector_id(
+                connector_name=self.connector_name, destination_name=self.destination_name
+            )
 
         raise ValueError("No value specified for connector_id or to both connector_name and destination_name")
 

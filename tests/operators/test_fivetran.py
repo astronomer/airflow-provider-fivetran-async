@@ -115,6 +115,7 @@ MOCK_FIVETRAN_CONNECTORS_RESPONSE_PAYLOAD = {
     },
 }
 
+
 @pytest.fixture
 def context():
     """
@@ -256,7 +257,6 @@ class TestFivetranOperator(unittest.TestCase):
         )
         assert task.fivetran_conn_id == FivetranHook.default_conn_name
 
-
     @requests_mock.mock()
     def test_fivetran_op_without_connector_id(self, m):
         """Tests that execute_complete method returns expected result and that it prints expected log"""
@@ -315,4 +315,7 @@ class TestFivetranOperator(unittest.TestCase):
                 fivetran_conn_id="conn_fivetran",
             )
 
-        assert str(exc.value) == "No value specified for connector_id or to both connector_name and destination_name"
+        assert (
+            str(exc.value)
+            == "No value specified for connector_id or to both connector_name and destination_name"
+        )

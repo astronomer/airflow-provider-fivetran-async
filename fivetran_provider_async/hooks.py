@@ -300,20 +300,18 @@ class FivetranHook(BaseHook):
 
     def get_connector_id(self, connector_name: str, destination_name: str) -> str:
         all_groups = self._get_groups()
-        group = next((group for group in all_groups if group.get(
-            "name") == destination_name), None)
+        group = next((group for group in all_groups if group.get("name") == destination_name), None)
         if not group:
             raise ValueError(f"Destination '{destination_name}' not found.")
 
-        all_connectors = self.get_connectors(group_id=group.get("id", ''))
-        connector = next((connector for connector in all_connectors if connector.get(
-            "schema") == connector_name), None)
+        all_connectors = self.get_connectors(group_id=group.get("id", ""))
+        connector = next(
+            (connector for connector in all_connectors if connector.get("schema") == connector_name), None
+        )
         if not connector:
-            raise ValueError(
-                f"Connector '{connector_name}' not found in Destination '{destination_name}'."
-            )
+            raise ValueError(f"Connector '{connector_name}' not found in Destination '{destination_name}'.")
 
-        return connector.get("id", '')
+        return connector.get("id", "")
 
     def check_connector(self, connector_id: str) -> dict[str, Any]:
         """
