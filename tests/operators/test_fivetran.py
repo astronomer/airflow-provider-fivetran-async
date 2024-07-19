@@ -310,7 +310,7 @@ class TestFivetranOperator(unittest.TestCase):
     def test_fivetran_op_without_connector_id_error(self):
         """Tests that execute_complete method raises exception in case of error"""
         with pytest.raises(ValueError) as exc:
-            task = FivetranOperator(
+            FivetranOperator(
                 task_id="fivetran_op_async",
                 fivetran_conn_id="conn_fivetran",
             )
