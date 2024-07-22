@@ -45,7 +45,11 @@ class FivetranOperator(BaseOperator):
     :param fivetran_retry_delay: Time to wait before retrying API request
     :param run_name: Fivetran run name
     :param timeout_seconds: Timeout in seconds
-    :param connector_id: ID of the Fivetran connector to sync, found on the Connector settings page.
+    :param connector_id: Optional, ID of the Fivetran connector to sync, found on the Connector settings page.
+    :param connector_name: Optional, Name of the Fivetran connector to sync, found on the
+        Connectors page in the Fivetran Dashboard.
+    :param destination_name: Optional, Destination of the Fivetran connector to sync, found on the
+        Connectors page in the Fivetran Dashboard.
     :param schedule_type: schedule type. Default is "manual" which takes the connector off Fivetran schedule.
     :param poll_frequency: Time in seconds that the job should wait in between each try.
     :param reschedule_wait_time: Optional, if connector is in reset state,
@@ -56,11 +60,13 @@ class FivetranOperator(BaseOperator):
 
     operator_extra_links = (RegistryLink(),)
 
-    template_fields = ["connector_id"]
+    template_fields = ["connector_id", "connector_name", "destination_name"]
 
     def __init__(
         self,
-        connector_id: str,
+        connector_id: Optional[str] = None,
+        connector_name: Optional[str] = None,
+        destination_name: Optional[str] = None,
         run_name: Optional[str] = None,
         fivetran_conn_id: str = "fivetran_default",
         fivetran_retry_limit: int = 3,
@@ -72,7 +78,9 @@ class FivetranOperator(BaseOperator):
         wait_for_completion: bool = True,
         **kwargs,
     ) -> None:
-        self.connector_id = connector_id
+        self._connector_id = connector_id
+        self.connector_name = connector_name
+        self.destination_name = destination_name
         self.fivetran_conn_id = fivetran_conn_id
         self.run_name = run_name
 
@@ -157,6 +165,17 @@ class FivetranOperator(BaseOperator):
             retry_limit=self.fivetran_retry_limit,
             retry_delay=self.fivetran_retry_delay,
         )
+
+    @cached_property
+    def connector_id(self) -> str:
+        if self._connector_id:
+            return self._connector_id
+        elif self.connector_name and self.destination_name:
+            return self.hook.get_connector_id(
+                connector_name=self.connector_name, destination_name=self.destination_name
+            )
+
+        raise ValueError("No value specified for connector_id or to both connector_name and destination_name")
 
     def execute_complete(self, context: Context, event: Optional[Dict[Any, Any]] = None) -> None:
         """

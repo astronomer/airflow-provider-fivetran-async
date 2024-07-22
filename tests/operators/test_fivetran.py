@@ -54,6 +54,67 @@ MOCK_FIVETRAN_RESPONSE_PAYLOAD = {
     },
 }
 
+MOCK_FIVETRAN_GROUPS_RESPONSE_PAYLOAD = {
+    "code": "Success",
+    "data": {
+        "items": [
+            {
+                "id": "rarer_gradient",
+                "name": "GoogleSheets",
+                "created_at": "2022-12-12T17:14:33.790844Z",
+            },
+        ]
+    },
+}
+
+MOCK_FIVETRAN_CONNECTORS_RESPONSE_PAYLOAD = {
+    "code": "Success",
+    "data": {
+        "items": [
+            {
+                "id": "interchangeable_revenge",
+                "group_id": "rarer_gradient",
+                "service": "google_sheets",
+                "service_version": 1,
+                "schema": "google_sheets.fivetran_google_sheets_spotify",
+                "connected_by": "mournful_shalt",
+                "created_at": "2021-03-05T22:58:56.238875Z",
+                "succeeded_at": "2021-03-23T20:55:12.670390Z",
+                "failed_at": "null",
+                "sync_frequency": 360,
+                "status": {
+                    "setup_state": "connected",
+                    "sync_state": "scheduled",
+                    "update_state": "on_schedule",
+                    "is_historical_sync": False,
+                    "tasks": [],
+                    "warnings": [],
+                },
+            },
+            {
+                "id": "wicked_impressive",
+                "group_id": "rarer_gradient",
+                "service": "netsuite",
+                "service_version": 1,
+                "schema": "netsuite",
+                "connected_by": "concerning_batch",
+                "created_at": "2018-07-21T22:55:21.724201Z",
+                "succeeded_at": "2018-12-26T17:58:18.245Z",
+                "failed_at": "2018-08-24T15:24:58.872491Z",
+                "sync_frequency": 60,
+                "status": {
+                    "setup_state": "connected",
+                    "sync_state": "paused",
+                    "update_state": "delayed",
+                    "is_historical_sync": False,
+                    "tasks": [],
+                    "warnings": [],
+                },
+            },
+        ]
+    },
+}
+
 
 @pytest.fixture
 def context():
@@ -195,3 +256,66 @@ class TestFivetranOperator(unittest.TestCase):
             schedule_type="manual",
         )
         assert task.fivetran_conn_id == FivetranHook.default_conn_name
+
+    @requests_mock.mock()
+    def test_fivetran_op_without_connector_id(self, m):
+        """Tests that execute_complete method returns expected result and that it prints expected log"""
+        m.get(
+            "https://api.fivetran.com/v1/groups/",
+            json=MOCK_FIVETRAN_GROUPS_RESPONSE_PAYLOAD,
+        )
+        m.get(
+            "https://api.fivetran.com/v1/groups/rarer_gradient/connectors/",
+            json=MOCK_FIVETRAN_CONNECTORS_RESPONSE_PAYLOAD,
+        )
+
+        m.get(
+            "https://api.fivetran.com/v1/connectors/interchangeable_revenge",
+            json=MOCK_FIVETRAN_RESPONSE_PAYLOAD_SHEETS,
+        )
+
+        m.post(
+            "https://api.fivetran.com/v1/connectors/interchangeable_revenge/force",
+            json=MOCK_FIVETRAN_RESPONSE_PAYLOAD_SHEETS,
+        )
+
+        task = FivetranOperator(
+            task_id="fivetran_op_async",
+            fivetran_conn_id="conn_fivetran",
+            connector_name="google_sheets.fivetran_google_sheets_spotify",
+            destination_name="GoogleSheets",
+            reschedule_wait_time=60,
+            schedule_type="manual",
+        )
+        with pytest.raises(TaskDeferred):
+            task.execute(context)
+
+        expected_return_value = MOCK_FIVETRAN_RESPONSE_PAYLOAD_SHEETS["data"]["succeeded_at"]
+
+        with mock.patch.object(task.log, "info") as mock_log_info:
+            assert (
+                task.execute_complete(
+                    context=context,
+                    event={
+                        "status": "success",
+                        "message": "Fivetran sync completed",
+                        "return_value": MOCK_FIVETRAN_RESPONSE_PAYLOAD_SHEETS["data"]["succeeded_at"],
+                    },
+                )
+                == expected_return_value
+            )
+
+        mock_log_info.assert_called_with("Fivetran sync completed")
+
+    def test_fivetran_op_without_connector_id_error(self):
+        """Tests that execute_complete method raises exception in case of error"""
+        with pytest.raises(ValueError) as exc:
+            FivetranOperator(
+                task_id="fivetran_op_async",
+                fivetran_conn_id="conn_fivetran",
+            )
+
+        assert (
+            str(exc.value)
+            == "No value specified for connector_id or to both connector_name and destination_name"
+        )

@@ -764,6 +764,22 @@ class TestFivetranHook(unittest.TestCase):
         assert results[-1]["id"] == "iodize_open"
 
     @requests_mock.mock()
+    def test_get_connector_id(self, m):
+        m.get(
+            "https://api.fivetran.com/v1/groups/",
+            json=MOCK_FIVETRAN_GROUPS_RESPONSE_PAYLOAD_2,
+        )
+        m.get(
+            "https://api.fivetran.com/v1/groups/rarer_gradient/connectors/",
+            json=MOCK_FIVETRAN_CONNECTORS_RESPONSE_PAYLOAD_1,
+        )
+        hook = FivetranHook(
+            fivetran_conn_id="conn_fivetran",
+        )
+        result = hook.get_connector_id(connector_name="salesforce", destination_name="GoogleSheets")
+        assert result == "iodize_impressive"
+
+    @requests_mock.mock()
     def test_start_fivetran_sync(self, m):
         m.get(
             "https://api.fivetran.com/v1/connectors/interchangeable_revenge",
