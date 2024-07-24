@@ -1,5 +1,19 @@
 # Changelog
 
+## 2.1.0 (2024-07-24)
+
+### Feature
+- Add methods to get the connector_id by @natanlaverde in https://github.com/astronomer/airflow-provider-fivetran-async/pull/101
+
+### Bug Fixes
+- Set correct default_conn_name in class by @pankajastro in https://github.com/astronomer/airflow-provider-fivetran-async/pull/95
+- Add return statement after yield in trigger to avoid infinite loop by @pankajastro in https://github.com/astronomer/airflow-provider-fivetran-async/pull/94
+
+### Misc
+- Enable Python3.12 test by @pankajastro in https://github.com/astronomer/airflow-provider-fivetran-async/pull/91
+- Remove old Async operator name from docstring by @pankajastro in https://github.com/astronomer/airflow-provider-fivetran-async/pull/96
+- Clean example DAG by @pankajastro in https://github.com/astronomer/airflow-provider-fivetran-async/pull/97
+
 ## 2.0.2 (2024-01-17)
 
 ### Feature
