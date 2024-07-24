@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.1.0 (2024-07-22)
+## 2.1.0 (2024-07-24)
 
 ### Feature
 - Add methods to get the connector_id by @natanlaverde in https://github.com/astronomer/airflow-provider-fivetran-async/pull/101
