@@ -634,15 +634,10 @@ class FivetranHookAsync(FivetranHook):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
-    def _prepare_api_call_kwargs(self, method: str, endpoint: str, **kwargs: Any) -> dict[str, Any]:
-        # Cache existing auth and remove from kwargs dict.
-        prior_auth = kwargs.pop("auth", None)
-
-        kwargs = super()._prepare_api_call_kwargs(method, endpoint, **kwargs)
+    def _prepare_api_call_kwargs_async(self, method: str, endpoint: str, **kwargs: Any) -> dict[str, Any]:
+        kwargs = self._prepare_api_call_kwargs(method, endpoint, **kwargs)
         auth = kwargs.get("auth")
-        if prior_auth is not None and isinstance(prior_auth, aiohttp.BasicAuth):
-            kwargs["auth"] = prior_auth
-        elif auth is not None and is_container(auth) and 2 <= len(auth) <= 3:
+        if auth is not None and is_container(auth) and 2 <= len(auth) <= 3:
             kwargs["auth"] = aiohttp.BasicAuth(*auth)
         return kwargs
 
@@ -671,7 +666,7 @@ class FivetranHookAsync(FivetranHook):
 
         url = f"{self.api_protocol}://{self.api_host}/{endpoint}"
 
-        kwargs = self._prepare_api_call_kwargs(method, endpoint, **kwargs)
+        kwargs = self._prepare_api_call_kwargs_async(method, endpoint, **kwargs)
 
         async with aiohttp.ClientSession() as session:
             attempt_num = 1
