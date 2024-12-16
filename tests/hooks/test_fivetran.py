@@ -680,7 +680,8 @@ class TestFivetranHookAsync:
     @pytest.mark.asyncio
     @mock.patch("fivetran_provider_async.hooks.FivetranHookAsync.get_connection")
     async def test_prepare_api_call_kwargs_async_returns_aiohttp_basicauth(self, mock_get_connection):
-        """Tests to verify that the 'auth' value returned from kwarg preparation is of type aiohttp.BasicAuth"""
+        """Tests to verify that the 'auth' value returned from kwarg preparation is
+        of type aiohttp.BasicAuth"""
         hook = FivetranHookAsync(fivetran_conn_id="conn_fivetran")
         hook.fivetran_conn = mock_get_connection
         hook.fivetran_conn.login = LOGIN
