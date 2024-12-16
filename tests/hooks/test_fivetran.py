@@ -5,8 +5,9 @@ import multidict
 import pendulum
 import pytest
 import requests_mock
-from aiohttp import ClientResponseError, RequestInfo
+from aiohttp import BasicAuth, ClientResponseError, RequestInfo
 from airflow.exceptions import AirflowException
+from airflow.utils.helpers import is_container
 
 from fivetran_provider_async.hooks import FivetranHook, FivetranHookAsync
 from tests.common.static import (
@@ -599,6 +600,34 @@ class TestFivetranHookAsync:
     @pytest.mark.asyncio
     @mock.patch("fivetran_provider_async.hooks.aiohttp.ClientSession")
     @mock.patch("fivetran_provider_async.hooks.FivetranHookAsync.get_connection")
+    async def test_do_api_call_async_verify_using_async_kwargs_preparation(
+        self, mock_get_connection, mock_session
+    ):
+        """Tests that _do_api_call_async calls _prepare_api_call_kwargs_async"""
+
+        async def mock_fun(arg1, arg2, arg3, arg4):
+            return {"status": "success"}
+
+        mock_session.return_value.__aexit__.return_value = mock_fun
+        mock_session.return_value.__aenter__.return_value.request.return_value.json.return_value = {
+            "status": "success"
+        }
+
+        hook = FivetranHookAsync(fivetran_conn_id="conn_fivetran")
+
+        hook.fivetran_conn = mock_get_connection
+        hook.fivetran_conn.login = LOGIN
+        hook.fivetran_conn.password = PASSWORD
+        with mock.patch(
+            "fivetran_provider_async.hooks.FivetranHookAsync._prepare_api_call_kwargs_async"
+        ) as prep_func:
+            await hook._do_api_call_async(("POST", "v1/connectors/test"))
+
+        prep_func.assert_called_once_with("POST", "v1/connectors/test")
+
+    @pytest.mark.asyncio
+    @mock.patch("fivetran_provider_async.hooks.aiohttp.ClientSession")
+    @mock.patch("fivetran_provider_async.hooks.FivetranHookAsync.get_connection")
     async def test_do_api_call_async_with_non_retryable_client_response_error(
         self, mock_get_connection, mock_session
     ):
@@ -647,6 +676,23 @@ class TestFivetranHookAsync:
             await hook._do_api_call_async(("PATCH", "v1/connectors/test"))
 
         assert str(exc.value) == "API requests to Fivetran failed 3 times. Giving up."
+
+    @pytest.mark.asyncio
+    @mock.patch("fivetran_provider_async.hooks.FivetranHookAsync.get_connection")
+    async def test_prepare_api_call_kwargs_async_returns_aiohttp_basicauth(self, mock_get_connection):
+        """Tests to verify that the 'auth' value returned from kwarg preparation is of type aiohttp.BasicAuth"""
+        hook = FivetranHookAsync(fivetran_conn_id="conn_fivetran")
+        hook.fivetran_conn = mock_get_connection
+        hook.fivetran_conn.login = LOGIN
+        hook.fivetran_conn.password = PASSWORD
+
+        # Test first without passing in an auth kwarg
+        kwargs = hook._prepare_api_call_kwargs_async("POST", "v1/connectors/test")
+        assert isinstance(kwargs["auth"], BasicAuth)
+
+        # Pass in auth kwarg of a different type (using a string for the test)
+        kwargs = hook._prepare_api_call_kwargs_async("POST", "v1/connectors/test", auth="BadAuth")
+        assert isinstance(kwargs["auth"], BasicAuth)
 
 
 # Mock the `conn_fivetran` Airflow connection (note the `@` after `API_SECRET`)
@@ -794,3 +840,20 @@ class TestFivetranHook(unittest.TestCase):
         )
         result = hook.start_fivetran_sync(connector_id="interchangeable_revenge")
         assert result is not None
+
+    def test_prepare_api_call_kwargs_always_returns_tuple(self):
+        """Tests to verify that given a valid fivetran_conn _prepare_api_call_kwargs always returns
+        a username/password tuple"""
+        hook = FivetranHook(
+            fivetran_conn_id="conn_fivetran",
+        )
+
+        # Test first without passing in an auth kwarg
+        kwargs = hook._prepare_api_call_kwargs("POST", "v1/connectors/test")
+        assert not isinstance(kwargs["auth"], BasicAuth)
+        assert is_container(kwargs["auth"]) and len(kwargs["auth"]) == 2
+
+        # Pass in auth kwarg of a different type (using a string for the test)
+        kwargs = hook._prepare_api_call_kwargs("POST", "v1/connectors/test", auth="BadAuth")
+        assert not isinstance(kwargs["auth"], BasicAuth)
+        assert is_container(kwargs["auth"]) and len(kwargs["auth"]) == 2
