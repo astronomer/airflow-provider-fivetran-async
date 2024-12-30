@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.1.1 (2024-12-30)
+
+### Bug Fixes
+
+- Ensure proper preparation of API call ``kwargs`` for synchronous methods in ``FivetranHookAsync`` by @JeremyDOwens in https://github.com/astronomer/airflow-provider-fivetran-async/pull/115
+
+### Others
+
+- Pre-commit hook updates in https://github.com/astronomer/airflow-provider-fivetran-async/pull/104, https://github.com/astronomer/airflow-provider-fivetran-async/pull/105,  https://github.com/astronomer/airflow-provider-fivetran-async/pull/112, https://github.com/astronomer/airflow-provider-fivetran-async/pull/113, https://github.com/astronomer/airflow-provider-fivetran-async/pull/114 and https://github.com/astronomer/airflow-provider-fivetran-async/pull/116
+
 ## 2.1.0 (2024-07-24)
 
 ### Feature
