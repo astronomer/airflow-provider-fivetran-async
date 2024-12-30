@@ -4,7 +4,7 @@
 
 ### Bug Fixes
 
-- fix: prepare api call kwargs correctly for synchronous methods when using FivetranHookAsync by @JeremyDOwens in https://github.com/astronomer/airflow-provider-fivetran-async/pull/115
+- Ensure proper preparation of API call ``kwargs`` for synchronous methods in ``FivetranHookAsync`` by @JeremyDOwens in https://github.com/astronomer/airflow-provider-fivetran-async/pull/115
 
 ### Others
 
