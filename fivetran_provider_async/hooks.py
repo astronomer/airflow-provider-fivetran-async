@@ -106,7 +106,7 @@ class FivetranHook(BaseHook):
 
         auth = (self.fivetran_conn.login, self.fivetran_conn.password)
 
-        kwargs.setdefault("auth", auth)
+        kwargs["auth"] = auth
         kwargs.setdefault("headers", {})
 
         kwargs["headers"].setdefault("User-Agent", self.api_user_agent + self._get_airflow_version())
@@ -634,8 +634,8 @@ class FivetranHookAsync(FivetranHook):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
-    def _prepare_api_call_kwargs(self, method: str, endpoint: str, **kwargs: Any) -> dict[str, Any]:
-        kwargs = super()._prepare_api_call_kwargs(method, endpoint, **kwargs)
+    def _prepare_api_call_kwargs_async(self, method: str, endpoint: str, **kwargs: Any) -> dict[str, Any]:
+        kwargs = self._prepare_api_call_kwargs(method, endpoint, **kwargs)
         auth = kwargs.get("auth")
         if auth is not None and is_container(auth) and 2 <= len(auth) <= 3:
             kwargs["auth"] = aiohttp.BasicAuth(*auth)
@@ -666,7 +666,7 @@ class FivetranHookAsync(FivetranHook):
 
         url = f"{self.api_protocol}://{self.api_host}/{endpoint}"
 
-        kwargs = self._prepare_api_call_kwargs(method, endpoint, **kwargs)
+        kwargs = self._prepare_api_call_kwargs_async(method, endpoint, **kwargs)
 
         async with aiohttp.ClientSession() as session:
             attempt_num = 1
