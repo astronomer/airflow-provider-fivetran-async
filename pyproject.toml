@@ -46,14 +46,7 @@ tests = [
     "pytest-asyncio",
     "pytest-cov",
     "requests_mock",
-]
-
-openlineage = [
-    "openlineage-airflow>=0.19.2"
-]
-
-all = [
-    "openlineage-airflow>=0.19.2"
+    "pre-commit",
 ]
 
 ######################################
