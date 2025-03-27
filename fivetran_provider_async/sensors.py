@@ -98,6 +98,7 @@ class FivetranSensor(BaseSensorOperator):
         deferrable: bool = True,
         **kwargs: Any,
     ) -> None:
+        super().__init__(**kwargs)
         self.fivetran_conn_id = fivetran_conn_id
         self._connector_id = connector_id
         self.connector_name = connector_name
@@ -149,7 +150,6 @@ class FivetranSensor(BaseSensorOperator):
         self.always_wait_when_syncing = always_wait_when_syncing
         self.propagate_failures_forward = propagate_failures_forward
         self.deferrable = deferrable
-        super().__init__(**kwargs)
 
     def execute(self, context: Context) -> None:
         """Check for the target_status and defers using the trigger"""
