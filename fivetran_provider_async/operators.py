@@ -244,9 +244,7 @@ class FivetranOperator(BaseOperator):
                 Connector ID: {self.connector_id}
                 """
             ),
-            "ownership": OwnershipJobFacet(
-                owners=[OwnershipJobFacetOwners(name=self.owner, type=self.email)]
-            ),
+            "ownership": OwnershipJobFacet(owners=[OwnershipJobFacetOwners(name=self.owner, type=self.email)]),
         }
 
         run_facets = {}

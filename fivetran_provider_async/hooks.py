@@ -141,8 +141,7 @@ class FivetranHook(BaseHook):
             method, endpoint = method  # type: ignore[misc]
         elif endpoint is None:
             raise TypeError(
-                f"{self.__class__.__name__}._do_api_call() missing 1 required"
-                f" positional argument: 'endpoint'"
+                f"{self.__class__.__name__}._do_api_call() missing 1 required" f" positional argument: 'endpoint'"
             )
 
         if TYPE_CHECKING:
@@ -173,9 +172,7 @@ class FivetranHook(BaseHook):
                 self._log_request_error(attempt_num, str(e))
 
             if attempt_num == self.retry_limit:
-                raise AirflowException(
-                    f"API request to Fivetran failed {self.retry_limit} times." " Giving up."
-                )
+                raise AirflowException(f"API request to Fivetran failed {self.retry_limit} times." " Giving up.")
 
             attempt_num += 1
             sleep(self.retry_delay)
@@ -274,9 +271,7 @@ class FivetranHook(BaseHook):
         endpoint = self.api_path_groups
         cursor = True
         while cursor:
-            resp = self._do_api_call(
-                "GET", endpoint, params={"cursor": cursor} if isinstance(cursor, str) else None
-            )
+            resp = self._do_api_call("GET", endpoint, params={"cursor": cursor} if isinstance(cursor, str) else None)
             cursor = resp["data"].get("next_cursor")
             for group in resp["data"]["items"]:
                 yield group
@@ -291,9 +286,7 @@ class FivetranHook(BaseHook):
         endpoint = f"{self.api_path_groups}{group_id}/connectors/"
         cursor = True
         while cursor:
-            resp = self._do_api_call(
-                "GET", endpoint, params={"cursor": cursor} if isinstance(cursor, str) else None
-            )
+            resp = self._do_api_call("GET", endpoint, params={"cursor": cursor} if isinstance(cursor, str) else None)
             cursor = resp["data"].get("next_cursor")
             for connector in resp["data"]["items"]:
                 yield connector
@@ -305,9 +298,7 @@ class FivetranHook(BaseHook):
             raise ValueError(f"Destination '{destination_name}' not found.")
 
         all_connectors = self.get_connectors(group_id=group.get("id", ""))
-        connector = next(
-            (connector for connector in all_connectors if connector.get("schema") == connector_name), None
-        )
+        connector = next((connector for connector in all_connectors if connector.get("schema") == connector_name), None)
         if not connector:
             raise ValueError(f"Connector '{connector_name}' not found in Destination '{destination_name}'.")
 
@@ -390,8 +381,7 @@ class FivetranHook(BaseHook):
 
         last_sync = (
             succeeded_at
-            if failed_at_time is None
-            or self._parse_timestamp(succeeded_at) > self._parse_timestamp(failed_at)
+            if failed_at_time is None or self._parse_timestamp(succeeded_at) > self._parse_timestamp(failed_at)
             else failed_at
         )
         return last_sync
@@ -571,9 +561,7 @@ class FivetranHook(BaseHook):
             self.log.info("Starting connector again in %s seconds", reschedule_wait_time)
             time.sleep(reschedule_wait_time)
         else:
-            wait_time = (
-                self._parse_timestamp(reschedule_for).add(minutes=1) - pendulum.now(tz="UTC")
-            ).seconds
+            wait_time = (self._parse_timestamp(reschedule_for).add(minutes=1) - pendulum.now(tz="UTC")).seconds
             if wait_time < 0:
                 raise ValueError(
                     f"Reschedule time {wait_time} configured in "
@@ -657,8 +645,7 @@ class FivetranHookAsync(FivetranHook):
             method, endpoint = method  # type: ignore[misc]
         elif endpoint is None:
             raise TypeError(
-                f"{self.__class__.__name__}._do_api_call_async() missing 1 required"
-                f" positional argument: 'endpoint'"
+                f"{self.__class__.__name__}._do_api_call_async() missing 1 required" f" positional argument: 'endpoint'"
             )
 
         if self.fivetran_conn is None:
@@ -683,9 +670,7 @@ class FivetranHookAsync(FivetranHook):
                     self._log_request_error(attempt_num, str(e))
 
                 if attempt_num == self.retry_limit:
-                    raise AirflowException(
-                        f"API requests to Fivetran failed {self.retry_limit} times." " Giving up."
-                    )
+                    raise AirflowException(f"API requests to Fivetran failed {self.retry_limit} times." " Giving up.")
 
                 attempt_num += 1
                 await asyncio.sleep(self.retry_delay)
@@ -702,9 +687,7 @@ class FivetranHookAsync(FivetranHook):
         if connector_id == "":
             raise ValueError("No value specified for connector_id")
         endpoint = self.api_path_connectors + connector_id
-        resp = await self._do_api_call_async(
-            "GET", endpoint, headers={"Accept": "application/json;version=2"}
-        )
+        resp = await self._do_api_call_async("GET", endpoint, headers={"Accept": "application/json;version=2"})
         return resp["data"]
 
     async def get_sync_status_async(
@@ -716,8 +699,7 @@ class FivetranHookAsync(FivetranHook):
         import warnings
 
         warnings.warn(
-            "`get_sync_status_async()` is deprecated."
-            " Please use `is_synced_after_target_time_async()` instead.",
+            "`get_sync_status_async()` is deprecated." " Please use `is_synced_after_target_time_async()` instead.",
             stacklevel=2,
         )
 
