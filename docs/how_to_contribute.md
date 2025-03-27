@@ -26,7 +26,7 @@ To contribute to the airflow-provider-fivetran-async project:
 ### Requirements
 
 - [Git](https://git-scm.com/)
-- [Python](https://www.python.org/) <= 3.12 
+- [Python](https://www.python.org/) <= 3.12
 - [Hatch](https://hatch.pypa.io/latest/)
 
 Clone the **airflow-provider-fivetran-async** repository and change the current working directory to the repo's root directory:
