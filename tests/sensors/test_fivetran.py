@@ -119,11 +119,11 @@ class TestFivetranSensor:
     @pytest.mark.parametrize("poke_interval", [None, 5])
     def test_fivetran_sensor_async_poke_interval(self, poke_interval):
         """Asserts poke_interval assignment works as expected."""
-        kwargs = dict(
-            task_id=TASK_ID,
-            fivetran_conn_id="fivetran_default",
-            connector_id="test_connector",
-        )
+        kwargs = {
+            "task_id": TASK_ID,
+            "fivetran_conn_id": "fivetran_default",
+            "connector_id": "test_connector",
+        }
 
         if poke_interval:
             kwargs["poke_interval"] = poke_interval
