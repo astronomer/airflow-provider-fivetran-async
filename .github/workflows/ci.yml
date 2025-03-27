@@ -141,8 +141,6 @@ jobs:
     needs:
       - Static-Check
       - Run-Unit-Tests
-      - Run-Integration-Tests
-      - Deploy-Pages
       - Code-Coverage
     runs-on: ubuntu-latest
     steps:
