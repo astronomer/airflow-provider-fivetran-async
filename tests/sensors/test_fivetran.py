@@ -116,13 +116,7 @@ class TestFivetranSensor:
             )
         mock_log_info.assert_called_with("Fivetran connector finished syncing")
 
-    @pytest.mark.parametrize(
-        "poke_interval",
-        [
-            None,
-            5
-        ]
-    )
+    @pytest.mark.parametrize("poke_interval", [None, 5])
     def test_fivetran_sensor_async_poke_interval(self, poke_interval):
         """Asserts poke_interval assignment works as expected."""
         kwargs = dict(
@@ -134,7 +128,5 @@ class TestFivetranSensor:
         if poke_interval:
             kwargs["poke_interval"] = poke_interval
 
-        task = FivetranSensor(
-            **kwargs
-        )
+        task = FivetranSensor(**kwargs)
         assert task.poke_interval == poke_interval if poke_interval else task.poke_interval == 60.0
