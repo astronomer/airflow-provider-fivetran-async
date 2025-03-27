@@ -102,9 +102,7 @@ with dag:
 
     ml_branch = BranchPythonOperator(task_id="ml_branch", python_callable=ml_branch, provide_context=True)
 
-    train_model = BigQueryExecuteQueryOperator(
-        task_id="train_model", sql=TRAINING_QUERY, use_legacy_sql=False
-    )
+    train_model = BigQueryExecuteQueryOperator(task_id="train_model", sql=TRAINING_QUERY, use_legacy_sql=False)
 
     get_preds = BigQueryExecuteQueryOperator(
         task_id="get_predictions",

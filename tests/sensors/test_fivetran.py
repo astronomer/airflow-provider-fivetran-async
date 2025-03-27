@@ -97,9 +97,7 @@ class TestFivetranSensor:
             poke_interval=5,
         )
         with pytest.raises(AirflowException) as exc:
-            task.execute_complete(
-                context=None, event={"status": "error", "message": "Fivetran connector sync failure"}
-            )
+            task.execute_complete(context=None, event={"status": "error", "message": "Fivetran connector sync failure"})
         assert str(exc.value) == "error: Fivetran connector sync failure"
 
     def test_fivetran_sensor_async_execute_complete(self):
