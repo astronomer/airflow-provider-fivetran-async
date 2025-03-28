@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.1.2 (2025-03-28)
+
+### Bug Fixes
+
+- Allow ``FivetranSensor`` poke_interval to work as expected by @stubs in https://github.com/astronomer/airflow-provider-fivetran-async/pull/125
+
+### Others
+
+- Add contributing guidelines by @pankajastro in https://github.com/astronomer/airflow-provider-fivetran-async/pull/127
+- Use single packaging tool pyproject.toml by @pankajastro in https://github.com/astronomer/airflow-provider-fivetran-async/pull/126
+- Pre-commit hook updates in https://github.com/astronomer/airflow-provider-fivetran-async/pull/118, https://github.com/astronomer/airflow-provider-fivetran-async/pull/120, https://github.com/astronomer/airflow-provider-fivetran-async/pull/121, https://github.com/astronomer/airflow-provider-fivetran-async/pull/122 and https://github.com/astronomer/airflow-provider-fivetran-async/pull/123
+
 ## 2.1.1 (2024-12-30)
 
 ### Bug Fixes
