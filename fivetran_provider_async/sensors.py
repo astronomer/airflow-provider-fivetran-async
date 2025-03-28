@@ -9,8 +9,8 @@ from airflow.sensors.base import BaseSensorOperator
 from airflow.utils import timezone
 
 if TYPE_CHECKING:
-    from airflow.utils.context import Context
     import pendulum
+    from airflow.utils.context import Context
 
 from fivetran_provider_async.hooks import FivetranHook
 from fivetran_provider_async.triggers import FivetranTrigger

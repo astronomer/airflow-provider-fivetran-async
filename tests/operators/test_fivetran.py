@@ -315,7 +315,4 @@ class TestFivetranOperator(unittest.TestCase):
                 fivetran_conn_id="conn_fivetran",
             )
 
-        assert (
-            str(exc.value)
-            == "No value specified for connector_id or to both connector_name and destination_name"
-        )
+        assert str(exc.value) == "No value specified for connector_id or to both connector_name and destination_name"

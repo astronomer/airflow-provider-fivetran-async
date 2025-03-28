@@ -1,21 +1,123 @@
 [build-system]
-requires = ["setuptools","wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
-[tool.black]
-line-length = 110
-target-version = ['py39']
-
-[tool.pytest.ini_options]
-minversion = "6.0"
-addopts = "--tb=short --cov-report=xml"
-testpaths = [
-    "tests",
+[project]
+name = "airflow-provider-fivetran-async"
+dynamic = ["version"]
+description = "A Fivetran async provider for Apache Airflow"
+authors = [{ name = "Astronomer & Fivetran", email = "humans@astronomer.io" }]
+readme = "README.md"
+license = "Apache-2.0"
+license-files = { paths = ["LICENSE"] }
+requires-python = ">=3.8"
+keywords = ["airflow", "apache-airflow", "provider", "astronomer", "dag"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "License :: OSI Approved :: Apache Software License",
+    "Topic :: Database",
+    "Framework :: Apache Airflow",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    "apache-airflow>=2.2.0",
+    "aiohttp",
+    "asgiref",
+    "requests",
+    "openlineage-airflow>=0.19.2",
 ]
 
-[tool.isort]
-profile = "black"
-multi_line_output = 3
+
+[project.optional-dependencies]
+tests = [
+    "mypy",
+    "types-requests",
+    "parameterized",
+    "pytest",
+    "pytest-asyncio",
+    "pytest-cov",
+    "requests_mock",
+    "pre-commit",
+]
+
+######################################
+# TESTING
+######################################
+
+[tool.hatch.envs.tests]
+dependencies = [
+    "airflow-provider-fivetran-async[tests]",
+]
+pre-install-commands = ["sh scripts/test/pre-install-airflow.sh {matrix:airflow} {matrix:python}"]
+
+[[tool.hatch.envs.tests.matrix]]
+python = ["3.8", "3.9", "3.10", "3.11", "3.12"]
+airflow = ["2.2", "2.3", "2.4", "2.5", "2.6", "2.7", "2.8", "2.9", "2.10"]
+
+[tool.hatch.envs.tests.overrides]
+matrix.airflow.dependencies = [
+    { value = "typing_extensions<4.6", if = ["2.6"] },
+]
+
+[tool.hatch.envs.tests.scripts]
+freeze = "pip freeze"
+static-check = " pre-commit run --files fivetran_provider_async/*"
+test = 'sh scripts/test/unit.sh'
+test-cov = 'sh scripts/test/unit-cov.sh'
+
+
+[project.urls]
+Source = "https://github.com/astronomer/airflow-provider-fivetran-async"
+
+[tool.hatch.version]
+path = "fivetran_provider_async/__init__.py"
+
+
+
+[tool.hatch.build]
+sources = ["."]
+
+[tool.hatch.build.targets.sdist]
+include = ["fivetran_provider_async"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["fivetran_provider_async"]
 
 [tool.distutils.bdist_wheel]
 universal = true
+
+[tool.pytest.ini_options]
+filterwarnings = ["ignore::DeprecationWarning"]
+minversion = "6.0"
+
+
+######################################
+# THIRD PARTY TOOLS
+######################################
+
+[tool.black]
+line-length = 120
+target-version = ['py39', 'py310', 'py311', 'py312']
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = ["C901", "D300", "I", "F"]
+ignore = ["F541", "C901"]
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
+known-first-party = ["fivetran_provider_async", "tests"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10

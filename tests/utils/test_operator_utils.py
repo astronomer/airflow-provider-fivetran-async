@@ -76,9 +76,7 @@ class TestFivetranUtils(unittest.TestCase):
         openlineage_name_snowflake_downstream = _get_openlineage_name(
             config=MOCK_FIVETRAN_DESTINATIONS_RESPONSE_PAYLOAD_GCS_TO_SNOWFLAKE["data"]["config"],
             service="snowflake",
-            schema=next(
-                iter(MOCK_FIVETRAN_SCHEMAS_RESPONSE_PAYLOAD_GCS_TO_SNOWFLAKE["data"]["schemas"].values())
-            ),
+            schema=next(iter(MOCK_FIVETRAN_SCHEMAS_RESPONSE_PAYLOAD_GCS_TO_SNOWFLAKE["data"]["schemas"].values())),
             table="subscription_periods",
         )
         assert openlineage_name_snowflake_downstream == "test.demo.subscription_periods"
