@@ -8,7 +8,7 @@
 
 ### Others
 
-- https://github.com/astronomer/airflow-provider-fivetran-async/pull/127 by @pankajastro in https://github.com/astronomer/airflow-provider-fivetran-async/pull/127
+- Add contributing guidelines by @pankajastro in https://github.com/astronomer/airflow-provider-fivetran-async/pull/127
 - Use single packaging tool pyproject.toml by @pankajastro in https://github.com/astronomer/airflow-provider-fivetran-async/pull/126
 - Pre-commit hook updates in https://github.com/astronomer/airflow-provider-fivetran-async/pull/118, https://github.com/astronomer/airflow-provider-fivetran-async/pull/120, https://github.com/astronomer/airflow-provider-fivetran-async/pull/121, https://github.com/astronomer/airflow-provider-fivetran-async/pull/122 and https://github.com/astronomer/airflow-provider-fivetran-async/pull/123
 
