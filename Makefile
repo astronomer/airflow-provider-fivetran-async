@@ -13,6 +13,13 @@ endif
 
 ASTRO_RUNTIME_IMAGE_NAME = "quay.io/astronomer/astro-runtime:12.6.0-base"
 
+.PHONY: setup
+setup: ## Setup development environment
+	python -m venv venv
+	. venv/bin/activate && pip --no-cache-dir install ".[tests]"
+	@echo "To activate the virtual environment, run:"
+	@echo "source venv/bin/activate"
+
 dev: ## Create a development Environment using `docker compose` file.
 	IMAGE_NAME=$(ASTRO_RUNTIME_IMAGE_NAME) docker compose -f dev/docker-compose.yaml up -d
 
