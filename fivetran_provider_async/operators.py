@@ -113,30 +113,34 @@ class FivetranOperator(BaseOperator):
         if not self.wait_for_completion:
             return last_sync
 
-        if not self.deferrable:
-            self._wait_synchronously(pendulum.parse(last_sync))  # type: ignore[arg-type]
+        last_sync_dt: pendulum.DateTime = pendulum.parse(last_sync)
+
+        is_completed = self.hook.is_synced_after_target_time(
+            self.connector_id,
+            last_sync_dt,
+            propagate_failures_forward=False,
+            always_wait_when_syncing=True,
+        )
+
+        if is_completed:
             return None
-        else:
-            previous_completed_at = hook.get_last_sync(self.connector_id)
-            completed = hook.is_synced_after_target_time(
-                self.connector_id,
-                previous_completed_at,
-                propagate_failures_forward=False,
-                always_wait_when_syncing=True,
+
+        if self.deferrable:
+            self.defer(
+                timeout=self.execution_timeout,
+                trigger=FivetranTrigger(
+                    task_id=self.task_id,
+                    fivetran_conn_id=self.fivetran_conn_id,
+                    connector_id=self.connector_id,
+                    poke_interval=self.poll_frequency,
+                    reschedule_wait_time=self.reschedule_wait_time,
+                    previous_completed_at=last_sync_dt,
+                ),
+                method_name="execute_complete",
             )
-            if not completed:
-                self.defer(
-                    timeout=self.execution_timeout,
-                    trigger=FivetranTrigger(
-                        task_id=self.task_id,
-                        fivetran_conn_id=self.fivetran_conn_id,
-                        connector_id=self.connector_id,
-                        poke_interval=self.poll_frequency,
-                        reschedule_wait_time=self.reschedule_wait_time,
-                    ),
-                    method_name="execute_complete",
-                )
-            return None
+
+        self._wait_synchronously(last_sync_dt)
+        return None
 
     def _wait_synchronously(self, last_sync: pendulum.DateTime) -> None:
         """

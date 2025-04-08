@@ -5,6 +5,12 @@ from unittest import mock
 import pytest
 import requests_mock
 from airflow.exceptions import AirflowException, TaskDeferred
+from pendulum import DateTime
+
+try:
+    from pendulum import Timezone
+except ImportError:
+    from pendulum.tz.timezone import Timezone
 
 from fivetran_provider_async.hooks import FivetranHook
 from fivetran_provider_async.operators import FivetranOperator
@@ -170,6 +176,30 @@ class TestFivetranOperator(unittest.TestCase):
         )
         with pytest.raises(TaskDeferred):
             task.execute(context)
+
+    @mock.patch("fivetran_provider_async.operators.FivetranHook")
+    def test_fivetran_op_async_trigger_args(self, hook_cls):
+        """Tests that task gets deferred after job submission"""
+        hook = hook_cls.return_value
+        hook.start_fivetran_sync.return_value = "2025-12-31T12:34:56Z"
+        hook.is_synced_after_target_time.return_value = False
+
+        task = FivetranOperator(
+            task_id="fivetran_op_async",
+            fivetran_conn_id="conn_fivetran",
+            connector_id="interchangeable_revenge",
+        )
+        with pytest.raises(TaskDeferred) as exc:
+            task.execute({})
+
+        assert exc.value.timeout == task.execution_timeout
+        assert exc.value.method_name == "execute_complete"
+        assert exc.value.trigger.task_id == task.task_id
+        assert exc.value.trigger.fivetran_conn_id == task.fivetran_conn_id
+        assert exc.value.trigger.connector_id == task.connector_id
+        assert exc.value.trigger.poke_interval == task.poll_frequency
+        assert exc.value.trigger.reschedule_wait_time == task.reschedule_wait_time
+        assert exc.value.trigger.previous_completed_at == DateTime(2025, 12, 31, 12, 34, 56, tzinfo=Timezone("UTC"))
 
     def test_fivetran_op_async_execute_complete_error(self):
         """Tests that execute_complete method raises exception in case of error"""
