@@ -76,6 +76,7 @@ class FivetranOperator(BaseOperator):
         reschedule_wait_time: int = 0,
         deferrable: bool = True,
         wait_for_completion: bool = True,
+        resync: bool | dict = False,
         **kwargs,
     ) -> None:
         self._connector_id = connector_id
@@ -102,13 +103,21 @@ class FivetranOperator(BaseOperator):
         self.reschedule_wait_time = reschedule_wait_time
         self.wait_for_completion = wait_for_completion
         self.deferrable = deferrable
+        self.resync = resync
         super().__init__(**kwargs)
 
     def execute(self, context: Context) -> None | str:
         """Start the sync using synchronous hook"""
         hook = self.hook
         hook.prep_connector(self.connector_id, self.schedule_type)
-        last_sync = hook.start_fivetran_sync(self.connector_id)
+
+        sync_args = {"connector_id": self.connector_id}
+        if self.resync:
+            sync_args["mode"] = "resync"
+            if isinstance(self.resync, dict):
+                sync_args["payload"] = self.resync
+        last_sync = hook.start_fivetran_sync(**sync_args)
+
 
         if not self.wait_for_completion:
             return last_sync
