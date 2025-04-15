@@ -272,4 +272,4 @@ class FivetranResyncOperator(FivetranOperator):
         self.payload = payload
 
     def _sync(self, hook:FivetranHook):
-        hook.start_fivetran_sync(self.connector_id, mode="resync", payload=self.payload)
+        return hook.start_fivetran_sync(self.connector_id, mode="resync", payload=self.payload)
