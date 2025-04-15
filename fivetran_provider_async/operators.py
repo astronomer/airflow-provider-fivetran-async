@@ -266,7 +266,7 @@ class FivetranOperator(BaseOperator):
     def _sync(self, hook:FivetranHook):
         return hook.start_fivetran_sync(self.connector_id)
 
-class FivetranResyncOperator(BaseOperator):
+class FivetranResyncOperator(FivetranOperator):
     def __init__(self, payload: dict | None = None, **kwargs):
         super.__init__(**kwargs)
         self.payload = payload
