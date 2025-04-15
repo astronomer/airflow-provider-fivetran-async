@@ -264,12 +264,16 @@ class FivetranOperator(BaseOperator):
         return self.get_openlineage_facets_on_start()
 
     def _sync(self, hook:FivetranHook):
-        return hook.start_fivetran_sync(self.connector_id)
+        return hook.start_fivetran_sync(connector_id=self.connector_id)
 
 class FivetranResyncOperator(FivetranOperator):
-    def __init__(self, payload: dict | None = None, **kwargs):
+    def __init__(self, scope: dict | None = None, **kwargs):
         super().__init__(**kwargs)
-        self.payload = payload
+        self.scope = scope
 
     def _sync(self, hook:FivetranHook):
-        return hook.start_fivetran_sync(self.connector_id, mode="resync", payload=self.payload)
+        return hook.start_fivetran_sync(
+            connector_id=self.connector_id,
+            mode="resync",
+            payload={"scope": self.scope} if self.scope else None
+        )
