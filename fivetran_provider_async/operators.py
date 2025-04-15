@@ -108,7 +108,7 @@ class FivetranOperator(BaseOperator):
         """Start the sync using synchronous hook"""
         hook = self.hook
         hook.prep_connector(self.connector_id, self.schedule_type)
-        last_sync = self._sync()
+        last_sync = self._sync(hook)
 
         if not self.wait_for_completion:
             return last_sync
