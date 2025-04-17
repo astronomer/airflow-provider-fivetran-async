@@ -141,7 +141,7 @@ jobs:
       - name: Upload coverage to Github
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-unit-test-${{ matrix.python-version }}-${{ matrix.airflow-version }}
+          name: coverage-integration-test-${{ matrix.python-version }}-${{ matrix.airflow-version }}
           path: .coverage
           include-hidden-files: true
 
