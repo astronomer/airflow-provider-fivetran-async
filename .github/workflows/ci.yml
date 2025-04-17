@@ -103,12 +103,55 @@ jobs:
           path: .coverage
           include-hidden-files: true
 
+  Run-Integration-Tests:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [ "3.12" ]
+        airflow-version: [ "2.10" ]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.ref }}
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pip
+            .local/share/hatch/
+          key: integration-${{ runner.os }}-${{ matrix.python-version }}-${{ matrix.airflow-version }}-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('fivetran_provider_async/__init__.py') }}
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install packages and dependencies
+        run: |
+          python -m pip install uv
+          uv pip install --system hatch
+          hatch -e tests.py${{ matrix.python-version }}-${{ matrix.airflow-version }} run pip freeze
+
+      - name: Test Airflow ${{ matrix.airflow-version }} and Python ${{ matrix.python-version }}
+        run: |
+          hatch run tests.py${{ matrix.python-version }}-${{ matrix.airflow-version }}:test-integration-setup
+          hatch run tests.py${{ matrix.python-version }}-${{ matrix.airflow-version }}:test-integration
+
+      - name: Upload coverage to Github
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-integration-test-${{ matrix.python-version }}-${{ matrix.airflow-version }}
+          path: .coverage
+          include-hidden-files: true
+
   Publish-Package:
     if: github.event_name == 'release'
     name: Build and publish Python 🐍 distributions 📦 to PyPI
     needs:
       - Static-Check
       - Run-Unit-Tests
+      - Run-Integration-Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
