@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.1.3 (2025-04-17)
+
+### Bug Fixes
+
+- fix: pass last_sync when deferring by @m1racoli in https://github.com/astronomer/airflow-provider-fivetran-async/pull/131
+- Add missing provider entry point by @pankajastro in https://github.com/astronomer/airflow-provider-fivetran-async/pull/136
+
+### Others
+
+- ci: replace flake8 with ruff by @m1racoli in https://github.com/astronomer/airflow-provider-fivetran-async/pull/133
+- Pre-commit hook updates in https://github.com/astronomer/airflow-provider-fivetran-async/pull/129, https://github.com/astronomer/airflow-provider-fivetran-async/pull/132 and https://github.com/astronomer/airflow-provider-fivetran-async/pull/135
+
 ## 2.1.2 (2025-03-28)
 
 ### Bug Fixes

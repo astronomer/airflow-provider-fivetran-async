@@ -1,5 +1,5 @@
 # ruff: noqa F401
-__version__ = "2.1.3a1"
+__version__ = "2.1.3"
 
 import logging
 
