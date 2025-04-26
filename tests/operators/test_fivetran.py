@@ -362,7 +362,7 @@ class TestFivetranResyncOperator(unittest.TestCase):
             fivetran_conn_id="conn_fivetran",
             connector_id="interchangeable_revenge",
         )
-        with pytest.raises(TaskDeferred) as exc:
+        with pytest.raises(TaskDeferred):
             task.execute({})
 
         assert hook.start_fivetran_sync.call_args[1] == {
@@ -384,7 +384,7 @@ class TestFivetranResyncOperator(unittest.TestCase):
             connector_id="interchangeable_revenge",
             scope={"schema": ["table1", "table2"]},
         )
-        with pytest.raises(TaskDeferred) as exc:
+        with pytest.raises(TaskDeferred):
             task.execute({})
 
         assert hook.start_fivetran_sync.call_args[1] == {
