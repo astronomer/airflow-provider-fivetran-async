@@ -13,7 +13,7 @@ except ImportError:
     from pendulum.tz.timezone import Timezone
 
 from fivetran_provider_async.hooks import FivetranHook
-from fivetran_provider_async.operators import FivetranOperator
+from fivetran_provider_async.operators import FivetranOperator, FivetranResyncOperator
 from tests.common.static import (
     MOCK_FIVETRAN_DESTINATIONS_RESPONSE_PAYLOAD_SHEETS,
     MOCK_FIVETRAN_GROUPS_RESPONSE_PAYLOAD_SHEETS,
@@ -346,3 +346,49 @@ class TestFivetranOperator(unittest.TestCase):
             )
 
         assert str(exc.value) == "No value specified for connector_id or to both connector_name and destination_name"
+
+
+@mock.patch.dict("os.environ", AIRFLOW_CONN_CONN_FIVETRAN="http://API_KEY:API_SECRET@")
+class TestFivetranResyncOperator(unittest.TestCase):
+    @mock.patch("fivetran_provider_async.operators.FivetranHook")
+    def test_fivetran_resync_no_scope(self, hook_cls):
+        """Tests that task gets deferred after job submission"""
+        hook = hook_cls.return_value
+        hook.start_fivetran_sync.return_value = "2025-12-31T12:34:56Z"
+        hook.is_synced_after_target_time.return_value = False
+
+        task = FivetranResyncOperator(
+            task_id="fivetran_op_async",
+            fivetran_conn_id="conn_fivetran",
+            connector_id="interchangeable_revenge",
+        )
+        with pytest.raises(TaskDeferred) as exc:
+            task.execute({})
+
+        assert hook.start_fivetran_sync.call_args[1] == {
+            "connector_id": "interchangeable_revenge",
+            "mode": "resync",
+            "payload": None,
+        }
+
+    @mock.patch("fivetran_provider_async.operators.FivetranHook")
+    def test_fivetran_resync_scope(self, hook_cls):
+        """Tests that task gets deferred after job submission"""
+        hook = hook_cls.return_value
+        hook.start_fivetran_sync.return_value = "2025-12-31T12:34:56Z"
+        hook.is_synced_after_target_time.return_value = False
+
+        task = FivetranResyncOperator(
+            task_id="fivetran_op_async",
+            fivetran_conn_id="conn_fivetran",
+            connector_id="interchangeable_revenge",
+            scope={"schema": ["table1", "table2"]},
+        )
+        with pytest.raises(TaskDeferred) as exc:
+            task.execute({})
+
+        assert hook.start_fivetran_sync.call_args[1] == {
+            "connector_id": "interchangeable_revenge",
+            "mode": "resync",
+            "payload": {"scope": {"schema": ["table1", "table2"]}},
+        }
