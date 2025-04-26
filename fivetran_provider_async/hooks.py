@@ -376,7 +376,7 @@ class FivetranHook(BaseHook):
             if succeeded_at is None and failed_at is None:
                 succeeded_at = str(pendulum.now())
 
-        api_call_args = {
+        api_call_args: dict[str, Any] = {
             "method": "POST",
             "endpoint": f"{endpoint}/{'resync' if mode == 'resync' else 'force'}",
         }
