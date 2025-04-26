@@ -246,10 +246,7 @@ MOCK_FIVETRAN_CONNECTORS_RESPONSE_PAYLOAD_2 = {
     },
 }
 
-MOCK_FIVETRAN_OPERATION_PERFORMED_RESPONSE = {
-  "code": "Success",
-  "message": "Operation performed."
-}
+MOCK_FIVETRAN_OPERATION_PERFORMED_RESPONSE = {"code": "Success", "message": "Operation performed."}
 
 
 class TestFivetranHookAsync:
@@ -861,5 +858,5 @@ class TestFivetranHook(unittest.TestCase):
 
         assert m.last_request.path == "/v1/connectors/interchangeable_revenge/resync"
         assert m.last_request.json() == payload
-        assert m.last_request.method == 'POST'
+        assert m.last_request.method == "POST"
         assert result is not None

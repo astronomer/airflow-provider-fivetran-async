@@ -263,17 +263,16 @@ class FivetranOperator(BaseOperator):
     def get_openlineage_facets_on_complete(self, task_instance):
         return self.get_openlineage_facets_on_start()
 
-    def _sync(self, hook:FivetranHook):
+    def _sync(self, hook: FivetranHook):
         return hook.start_fivetran_sync(connector_id=self.connector_id)
+
 
 class FivetranResyncOperator(FivetranOperator):
     def __init__(self, scope: dict | None = None, **kwargs):
         super().__init__(**kwargs)
         self.scope = scope
 
-    def _sync(self, hook:FivetranHook):
+    def _sync(self, hook: FivetranHook):
         return hook.start_fivetran_sync(
-            connector_id=self.connector_id,
-            mode="resync",
-            payload={"scope": self.scope} if self.scope else None
+            connector_id=self.connector_id, mode="resync", payload={"scope": self.scope} if self.scope else None
         )
