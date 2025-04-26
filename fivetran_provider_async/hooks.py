@@ -370,7 +370,8 @@ class FivetranHook(BaseHook):
         succeeded_at = connector_details["succeeded_at"]
         failed_at = connector_details["failed_at"]
         endpoint = self.api_path_connectors + connector_id
-        if self._do_api_call("GET", endpoint)["data"]["paused"] is True:
+
+        if connector_details["paused"] is True:
             self._do_api_call("PATCH", endpoint, json={"paused": False})
             if succeeded_at is None and failed_at is None:
                 succeeded_at = str(pendulum.now())
