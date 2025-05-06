@@ -32,5 +32,5 @@ with dag:
         task_id="fivetran_resync_scoped",
         fivetran_conn_id="fivetran_default",
         connector_id="{{ var.value.connector_id }}",
-        scope={"schema": ["table1", "table2"]}
+        scope={"schema": ["table1", "table2"]},
     )
