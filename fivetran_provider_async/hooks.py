@@ -357,21 +357,32 @@ class FivetranHook(BaseHook):
         else:
             self.log.debug("Schedule type for %s was already %s", connector_id, schedule_type)
 
-    def start_fivetran_sync(self, connector_id: str) -> str:
+    def start_fivetran_sync(self, connector_id: str, mode="sync", payload: dict | None = None) -> str:
         """
         :param connector_id: Fivetran connector_id, found in connector settings
             page in the Fivetran user interface.
         :return: Timestamp of previously completed sync
         """
+        if payload and mode != "resync":
+            raise ValueError("payload should only be provided when doing a resync")
+
         connector_details = self.get_connector(connector_id)
         succeeded_at = connector_details["succeeded_at"]
         failed_at = connector_details["failed_at"]
         endpoint = self.api_path_connectors + connector_id
-        if self._do_api_call("GET", endpoint)["data"]["paused"] is True:
+
+        if connector_details["paused"] is True:
             self._do_api_call("PATCH", endpoint, json={"paused": False})
             if succeeded_at is None and failed_at is None:
                 succeeded_at = str(pendulum.now())
-        self._do_api_call("POST", endpoint + "/force")
+
+        api_call_args: dict[str, Any] = {
+            "method": "POST",
+            "endpoint": f"{endpoint}/{'resync' if mode == 'resync' else 'force'}",
+        }
+        if payload:
+            api_call_args["json"] = payload
+        self._do_api_call(**api_call_args)
 
         failed_at_time = None
         try:

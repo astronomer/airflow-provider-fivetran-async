@@ -246,6 +246,8 @@ MOCK_FIVETRAN_CONNECTORS_RESPONSE_PAYLOAD_2 = {
     },
 }
 
+MOCK_FIVETRAN_OPERATION_PERFORMED_RESPONSE = {"code": "Success", "message": "Operation performed."}
+
 
 class TestFivetranHookAsync:
     @pytest.mark.asyncio
@@ -832,3 +834,29 @@ class TestFivetranHook(unittest.TestCase):
         kwargs = hook._prepare_api_call_kwargs("POST", "v1/connectors/test", auth="BadAuth")
         assert not isinstance(kwargs["auth"], BasicAuth)
         assert is_container(kwargs["auth"]) and len(kwargs["auth"]) == 2
+
+    @requests_mock.mock()
+    def test_start_fivetran_resync(self, m):
+        m.get(
+            "https://api.fivetran.com/v1/connectors/interchangeable_revenge",
+            json=MOCK_FIVETRAN_RESPONSE_PAYLOAD,
+        )
+        m.post(
+            "https://api.fivetran.com/v1/connectors/interchangeable_revenge/resync",
+            json=MOCK_FIVETRAN_OPERATION_PERFORMED_RESPONSE,
+        )
+        hook = FivetranHook(
+            fivetran_conn_id="conn_fivetran",
+        )
+
+        payload = {"scope": {"schema": ["table1", "table2"]}}
+        result = hook.start_fivetran_sync(
+            connector_id="interchangeable_revenge",
+            mode="resync",
+            payload=payload,
+        )
+
+        assert m.last_request.path == "/v1/connectors/interchangeable_revenge/resync"
+        assert m.last_request.json() == payload
+        assert m.last_request.method == "POST"
+        assert result is not None

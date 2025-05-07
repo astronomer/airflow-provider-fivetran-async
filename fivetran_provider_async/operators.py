@@ -108,7 +108,7 @@ class FivetranOperator(BaseOperator):
         """Start the sync using synchronous hook"""
         hook = self.hook
         hook.prep_connector(self.connector_id, self.schedule_type)
-        last_sync = hook.start_fivetran_sync(self.connector_id)
+        last_sync = self._sync(hook)
 
         if not self.wait_for_completion:
             return last_sync
@@ -262,3 +262,17 @@ class FivetranOperator(BaseOperator):
 
     def get_openlineage_facets_on_complete(self, task_instance):
         return self.get_openlineage_facets_on_start()
+
+    def _sync(self, hook: FivetranHook):
+        return hook.start_fivetran_sync(connector_id=self.connector_id)
+
+
+class FivetranResyncOperator(FivetranOperator):
+    def __init__(self, scope: dict | None = None, **kwargs):
+        super().__init__(**kwargs)
+        self.scope = scope
+
+    def _sync(self, hook: FivetranHook):
+        return hook.start_fivetran_sync(
+            connector_id=self.connector_id, mode="resync", payload={"scope": self.scope} if self.scope else None
+        )
