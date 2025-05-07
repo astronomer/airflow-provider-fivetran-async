@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.2.0a1 (2025-05-07)
+
+### Feature
+
+- Add `ResyncOperator` by @johnhoran in https://github.com/astronomer/airflow-provider-fivetran-async/pull/140
+
+### Others
+
+- Pre-commit hook updates in https://github.com/astronomer/airflow-provider-fivetran-async/pull/138, https://github.com/astronomer/airflow-provider-fivetran-async/pull/141 and https://github.com/astronomer/airflow-provider-fivetran-async/pull/142
+
 ## 2.1.3 (2025-04-17)
 
 ### Bug Fixes
