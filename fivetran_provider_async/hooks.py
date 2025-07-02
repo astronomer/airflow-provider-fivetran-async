@@ -12,13 +12,21 @@ import pendulum
 import requests
 from aiohttp import ClientResponseError
 from airflow.exceptions import AirflowException
-from airflow.hooks.base import BaseHook
 from airflow.utils.helpers import is_container
+
+try:
+    from airflow.sdk.bases.hook import BaseHook
+except ImportError:
+    from airflow.hooks.base import BaseHook
+
 from asgiref.sync import sync_to_async
 from requests import exceptions as requests_exceptions
 
 if TYPE_CHECKING:
-    from airflow.models.connection import Connection
+    try:
+        from airflow.sdk.definitions.connection import Connection
+    except ImportError:
+        from airflow.models.connection import Connection
 
 
 class FivetranHook(BaseHook):

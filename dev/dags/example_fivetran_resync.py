@@ -1,6 +1,9 @@
 from datetime import datetime, timedelta
 
-from airflow import DAG
+try:
+    from airflow.sdk.definitions.dag import DAG
+except ImportError:
+    from airflow import DAG
 
 from fivetran_provider_async.operators import FivetranResyncOperator
 
@@ -12,7 +15,7 @@ default_args = {
 dag = DAG(
     dag_id="example_fivetran_resync",
     default_args=default_args,
-    schedule_interval=timedelta(days=1),
+    schedule=timedelta(days=1),
     catchup=False,
 )
 
@@ -32,5 +35,5 @@ with dag:
         task_id="fivetran_resync_scoped",
         fivetran_conn_id="fivetran_default",
         connector_id="{{ var.value.connector_id }}",
-        scope={"schema": ["table1", "table2"]},
+        scope={"ci_airflow_provider_fivetran_async": ["ci_airflow_provider_fivetran_async"]},
     )

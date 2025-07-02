@@ -6,10 +6,18 @@ from typing import TYPE_CHECKING, Any, Dict, Optional
 
 import pendulum
 from airflow.exceptions import AirflowException
-from airflow.models import BaseOperator, BaseOperatorLink
+
+try:
+    from airflow.sdk.bases import BaseOperator, BaseOperatorLink
+except ImportError:
+    from airflow.models import BaseOperator, BaseOperatorLink
+
 
 if TYPE_CHECKING:
-    from airflow.utils.context import Context
+    try:
+        from airflow.sdk.definitions.context import Context
+    except ImportError:
+        from airflow.utils.context import Context
 
 from fivetran_provider_async import __version__
 from fivetran_provider_async.hooks import FivetranHook
@@ -78,7 +86,7 @@ class FivetranOperator(BaseOperator):
         wait_for_completion: bool = True,
         **kwargs,
     ) -> None:
-        self._connector_id = connector_id
+        self.connector_id = connector_id
         self.connector_name = connector_name
         self.destination_name = destination_name
         self.fivetran_conn_id = fivetran_conn_id
@@ -107,7 +115,7 @@ class FivetranOperator(BaseOperator):
     def execute(self, context: Context) -> None | str:
         """Start the sync using synchronous hook"""
         hook = self.hook
-        hook.prep_connector(self.connector_id, self.schedule_type)
+        hook.prep_connector(self._connector_id, self.schedule_type)
         last_sync = self._sync(hook)
 
         if not self.wait_for_completion:
@@ -116,7 +124,7 @@ class FivetranOperator(BaseOperator):
         last_sync_dt: pendulum.DateTime = pendulum.parse(last_sync)
 
         is_completed = self.hook.is_synced_after_target_time(
-            self.connector_id,
+            self._connector_id,
             last_sync_dt,
             propagate_failures_forward=False,
             always_wait_when_syncing=True,
@@ -131,7 +139,7 @@ class FivetranOperator(BaseOperator):
                 trigger=FivetranTrigger(
                     task_id=self.task_id,
                     fivetran_conn_id=self.fivetran_conn_id,
-                    connector_id=self.connector_id,
+                    connector_id=self._connector_id,
                     poke_interval=self.poll_frequency,
                     reschedule_wait_time=self.reschedule_wait_time,
                     previous_completed_at=last_sync_dt,
@@ -152,7 +160,7 @@ class FivetranOperator(BaseOperator):
         """
         while True:
             is_completed = self.hook.is_synced_after_target_time(
-                self.connector_id, last_sync, propagate_failures_forward=False, always_wait_when_syncing=True
+                self._connector_id, last_sync, propagate_failures_forward=False, always_wait_when_syncing=True
             )
             if is_completed:
                 return
@@ -171,9 +179,9 @@ class FivetranOperator(BaseOperator):
         )
 
     @cached_property
-    def connector_id(self) -> str:
-        if self._connector_id:
-            return self._connector_id
+    def _connector_id(self) -> str:
+        if self.connector_id:
+            return self.connector_id
         elif self.connector_name and self.destination_name:
             return self.hook.get_connector_id(
                 connector_name=self.connector_name, destination_name=self.destination_name
@@ -264,7 +272,7 @@ class FivetranOperator(BaseOperator):
         return self.get_openlineage_facets_on_start()
 
     def _sync(self, hook: FivetranHook):
-        return hook.start_fivetran_sync(connector_id=self.connector_id)
+        return hook.start_fivetran_sync(connector_id=self._connector_id)
 
 
 class FivetranResyncOperator(FivetranOperator):
@@ -274,5 +282,5 @@ class FivetranResyncOperator(FivetranOperator):
 
     def _sync(self, hook: FivetranHook):
         return hook.start_fivetran_sync(
-            connector_id=self.connector_id, mode="resync", payload={"scope": self.scope} if self.scope else None
+            connector_id=self._connector_id, mode="resync", payload={"scope": self.scope} if self.scope else None
         )
