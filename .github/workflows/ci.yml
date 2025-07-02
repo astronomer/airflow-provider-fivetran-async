@@ -137,6 +137,11 @@ jobs:
         run: |
           hatch run tests.py${{ matrix.python-version }}-${{ matrix.airflow-version }}:test-integration-setup
           hatch run tests.py${{ matrix.python-version }}-${{ matrix.airflow-version }}:test-integration
+        env:
+          AIRFLOW_HOME: ${{ github.workspace }}
+          PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/examples:$PYTHONPATH
+          CI_FIVETRAN_KEY: ${{ secrets.CI_FIVETRAN_KEY }}
+          CI_FIVETRAN_SECRET: ${{ secrets.CI_FIVETRAN_SECRET }}
 
       - name: Upload coverage to Github
         uses: actions/upload-artifact@v4
