@@ -2,4 +2,6 @@ pytest \
     -vv \
     --cov=dagfactory \
     --cov-report=term-missing \
-    --cov-report=xml
+    --cov-report=xml \
+    -m "not (integration)" \
+  --ignore=tests/integrations
