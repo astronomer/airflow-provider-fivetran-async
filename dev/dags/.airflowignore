@@ -1,1 +1,3 @@
+example_fivetran_dbt.py
 example_fivetran_bqml.py
+example_fivetran_bigquery.py

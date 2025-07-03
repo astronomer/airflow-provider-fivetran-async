@@ -7,16 +7,10 @@ except ImportError:
 
 from fivetran_provider_async.operators import FivetranOperator
 
-default_args = {
-    "owner": "Airflow",
-    "start_date": datetime(2021, 4, 6),
-}
-
-
 with DAG(
     "example_fivetran_without_conn_id",
-    default_args=default_args,
     schedule=timedelta(days=1),
+    start_date=datetime(2025, 1, 1),
     catchup=False,
 ) as dag:
 
@@ -24,5 +18,5 @@ with DAG(
         task_id="fivetran_task",
         fivetran_conn_id="fivetran_default",
         connector_name="{{ var.value.connector_name }}",
-        destination_name="{{ var.value.destination_name }}",  # integration_team_ci
+        destination_name="{{ var.value.destination_name }}",
     )
