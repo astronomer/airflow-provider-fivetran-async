@@ -1,19 +1,25 @@
 from __future__ import annotations
 
+import logging
 from functools import cache
 from pathlib import Path
-
+import os
 import airflow
 import pytest
 from airflow.models.dagbag import DagBag
 from airflow.utils.db import create_default_connections
 from airflow.utils.session import provide_session
 from airflow.utils.state import DagRunState
+from airflow.models.connection import Connection
+from airflow.models.variable import Variable
 from packaging.version import Version
+from sqlalchemy.orm.session import Session
 
-from .test_utils import run_dag
+from tests.test_utils import run_dag
 
-EXAMPLE_DAGS_DIR = Path(__file__).parent.parent / "dev/dags"
+log = logging.getLogger(__name__)
+
+EXAMPLE_DAGS_DIR = Path(__file__).parent.parent.parent / "dev/dags"
 AIRFLOW_IGNORE_FILE = EXAMPLE_DAGS_DIR / ".airflowignore"
 AIRFLOW_VERSION = Version(airflow.__version__)
 IGNORED_DAG_FILES = ["example_fivetran_dbt.py", "example_fivetran_bqml.py", "example_fivetran_bigquery.py"]
@@ -30,6 +36,45 @@ def get_session(session=None):
 @pytest.fixture()
 def session():
     return get_session()
+
+@pytest.fixture
+def setup_connection(session: Session,):
+    conn_id = "fivetran_default"
+    existing_conn = session.query(Connection).filter_by(conn_id=conn_id).first()
+    if not existing_conn:
+        new_conn = Connection(
+            conn_id=conn_id,
+            conn_type="fivetran",
+            login=os.getenv("CI_FIVETRAN_KEY"),
+            password=os.getenv("CI_FIVETRAN_SECRET"),
+        )
+        session.add(new_conn)
+        session.commit()
+        log.info(f"Connection '{conn_id}' created.")
+    else:
+        log.info(f"Connection '{conn_id}' already exists.")
+
+
+@pytest.fixture
+def setup_variables(session: Session):
+    required_vars = ["connector_id", "connector_name", "destination_name"]
+    for var_name in required_vars:
+        var_key = var_name
+        var_val = os.getenv(f"CI_{var_name.upper()}")
+
+        if var_val is None:
+            log.warning(f"Environment variable CI_{var_name.upper()} not set.")
+            continue
+
+        existing_var = session.query(Variable).filter_by(key=var_key).first()
+        if not existing_var:
+            session.add(Variable(key=var_key, val=var_val))
+            log.info(f"Variable '{var_key}' created.")
+        else:
+            log.info(f"Variable '{var_key}' already exists.")
+
+    session.commit()
+
 
 
 @cache

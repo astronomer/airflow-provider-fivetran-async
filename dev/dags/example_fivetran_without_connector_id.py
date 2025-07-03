@@ -24,5 +24,5 @@ with DAG(
         task_id="fivetran_task",
         fivetran_conn_id="fivetran_default",
         connector_name="{{ var.value.connector_name }}",
-        destination_name="{{ var.value.destination_name }}",  # integration_team_ci
+        destination_name="{{ var.value.destination_name }}",
     )

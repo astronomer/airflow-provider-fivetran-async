@@ -9,11 +9,9 @@ from typing import Any
 import pytest
 from airflow.configuration import secrets_backend_list
 from airflow.exceptions import AirflowSkipException
-from airflow.models.connection import Connection
 from airflow.models.dag import DAG
 from airflow.models.dagrun import DagRun
 from airflow.models.taskinstance import TaskInstance
-from airflow.models.variable import Variable
 from airflow.secrets.local_filesystem import LocalFilesystemBackend
 from airflow.utils import timezone
 from airflow.utils.session import NEW_SESSION, provide_session
@@ -180,9 +178,7 @@ def _get_or_create_dagrun(
 
 
 @pytest.fixture
-def setup_connection(
-    session: Session,
-):
+def setup_connection(session: Session,):
     conn_id = "fivetran_default"
     existing_conn = session.query(Connection).filter_by(conn_id=conn_id).first()
     if not existing_conn:
