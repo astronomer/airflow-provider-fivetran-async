@@ -71,11 +71,10 @@ def setup_variables(session: Session = NEW_SESSION):
         existing_var = session.query(Variable).filter_by(key=var_key).first()
         if not existing_var:
             session.add(Variable(key=var_key, val=var_val))
+            session.commit()
             log.info("Variable %s created.", var_key)
         else:
             log.info("Variable %s already exists.", var_key)
-
-    session.commit()
 
 
 @cache
