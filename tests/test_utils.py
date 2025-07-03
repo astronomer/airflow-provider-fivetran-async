@@ -1,12 +1,10 @@
 from __future__ import annotations
 
 import logging
-import os
 import sys
 from datetime import datetime
 from typing import Any
 
-import pytest
 from airflow.configuration import secrets_backend_list
 from airflow.exceptions import AirflowSkipException
 from airflow.models.dag import DAG
@@ -175,42 +173,3 @@ def _get_or_create_dagrun(
     )
     log.info("created dagrun %s", str(dr))
     return dr
-
-
-@pytest.fixture
-def setup_connection(session: Session,):
-    conn_id = "fivetran_default"
-    existing_conn = session.query(Connection).filter_by(conn_id=conn_id).first()
-    if not existing_conn:
-        new_conn = Connection(
-            conn_id=conn_id,
-            conn_type="fivetran",
-            login=os.getenv("CI_FIVETRAN_KEY"),
-            password=os.getenv("CI_FIVETRAN_SECRET"),
-        )
-        session.add(new_conn)
-        session.commit()
-        log.info(f"Connection '{conn_id}' created.")
-    else:
-        log.info(f"Connection '{conn_id}' already exists.")
-
-
-@pytest.fixture
-def setup_variables(session: Session):
-    required_vars = ["connector_id", "connector_name", "destination_name"]
-    for var_name in required_vars:
-        var_key = var_name
-        var_val = os.getenv(f"CI_{var_name.upper()}")
-
-        if var_val is None:
-            log.warning(f"Environment variable CI_{var_name.upper()} not set.")
-            continue
-
-        existing_var = session.query(Variable).filter_by(key=var_key).first()
-        if not existing_var:
-            session.add(Variable(key=var_key, val=var_val))
-            log.info(f"Variable '{var_key}' created.")
-        else:
-            log.info(f"Variable '{var_key}' already exists.")
-
-    session.commit()
