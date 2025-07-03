@@ -16,7 +16,7 @@ from airflow.utils.state import DagRunState
 from packaging.version import Version
 from sqlalchemy.orm.session import Session
 
-from tests.test_utils import run_dag
+from tests.utils.utils import run_dag
 
 log = logging.getLogger(__name__)
 
