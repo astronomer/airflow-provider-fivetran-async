@@ -54,9 +54,9 @@ def setup_connection(
         )
         session.add(new_conn)
         session.commit()
-        log.info(f"Connection '{conn_id}' created.")
+        log.info("Connection %s created.", conn_id)
     else:
-        log.info(f"Connection '{conn_id}' already exists.")
+        log.info("Connection %s already exists.", conn_id)
 
 
 @pytest.fixture
@@ -67,15 +67,15 @@ def setup_variables(session: Session):
         var_val = os.getenv(f"CI_{var_name.upper()}")
 
         if var_val is None:
-            log.warning(f"Environment variable CI_{var_name.upper()} not set.")
+            log.warning("Environment variable %s not set.", f"CI_{var_name.upper()}")
             continue
 
         existing_var = session.query(Variable).filter_by(key=var_key).first()
         if not existing_var:
             session.add(Variable(key=var_key, val=var_val))
-            log.info(f"Variable '{var_key}' created.")
+            log.info("Variable %s created.", var_key)
         else:
-            log.info(f"Variable '{var_key}' already exists.")
+            log.info("Variable %s already exists.", var_key)
 
     session.commit()
 

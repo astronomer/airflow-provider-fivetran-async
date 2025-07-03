@@ -19,11 +19,6 @@ from sqlalchemy.orm.session import Session
 
 log = logging.getLogger(__name__)
 
-try:
-    from airflow.version import version as AIRFLOW_VERSION
-except ImportError:
-    pass
-
 
 def run_dag(dag: DAG, conn_file_path: str | None = None) -> DagRun:
     return test_dag(dag=dag, conn_file_path=conn_file_path)
