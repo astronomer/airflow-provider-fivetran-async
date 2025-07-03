@@ -9,15 +9,10 @@ from airflow.providers.ssh.operators.ssh import SSHOperator
 
 from fivetran_provider_async.operators import FivetranOperator
 
-default_args = {
-    "owner": "Airflow",
-    "start_date": datetime(2021, 4, 6),
-}
-
 with DAG(
     dag_id="ad_reporting_dag",
-    default_args=default_args,
     schedule=timedelta(days=1),
+    start_date=datetime(2025, 1, 1),
     catchup=False,
 ) as dag:
     linkedin_sync = FivetranOperator(

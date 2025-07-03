@@ -7,15 +7,10 @@ except ImportError:
 
 from fivetran_provider_async.operators import FivetranResyncOperator
 
-default_args = {
-    "owner": "Airflow",
-    "start_date": datetime(2021, 4, 6),
-}
-
 dag = DAG(
     dag_id="example_fivetran_resync",
-    default_args=default_args,
     schedule=timedelta(days=1),
+    start_date=datetime(2025, 1, 1),
     catchup=False,
 )
 

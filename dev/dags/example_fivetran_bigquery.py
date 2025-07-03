@@ -15,21 +15,12 @@ from fivetran_provider_async.sensors import FivetranSensor
 
 TABLE = "forestfires"
 DATASET = "google_sheets"
-# These args will get passed on to each operator
-# You can override them on a per-task basis during operator initialization
-default_args = {
-    "owner": "astronomer",
-    "depends_on_past": False,
-    "start_date": datetime(2021, 7, 7),
-    "email": ["noreply@astronomer.io"],
-    "email_on_failure": False,
-}
+
 
 with DAG(
     "example_fivetran_bigquery",
-    default_args=default_args,
-    description="",
     schedule=None,
+    start_date=datetime(2025, 1, 1),
     catchup=False,
 ) as dag:
     """
