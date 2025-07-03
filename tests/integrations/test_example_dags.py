@@ -11,7 +11,7 @@ from airflow.models.connection import Connection
 from airflow.models.dagbag import DagBag
 from airflow.models.variable import Variable
 from airflow.utils.db import create_default_connections
-from airflow.utils.session import provide_session
+from airflow.utils.session import NEW_SESSION, provide_session
 from airflow.utils.state import DagRunState
 from packaging.version import Version
 from sqlalchemy.orm.session import Session
@@ -39,10 +39,8 @@ def session():
     return get_session()
 
 
-@pytest.fixture
-def setup_connection(
-    session: Session,
-):
+@provide_session
+def setup_connection(session: Session = NEW_SESSION):
     conn_id = "fivetran_default"
     existing_conn = session.query(Connection).filter_by(conn_id=conn_id).first()
     if not existing_conn:
@@ -59,7 +57,7 @@ def setup_connection(
         log.info("Connection %s already exists.", conn_id)
 
 
-@pytest.fixture
+@provide_session
 def setup_variables(session: Session):
     required_vars = ["connector_id", "connector_name", "destination_name"]
     for var_name in required_vars:
@@ -111,7 +109,9 @@ def get_dag_ids() -> list[str]:
 
 @pytest.mark.integration
 @pytest.mark.parametrize("dag_id", get_dag_ids())
-def test_example_dag(session, dag_id: str, setup_connection, setup_variables):
+def test_example_dag(session, dag_id: str):
+    setup_variables()
+    setup_connection()
     dag_bag = get_dag_bag()
     dag = dag_bag.get_dag(dag_id)
 
