@@ -5,30 +5,28 @@ import os
 import sys
 from datetime import datetime
 from typing import Any
-import pytest
 
+import pytest
 from airflow.configuration import secrets_backend_list
 from airflow.exceptions import AirflowSkipException
+from airflow.models.connection import Connection
 from airflow.models.dag import DAG
 from airflow.models.dagrun import DagRun
 from airflow.models.taskinstance import TaskInstance
+from airflow.models.variable import Variable
 from airflow.secrets.local_filesystem import LocalFilesystemBackend
 from airflow.utils import timezone
-from airflow.utils.session import provide_session
+from airflow.utils.session import NEW_SESSION, provide_session
 from airflow.utils.state import DagRunState, State
 from airflow.utils.types import DagRunType
 from sqlalchemy.orm.session import Session
-from airflow.utils.session import NEW_SESSION
-from airflow.models.connection import Connection
-from airflow.models.variable import Variable
-
 
 log = logging.getLogger(__name__)
 
 try:
     from airflow.version import version as AIRFLOW_VERSION
 except ImportError:
-    from airflow import __version__ as AIRFLOW_VERSION
+    pass
 
 
 def run_dag(dag: DAG, conn_file_path: str | None = None) -> DagRun:
@@ -180,22 +178,26 @@ def _get_or_create_dagrun(
     log.info("created dagrun %s", str(dr))
     return dr
 
+
 @pytest.fixture
-def setup_connection(session: Session,):
+def setup_connection(
+    session: Session,
+):
     conn_id = "fivetran_default"
     existing_conn = session.query(Connection).filter_by(conn_id=conn_id).first()
     if not existing_conn:
         new_conn = Connection(
-        conn_id=conn_id,
-        conn_type="fivetran",
-        login=os.getenv("CI_FIVETRAN_KEY"),
-        password=os.getenv("CI_FIVETRAN_SECRET"),
-    )
+            conn_id=conn_id,
+            conn_type="fivetran",
+            login=os.getenv("CI_FIVETRAN_KEY"),
+            password=os.getenv("CI_FIVETRAN_SECRET"),
+        )
         session.add(new_conn)
         session.commit()
         log.info(f"Connection '{conn_id}' created.")
     else:
         log.info(f"Connection '{conn_id}' already exists.")
+
 
 @pytest.fixture
 def setup_variables(session: Session):
@@ -216,6 +218,3 @@ def setup_variables(session: Session):
             log.info(f"Variable '{var_key}' already exists.")
 
     session.commit()
-
-
-
