@@ -58,7 +58,7 @@ def setup_connection(session: Session = NEW_SESSION):
 
 
 @provide_session
-def setup_variables(session: Session):
+def setup_variables(session: Session = NEW_SESSION):
     required_vars = ["connector_id", "connector_name", "destination_name"]
     for var_name in required_vars:
         var_key = var_name
