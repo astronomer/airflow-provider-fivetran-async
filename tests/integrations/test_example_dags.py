@@ -1,17 +1,18 @@
 from __future__ import annotations
 
 import logging
+import os
 from functools import cache
 from pathlib import Path
-import os
+
 import airflow
 import pytest
+from airflow.models.connection import Connection
 from airflow.models.dagbag import DagBag
+from airflow.models.variable import Variable
 from airflow.utils.db import create_default_connections
 from airflow.utils.session import provide_session
 from airflow.utils.state import DagRunState
-from airflow.models.connection import Connection
-from airflow.models.variable import Variable
 from packaging.version import Version
 from sqlalchemy.orm.session import Session
 
@@ -37,8 +38,11 @@ def get_session(session=None):
 def session():
     return get_session()
 
+
 @pytest.fixture
-def setup_connection(session: Session,):
+def setup_connection(
+    session: Session,
+):
     conn_id = "fivetran_default"
     existing_conn = session.query(Connection).filter_by(conn_id=conn_id).first()
     if not existing_conn:
@@ -74,7 +78,6 @@ def setup_variables(session: Session):
             log.info(f"Variable '{var_key}' already exists.")
 
     session.commit()
-
 
 
 @cache
