@@ -1,7 +1,13 @@
 from datetime import datetime, timedelta
 
-from airflow import DAG
-from airflow.operators.python import BranchPythonOperator
+try:
+    from airflow.providers.standard.operators.python import BranchPythonOperator
+    from airflow.sdk.definitions.dag import DAG
+except ImportError:
+    from airflow import DAG
+    from airflow.operators.python import BranchPythonOperator
+
+
 from airflow.providers.google.cloud.operators.bigquery import (
     BigQueryExecuteQueryOperator,
     BigQueryGetDataOperator,
@@ -63,7 +69,7 @@ default_args = {
 dag = DAG(
     dag_id="example_fivetran_bqml",
     default_args=default_args,
-    schedule_interval=timedelta(days=1),
+    schedule=timedelta(days=1),
     catchup=False,
 )
 

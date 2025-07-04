@@ -343,7 +343,7 @@ class TestFivetranOperator(unittest.TestCase):
             FivetranOperator(
                 task_id="fivetran_op_async",
                 fivetran_conn_id="conn_fivetran",
-            )
+            ).execute(context={})
 
         assert str(exc.value) == "No value specified for connector_id or to both connector_name and destination_name"
 
