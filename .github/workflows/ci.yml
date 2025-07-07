@@ -1,7 +1,7 @@
 name: Build and test
 on:
   push:
-    branches: ['main', 'restrict_ci']
+    branches: ['main']
   pull_request:
     branches: ['main']
   release:
