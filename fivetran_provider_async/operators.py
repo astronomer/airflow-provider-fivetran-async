@@ -2,22 +2,12 @@ from __future__ import annotations
 
 from functools import cached_property
 from time import sleep
-from typing import TYPE_CHECKING, Any, Dict, Optional
+from typing import Any, Dict, Optional
 
 import pendulum
 from airflow.exceptions import AirflowException
-
-try:
-    from airflow.sdk.bases import BaseOperator, BaseOperatorLink
-except ImportError:
-    from airflow.models import BaseOperator, BaseOperatorLink
-
-
-if TYPE_CHECKING:
-    try:
-        from airflow.sdk.definitions.context import Context
-    except ImportError:
-        from airflow.utils.context import Context
+from airflow.models import BaseOperator, BaseOperatorLink
+from airflow.utils.context import Context
 
 from fivetran_provider_async import __version__
 from fivetran_provider_async.hooks import FivetranHook
