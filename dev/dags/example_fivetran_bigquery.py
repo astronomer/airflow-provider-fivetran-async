@@ -1,12 +1,7 @@
-try:
-    from airflow.providers.standard import EmptyOperator
-    from airflow.sdk.definitions.dag import DAG
-except ImportError:
-    from airflow import DAG
-    from airflow.operators.empty import EmptyOperator
-
 from datetime import datetime
 
+from airflow import DAG
+from airflow.operators.empty import EmptyOperator
 from airflow.providers.google.cloud.operators.bigquery import BigQueryValueCheckOperator
 from airflow.providers.google.cloud.sensors.bigquery import BigQueryTableExistenceSensor
 
@@ -29,7 +24,7 @@ with DAG(
     "example_fivetran_bigquery",
     default_args=default_args,
     description="",
-    schedule=None,
+    schedule_interval=None,
     catchup=False,
 ) as dag:
     """

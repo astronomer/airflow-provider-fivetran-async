@@ -1,9 +1,6 @@
 from datetime import datetime, timedelta
 
-try:
-    from airflow.sdk.definitions.dag import DAG
-except ImportError:
-    from airflow import DAG
+from airflow import DAG
 
 from fivetran_provider_async.operators import FivetranOperator
 
@@ -16,7 +13,7 @@ default_args = {
 with DAG(
     "example_fivetran_without_conn_id",
     default_args=default_args,
-    schedule=timedelta(days=1),
+    schedule_interval=timedelta(days=1),
     catchup=False,
 ) as dag:
 
