@@ -5,10 +5,19 @@
 ### Feature
 
 - Add `ResyncOperator` by @johnhoran in https://github.com/astronomer/airflow-provider-fivetran-async/pull/140
+- Add py.typed markers by @johnhoran in https://github.com/astronomer/airflow-provider-fivetran-async/pull/163
+
+### Bug Fixes
+
+- Fix the templated attr for FivetranOperator and use astro-cli by @pankajastro in https://github.com/astronomer/airflow-provider-fivetran-async/pull/156
 
 ### Others
 
-- Pre-commit hook updates in https://github.com/astronomer/airflow-provider-fivetran-async/pull/138, https://github.com/astronomer/airflow-provider-fivetran-async/pull/141 and https://github.com/astronomer/airflow-provider-fivetran-async/pull/142
+- Use pull_request for authorize as we don't have pull_request_target event configured by @pankajkoti in https://github.com/astronomer/airflow-provider-fivetran-async/pull/161
+- Add Authorize job the CI by @pankajastro in https://github.com/astronomer/airflow-provider-fivetran-async/pull/159
+- Update CODEOWNERS by @pankajastro in https://github.com/astronomer/airflow-provider-fivetran-async/pull/158
+- Drop Python 3.8 support by @pankajastro in https://github.com/astronomer/airflow-provider-fivetran-async/pull/153
+- Pre-commit hook updates in https://github.com/astronomer/airflow-provider-fivetran-async/pull/138, https://github.com/astronomer/airflow-provider-fivetran-async/pull/141, https://github.com/astronomer/airflow-provider-fivetran-async/pull/142, https://github.com/astronomer/airflow-provider-fivetran-async/pull/145, https://github.com/astronomer/airflow-provider-fivetran-async/pull/146, https://github.com/astronomer/airflow-provider-fivetran-async/pull/147, https://github.com/astronomer/airflow-provider-fivetran-async/pull/149, https://github.com/astronomer/airflow-provider-fivetran-async/pull/151, https://github.com/astronomer/airflow-provider-fivetran-async/pull/152, https://github.com/astronomer/airflow-provider-fivetran-async/pull/155, https://github.com/astronomer/airflow-provider-fivetran-async/pull/160 and https://github.com/astronomer/airflow-provider-fivetran-async/pull/162
 
 ## 2.1.3 (2025-04-17)
 
