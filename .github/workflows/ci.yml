@@ -174,6 +174,7 @@ jobs:
         env:
           AIRFLOW_HOME: ${{ github.workspace }}
           PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/examples:$PYTHONPATH
+          AIRFLOW_CONN_FIVETRAN_DEFAULT: ${{ secrets.FIVETRAN_DEFAULT }}
           CI_FIVETRAN_KEY: ${{ secrets.CI_FIVETRAN_KEY }}
           CI_FIVETRAN_SECRET: ${{ secrets.CI_FIVETRAN_SECRET }}
           CI_CONNECTOR_ID: ${{ env.CI_CONNECTOR_ID }}

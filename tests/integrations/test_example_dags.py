@@ -111,8 +111,8 @@ def get_dag_ids() -> list[str]:
 @pytest.mark.integration
 @pytest.mark.parametrize("dag_id", get_dag_ids())
 def test_example_dag(session, dag_id: str):
-    setup_variables(session)
-    setup_connection(session)
+    # setup_variables(session)
+    # setup_connection(session)
     dag_bag = get_dag_bag()
     dag = dag_bag.get_dag(dag_id)
 

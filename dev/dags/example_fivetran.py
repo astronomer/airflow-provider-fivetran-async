@@ -20,5 +20,5 @@ with dag:
     fivetran_sync_start = FivetranOperator(
         task_id="fivetran_task",
         fivetran_conn_id="fivetran_default",
-        connector_id="{{ var.value.connector_id }}",
+        connector_id="industries_leukemia",  # "{{ var.value.connector_id }}",
     )
