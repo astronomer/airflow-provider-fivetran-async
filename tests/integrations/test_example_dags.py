@@ -65,8 +65,9 @@ def setup_variables(session: Session = NEW_SESSION):
         var_val = os.getenv(f"CI_{var_name.upper()}")
 
         if var_val is None:
-            log.warning("Environment variable %s not set.", f"CI_{var_name.upper()}")
-            continue
+            raise Exception("Environment variable %s not set.", f"CI_{var_name.upper()}")
+            # log.warning("Environment variable %s not set.", f"CI_{var_name.upper()}")
+            # continue
 
         existing_var = session.query(Variable).filter_by(key=var_key).first()
         if not existing_var:
