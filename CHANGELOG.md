@@ -13,7 +13,7 @@
 
 ### Others
 
-- Drop Airflow 2.2 and 2.3 support by @pankajastro in https://github.com/astronomer/airflow-provider-fivetran-async/pull/165 (WIP)
+- Drop Airflow 2.2 and 2.3 support by @pankajastro in https://github.com/astronomer/airflow-provider-fivetran-async/pull/165
 - Add Integration tests by @pankajastro in https://github.com/astronomer/airflow-provider-fivetran-async/pull/164 (WIP)
 - Use pull_request for authorize as we don't have pull_request_target event configured by @pankajkoti in https://github.com/astronomer/airflow-provider-fivetran-async/pull/161
 - Add Authorize job the CI by @pankajastro in https://github.com/astronomer/airflow-provider-fivetran-async/pull/159
