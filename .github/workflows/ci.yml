@@ -13,7 +13,16 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  Authorize:
+    environment: ${{ github.event_name == 'pull_request' &&
+      github.event.pull_request.head.repo.full_name != github.repository &&
+      'external' || 'internal' }}
+    runs-on: ubuntu-latest
+    steps:
+      - run: true
+
   Static-Check:
+    needs: Authorize
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -29,6 +38,7 @@ jobs:
       - run: hatch run tests.py3.11-2.10:static-check
 
   Run-Unit-Tests:
+    needs: Authorize
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -104,6 +114,7 @@ jobs:
           include-hidden-files: true
 
   Run-Integration-Tests:
+    needs: Authorize
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -180,6 +191,7 @@ jobs:
       - Static-Check
       - Run-Unit-Tests
       - Run-Integration-Tests
+      - Authorize
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
