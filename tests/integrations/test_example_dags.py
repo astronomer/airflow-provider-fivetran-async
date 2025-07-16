@@ -15,8 +15,6 @@ from airflow.utils.state import DagRunState
 from packaging.version import Version
 from sqlalchemy.orm.session import Session
 
-from tests.utils.utils import run_dag
-
 log = logging.getLogger(__name__)
 
 EXAMPLE_DAGS_DIR = Path(__file__).parent.parent.parent / "dev/dags"
@@ -98,13 +96,6 @@ def test_example_dag(session, dag_id: str):
     dag_bag = get_dag_bag()
     dag = dag_bag.get_dag(dag_id)
 
-    # This feature is available since Airflow 2.5:
-    # https://airflow.apache.org/docs/apache-airflow/stable/release_notes.html#airflow-2-5-0-2022-12-02
-    dag_run = None
-    if AIRFLOW_VERSION >= Version("2.5"):
-        dag_run = dag.test()
-    else:
-        dag_run = run_dag(dag)
-
+    dag_run = dag.test()
     if dag_run is not None:
         assert dag_run.state == DagRunState.SUCCESS
