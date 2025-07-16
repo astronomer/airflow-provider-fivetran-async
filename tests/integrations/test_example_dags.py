@@ -73,6 +73,7 @@ def setup_variables(session: Session = NEW_SESSION):
             session.add(Variable(key=var_key, val=var_val))
             session.commit()
             log.info("Variable %s created.", var_key)
+            log.info("Variable val %s created.", var_val)
         else:
             log.info("Variable %s already exists.", var_key)
 
@@ -109,8 +110,8 @@ def get_dag_ids() -> list[str]:
 @pytest.mark.integration
 @pytest.mark.parametrize("dag_id", get_dag_ids())
 def test_example_dag(session, dag_id: str):
-    setup_variables()
-    setup_connection()
+    setup_variables(session)
+    setup_connection(session)
     dag_bag = get_dag_bag()
     dag = dag_bag.get_dag(dag_id)
 
