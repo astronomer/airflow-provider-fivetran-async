@@ -22,7 +22,12 @@ log = logging.getLogger(__name__)
 EXAMPLE_DAGS_DIR = Path(__file__).parent.parent.parent / "dev/dags"
 AIRFLOW_IGNORE_FILE = EXAMPLE_DAGS_DIR / ".airflowignore"
 AIRFLOW_VERSION = Version(airflow.__version__)
-IGNORED_DAG_FILES = ["example_fivetran_dbt.py", "example_fivetran_bqml.py", "example_fivetran_bigquery.py"]
+IGNORED_DAG_FILES = [
+    "example_fivetran_dbt.py",
+    "example_fivetran_bqml.py",
+    "example_fivetran_bigquery.py",
+    "example_fivetran_resync.py",  # Disabled due to slow performance
+]
 
 MIN_VER_DAG_FILE_VER: dict[str, list[str]] = {}
 
