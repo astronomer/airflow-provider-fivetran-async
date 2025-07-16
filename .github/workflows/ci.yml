@@ -1,7 +1,7 @@
 name: Build and test
 on:
   push:
-    branches: ['main']
+    branches: ['main', 'add_integration_test']
   pull_request:
     branches: ['main']
   release:
@@ -104,7 +104,7 @@ jobs:
 
       - name: Test Airflow ${{ matrix.airflow-version }} and Python ${{ matrix.python-version }}
         run: |
-          hatch run tests.py${{ matrix.python-version }}-${{ matrix.airflow-version }}:test-cov
+          hatch run tests.py${{ matrix.python-version }}-${{ matrix.airflow-version }}:test
 
       - name: Upload coverage to Github
         uses: actions/upload-artifact@v4

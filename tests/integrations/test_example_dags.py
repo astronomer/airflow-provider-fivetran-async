@@ -21,10 +21,15 @@ EXAMPLE_DAGS_DIR = Path(__file__).parent.parent.parent / "dev/dags"
 AIRFLOW_IGNORE_FILE = EXAMPLE_DAGS_DIR / ".airflowignore"
 AIRFLOW_VERSION = Version(airflow.__version__)
 IGNORED_DAG_FILES = [
+    # Disabled due to infrastructure and credential challenges.
+    # This DAG fetches data from LinkedIn and X (formerly Twitter),
+    # and also depends on the SSH operator.
     "example_fivetran_dbt.py",
     "example_fivetran_bqml.py",
+    # Depends on an operator from the Google provider, which was removed in recent Airflow versions.
     "example_fivetran_bigquery.py",
-    "example_fivetran_resync.py",  # Disabled due to slow performance
+    # Disabled due to slow performance
+    "example_fivetran_resync.py",
 ]
 
 MIN_VER_DAG_FILE_VER: dict[str, list[str]] = {}
