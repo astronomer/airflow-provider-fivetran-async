@@ -47,15 +47,12 @@ def setup_variables(session: Session = NEW_SESSION):
 
         if var_val is None:
             raise Exception("Environment variable %s not set.", f"CI_{var_name.upper()}")
-            # log.warning("Environment variable %s not set.", f"CI_{var_name.upper()}")
-            # continue
 
         existing_var = session.query(Variable).filter_by(key=var_key).first()
         if not existing_var:
             session.add(Variable(key=var_key, val=var_val))
             session.commit()
             log.info("Variable %s created.", var_key)
-            log.info("Variable val %s created.", var_val)
         else:
             log.info("Variable %s already exists.", var_key)
 
