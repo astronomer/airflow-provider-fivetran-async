@@ -176,10 +176,9 @@ jobs:
           PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/examples:$PYTHONPATH
           CI_FIVETRAN_KEY: ${{ secrets.CI_FIVETRAN_KEY }}
           CI_FIVETRAN_SECRET: ${{ secrets.CI_FIVETRAN_SECRET }}
-          # CI_CONNECTOR_ID: ${{ secrets.CI_CONNECTOR_ID }}
           CI_CONNECTOR_ID: ${{ env.CI_CONNECTOR_ID }}
-          CI_CONNECTOR_NAME: ${{ secrets.CI_CONNECTOR_NAME }}
-          CI_DESTINATION_NAME: ${{ secrets.CI_DESTINATION_NAME }}
+          CI_CONNECTOR_NAME: ${{ env.CI_CONNECTOR_NAME }}
+          CI_DESTINATION_NAME: ${{ env.CI_DESTINATION_NAME }}
 
       - name: Upload coverage to Github
         uses: actions/upload-artifact@v4
