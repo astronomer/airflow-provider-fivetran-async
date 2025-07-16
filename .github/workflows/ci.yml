@@ -1,7 +1,7 @@
 name: Build and test
 on:
   push:
-    branches: ['main', 'bump_airflow_version']
+    branches: ['main']
   pull_request:
     branches: ['main']
   release:
@@ -91,7 +91,7 @@ jobs:
 
       - name: Test Airflow ${{ matrix.airflow-version }} and Python ${{ matrix.python-version }}
         run: |
-          hatch run tests.py${{ matrix.python-version }}-${{ matrix.airflow-version }}:test-cov
+          hatch run tests.py${{ matrix.python-version }}-${{ matrix.airflow-version }}:test
 
       - name: Upload coverage to Github
         uses: actions/upload-artifact@v4
@@ -106,8 +106,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [ "3.12" ]
-        airflow-version: [ "2.10" ]
+        python-version: [ "3.9", "3.10", "3.11", "3.12" ]
+        # TODO: Enable tests for others version of Airflow
+        # https://github.com/astronomer/airflow-provider-fivetran-async/issues/166
+        airflow-version: [ "2.8", "2.9", "2.10" ]
+        exclude:
+          - python-version: "3.12"
+            airflow-version: "2.8"
     steps:
       - uses: actions/checkout@v4
         with:
@@ -135,6 +140,13 @@ jobs:
         run: |
           hatch run tests.py${{ matrix.python-version }}-${{ matrix.airflow-version }}:test-integration-setup
           hatch run tests.py${{ matrix.python-version }}-${{ matrix.airflow-version }}:test-integration
+        env:
+          AIRFLOW_HOME: ${{ github.workspace }}
+          PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/examples:$PYTHONPATH
+          AIRFLOW_CONN_FIVETRAN_DEFAULT: ${{ secrets.FIVETRAN_DEFAULT }}
+          CI_CONNECTOR_ID: industries_leukemia
+          CI_CONNECTOR_NAME: ci_airflow_provider_fivetran_async
+          CI_DESTINATION_NAME: integration_team_ci
 
       - name: Upload coverage to Github
         uses: actions/upload-artifact@v4

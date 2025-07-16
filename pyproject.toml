@@ -71,7 +71,6 @@ matrix.airflow.dependencies = [
 freeze = "pip freeze"
 static-check = " pre-commit run --files fivetran_provider_async/*"
 test = 'sh scripts/test/unit.sh'
-test-cov = 'sh scripts/test/unit-cov.sh'
 test-integration = 'sh scripts/test/integration.sh'
 test-integration-setup = 'sh scripts/test/integration-setup.sh'
 
