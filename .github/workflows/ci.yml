@@ -1,7 +1,7 @@
 name: Build and test
 on:
   push:
-    branches: ['main']
+    branches: ['main', 'add_integration_test']
   pull_request:
     branches: ['main']
   release:
@@ -13,16 +13,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  Authorize:
-    environment: ${{ github.event_name == 'pull_request' &&
-      github.event.pull_request.head.repo.full_name != github.repository &&
-      'external' || 'internal' }}
-    runs-on: ubuntu-latest
-    steps:
-      - run: true
-
   Static-Check:
-    needs: Authorize
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -38,7 +29,6 @@ jobs:
       - run: hatch run tests.py3.11-2.10:static-check
 
   Run-Unit-Tests:
-    needs: Authorize
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -114,13 +104,46 @@ jobs:
           include-hidden-files: true
 
   Run-Integration-Tests:
-    needs: Authorize
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        python-version: [ "3.12" ]
-        airflow-version: [ "2.10" ]
+        python-version: [ "3.9", "3.10", "3.11", "3.12" ]
+        airflow-version: [ "2.2", "2.3", "2.4", "2.5", "2.6", "2.7", "2.8", "2.9", "2.10" ]
+        exclude:
+          # Apache Airflow versions prior to 2.3.0 have not been tested with Python 3.10
+          # See: https://airflow.apache.org/docs/apache-airflow/2.2.0/installation/prerequisites.html
+          - python-version: "3.10"
+            airflow-version: "2.2"
+          # Apache Airflow versions prior to 2.6.2 have not been tested with Python 3.11
+          - python-version: "3.11"
+            airflow-version: "2.2"
+          - python-version: "3.11"
+            airflow-version: "2.3"
+          - python-version: "3.11"
+            airflow-version: "2.4"
+          - python-version: "3.11"
+            airflow-version: "2.5"
+          - python-version: "3.11"
+            airflow-version: "2.6"
+          # Apache Airflow versions prior to 2.9.0 have not been tested with Python 3.12.
+          # Official support for Python 3.12 and the corresponding constraints.txt are available only for Apache Airflow >= 2.9.0.
+          # See: https://github.com/apache/airflow/tree/2.9.0?tab=readme-ov-file#requirements
+          # See: https://github.com/apache/airflow/tree/2.8.4?tab=readme-ov-file#requirements
+          - python-version: "3.12"
+            airflow-version: "2.2"
+          - python-version: "3.12"
+            airflow-version: "2.3"
+          - python-version: "3.12"
+            airflow-version: "2.4"
+          - python-version: "3.12"
+            airflow-version: "2.5"
+          - python-version: "3.12"
+            airflow-version: "2.6"
+          - python-version: "3.12"
+            airflow-version: "2.7"
+          - python-version: "3.12"
+            airflow-version: "2.8"
     steps:
       - uses: actions/checkout@v4
         with:
@@ -148,6 +171,15 @@ jobs:
         run: |
           hatch run tests.py${{ matrix.python-version }}-${{ matrix.airflow-version }}:test-integration-setup
           hatch run tests.py${{ matrix.python-version }}-${{ matrix.airflow-version }}:test-integration
+        env:
+          AIRFLOW_HOME: ${{ github.workspace }}
+          PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/examples:$PYTHONPATH
+          CI_FIVETRAN_KEY: ${{ secrets.CI_FIVETRAN_KEY }}
+          CI_FIVETRAN_SECRET: ${{ secrets.CI_FIVETRAN_SECRET }}
+          # CI_CONNECTOR_ID: ${{ secrets.CI_CONNECTOR_ID }}
+          CI_CONNECTOR_ID: ${{ env.CI_CONNECTOR_ID }}
+          CI_CONNECTOR_NAME: ${{ secrets.CI_CONNECTOR_NAME }}
+          CI_DESTINATION_NAME: ${{ secrets.CI_DESTINATION_NAME }}
 
       - name: Upload coverage to Github
         uses: actions/upload-artifact@v4
@@ -163,7 +195,6 @@ jobs:
       - Static-Check
       - Run-Unit-Tests
       - Run-Integration-Tests
-      - Authorize
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
