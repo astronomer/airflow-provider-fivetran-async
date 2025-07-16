@@ -7,7 +7,6 @@ from pathlib import Path
 
 import airflow
 import pytest
-from airflow.models.connection import Connection
 from airflow.models.dagbag import DagBag
 from airflow.models.variable import Variable
 from airflow.utils.db import create_default_connections
@@ -37,24 +36,6 @@ def get_session(session=None):
 @pytest.fixture()
 def session():
     return get_session()
-
-
-@provide_session
-def setup_connection(session: Session = NEW_SESSION):
-    conn_id = "fivetran_default"
-    existing_conn = session.query(Connection).filter_by(conn_id=conn_id).first()
-    if not existing_conn:
-        new_conn = Connection(
-            conn_id=conn_id,
-            conn_type="fivetran",
-            login=os.getenv("CI_FIVETRAN_KEY"),
-            password=os.getenv("CI_FIVETRAN_SECRET"),
-        )
-        session.add(new_conn)
-        session.commit()
-        log.info("Connection %s created.", conn_id)
-    else:
-        log.info("Connection %s already exists.", conn_id)
 
 
 @provide_session
@@ -112,7 +93,6 @@ def get_dag_ids() -> list[str]:
 @pytest.mark.parametrize("dag_id", get_dag_ids())
 def test_example_dag(session, dag_id: str):
     setup_variables(session)
-    # setup_connection(session)
     dag_bag = get_dag_bag()
     dag = dag_bag.get_dag(dag_id)
 
