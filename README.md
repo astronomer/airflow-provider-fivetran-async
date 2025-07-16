@@ -102,7 +102,7 @@ In this case, the sensor will make note of when the last completed time was, and
 
 ## Examples
 
-See the [**examples**](https://github.com/astronomer/airflow-provider-fivetran-async/tree/main/fivetran_provider_async/example_dags) directory for an example DAG.
+See the [**examples**](https://github.com/astronomer/airflow-provider-fivetran-async/tree/main/fivetran_provider_async/dev/dags) directory for an example DAG.
 
 ## Issues
 

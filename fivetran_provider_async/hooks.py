@@ -13,12 +13,10 @@ import requests
 from aiohttp import ClientResponseError
 from airflow.exceptions import AirflowException
 from airflow.hooks.base import BaseHook
+from airflow.models.connection import Connection
 from airflow.utils.helpers import is_container
 from asgiref.sync import sync_to_async
 from requests import exceptions as requests_exceptions
-
-if TYPE_CHECKING:
-    from airflow.models.connection import Connection
 
 
 class FivetranHook(BaseHook):

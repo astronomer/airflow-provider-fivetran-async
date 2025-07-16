@@ -1,17 +1,6 @@
-.PHONY: dev logs stop clean build build-run restart restart-all run-tests shell help
-
-# If the first argument is "run"...
-ifeq (run-mypy,$(firstword $(MAKECMDGOALS)))
-  # use the rest as arguments for "run"
-  RUN_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
-  ifndef RUN_ARGS
-  RUN_ARGS := .
-  endif
-  # ...and turn them into do-nothing targets
-  $(eval $(RUN_ARGS):;@:)
-endif
-
-ASTRO_RUNTIME_IMAGE_NAME = "quay.io/astronomer/astro-runtime:12.6.0-base"
+.PHONY: help
+help:
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
 .PHONY: setup
 setup: ## Setup development environment
@@ -20,39 +9,22 @@ setup: ## Setup development environment
 	@echo "To activate the virtual environment, run:"
 	@echo "source venv/bin/activate"
 
-dev: ## Create a development Environment using `docker compose` file.
-	IMAGE_NAME=$(ASTRO_RUNTIME_IMAGE_NAME) docker compose -f dev/docker-compose.yaml up -d
+.PHONY: build-whl
+build-whl: ## Build installable whl file
+	rm -rf dev/include/*
+	rm -rf dist/*
+	mkdir -p dev/include
+	uv build --wheel --sdist
+	cp dist/* dev/include/
 
-logs: ## View logs of the all the containers
-	docker compose -f dev/docker-compose.yaml logs --follow
+.PHONY: docker-run
+docker-run: build-whl ## Runs local Airflow for testing
+	@if ! lsof -i :8080 | grep LISTEN > /dev/null; then \
+		cd dev && astro dev start --verbosity debug; \
+	else \
+		cd dev && astro dev restart --verbosity debug; \
+	fi
 
-stop: ## Stop all the containers
-	docker compose -f dev/docker-compose.yaml down
-
-clean: ## Remove all the containers along with volumes
-	docker compose -f dev/docker-compose.yaml down  --volumes --remove-orphans
-	rm -rf dev/logs
-
-build: ## Build the Docker image (ignoring cache)
-	docker build --build-arg IMAGE_NAME=$(ASTRO_RUNTIME_IMAGE_NAME) -f dev/Dockerfile . -t airflow-provider-fivetran-async-dev:latest --no-cache
-
-build-run: ## Build the Docker Image & then run the containers
-	IMAGE_NAME=$(ASTRO_RUNTIME_IMAGE_NAME) docker compose -f dev/docker-compose.yaml up --build -d
-
-restart: ## Restart Triggerer, Scheduler and Worker containers
-	docker compose -f dev/docker-compose.yaml restart airflow-triggerer airflow-scheduler airflow-worker
-
-restart-all: ## Restart all the containers
-	docker compose -f dev/docker-compose.yaml restart
-
-run-tests: ## Run CI tests
-	docker build --build-arg IMAGE_NAME=$(ASTRO_RUNTIME_IMAGE_NAME) -f dev/Dockerfile . -t airflow-provider-fivetran-async-dev
-	docker run -v `pwd`:/usr/local/airflow/airflow_provider_fivetran_async -v `pwd`/dev/.cache:/home/astro/.cache \
-        -w /usr/local/airflow/airflow_provider_fivetran_async \
-		--rm -it airflow-provider-fivetran-async-dev -- pytest --cov astronomer --cov-report=term-missing tests
-
-shell:  ## Runs a shell within a container (Allows interactive session)
-	docker compose -f dev/docker-compose.yaml run --rm airflow-scheduler bash
-
-help: ## Prints this message
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-41s\033[0m %s\n", $$1, $$2}'
+.PHONY: docker-stop
+docker-stop: ## Stop Docker container
+	cd dev && astro dev stop

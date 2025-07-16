@@ -9,17 +9,17 @@ default_args = {
     "start_date": datetime(2021, 4, 6),
 }
 
-dag = DAG(
-    dag_id="example_fivetran_without_connector_id",
+
+with DAG(
+    "example_fivetran_without_conn_id",
     default_args=default_args,
     schedule_interval=timedelta(days=1),
     catchup=False,
-)
+) as dag:
 
-with dag:
     fivetran_sync_start = FivetranOperator(
         task_id="fivetran_task",
         fivetran_conn_id="fivetran_default",
         connector_name="{{ var.value.connector_name }}",
-        destination_name="{{ var.value.destination_name }}",
+        destination_name="{{ var.value.destination_name }}",  # integration_team_ci
     )
