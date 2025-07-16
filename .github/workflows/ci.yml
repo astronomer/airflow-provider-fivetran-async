@@ -175,11 +175,9 @@ jobs:
           AIRFLOW_HOME: ${{ github.workspace }}
           PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/examples:$PYTHONPATH
           AIRFLOW_CONN_FIVETRAN_DEFAULT: ${{ secrets.FIVETRAN_DEFAULT }}
-          CI_FIVETRAN_KEY: ${{ secrets.CI_FIVETRAN_KEY }}
-          CI_FIVETRAN_SECRET: ${{ secrets.CI_FIVETRAN_SECRET }}
-          CI_CONNECTOR_ID: ${{ env.CI_CONNECTOR_ID }}
-          CI_CONNECTOR_NAME: ${{ env.CI_CONNECTOR_NAME }}
-          CI_DESTINATION_NAME: ${{ env.CI_DESTINATION_NAME }}
+          CI_CONNECTOR_ID: industries_leukemia
+          CI_CONNECTOR_NAME: ci_airflow_provider_fivetran_async
+          CI_DESTINATION_NAME: integration_team_ci
 
       - name: Upload coverage to Github
         uses: actions/upload-artifact@v4
