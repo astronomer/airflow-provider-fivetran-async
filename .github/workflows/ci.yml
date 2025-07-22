@@ -1,7 +1,7 @@
 name: Build and test
 on:
   push:
-    branches: ['main', 'fix_github_ci_jobs']
+    branches: ['main']
   pull_request:
     branches: ['main']
   release:
