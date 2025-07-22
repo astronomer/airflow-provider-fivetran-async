@@ -110,3 +110,9 @@ Please submit [issues](https://github.com/astronomer/airflow-provider-fivetran-a
 [https://github.com/astronomer/airflow-provider-fivetran-async](https://github.com/astronomer/airflow-provider-fivetran-async)
 
 We are happy to hear from you. Please email any feedback to the authors at [humans@astronomer.io](mailto:humans@astronomer.io).
+
+## Security Policy
+
+Check the project's [Security Policy](https://github.com/astronomer/airflow-provider-fivetran-async/blob/main/SECURITY.md) to learn
+how to report security vulnerabilities in airflow-provider-fivetran-async and how security issues reported to the airflow-provider-fivetran-async
+security team are handled.
