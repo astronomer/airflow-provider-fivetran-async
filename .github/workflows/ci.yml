@@ -1,7 +1,7 @@
 name: Build and test
 on:
   push:
-    branches: ['main']
+    branches: ['main', 'fix_github_ci_jobs']
   pull_request:
     branches: ['main']
   release:
@@ -18,12 +18,16 @@ jobs:
       github.event.pull_request.head.repo.full_name != github.repository &&
       'external' || 'internal' }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - run: true
 
   Static-Check:
     needs: Authorize
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
         with:
@@ -40,6 +44,8 @@ jobs:
   Run-Unit-Tests:
     needs: Authorize
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
@@ -103,6 +109,8 @@ jobs:
   Run-Integration-Tests:
     needs: Authorize
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
@@ -164,6 +172,12 @@ jobs:
       - Run-Integration-Tests
       - Authorize
     runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/airflow-provider-fivetran-async
+    permissions:
+      id-token: write
+      contents: read
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -175,6 +189,3 @@ jobs:
       - run: pip3 install hatch
       - run: hatch build
       - run: hatch publish
-    env:
-      HATCH_INDEX_USER: __token__
-      HATCH_INDEX_AUTH: ${{ secrets.PYPI_PASSWORD }}
