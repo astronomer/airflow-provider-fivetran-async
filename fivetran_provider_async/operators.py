@@ -241,13 +241,11 @@ class FivetranOperator(BaseOperator):
             )
 
         job_facets = {
-            "documentation": DocumentationJobFacet(
-                description=f"""
+            "documentation": DocumentationJobFacet(description=f"""
                 Fivetran run for service: {connector_response['service']}\n
                 Group Name: {groups_response["name"]}\n
                 Connector ID: {self.connector_id}
-                """
-            ),
+                """),
             "ownership": OwnershipJobFacet(owners=[OwnershipJobFacetOwners(name=self.owner, type=self.email)]),
         }
 
