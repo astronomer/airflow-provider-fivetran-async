@@ -1,7 +1,7 @@
 name: Build and test
 on:
   push:
-    branches: ['main']
+    branches: ['main', 'feature/airflow-3-compatibility']
   pull_request:
     branches: ['main']
   release:
