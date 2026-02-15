@@ -5,6 +5,7 @@ from functools import cached_property
 from typing import TYPE_CHECKING, Any, Optional
 
 from airflow.exceptions import AirflowException
+
 try:
     from airflow.sensors.base import BaseSensorOperator
 except ImportError:

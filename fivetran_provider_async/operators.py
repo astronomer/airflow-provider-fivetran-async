@@ -6,10 +6,11 @@ from typing import TYPE_CHECKING, Any, Dict, Optional
 
 import pendulum
 from airflow.exceptions import AirflowException
+
 try:
     from airflow.models import BaseOperator, BaseOperatorLink
 except ImportError:
-    from airflow.sdk import BaseOperator, BaseOperatorLink 
+    from airflow.sdk import BaseOperator, BaseOperatorLink
 
 if TYPE_CHECKING:
     from airflow.utils.context import Context
@@ -248,13 +249,11 @@ class FivetranOperator(BaseOperator):
             )
 
         job_facets = {
-            "documentation": DocumentationJobFacet(
-                description=f"""
+            "documentation": DocumentationJobFacet(description=f"""
                 Fivetran run for service: {connector_response['service']}\n
                 Group Name: {groups_response["name"]}\n
                 Connector ID: {self.connector_id}
-                """
-            ),
+                """),
             "ownership": OwnershipJobFacet(owners=[OwnershipJobFacetOwners(name=self.owner, type=self.email)]),
         }
 
