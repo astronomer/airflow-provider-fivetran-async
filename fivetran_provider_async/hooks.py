@@ -12,7 +12,8 @@ import pendulum
 import requests
 from aiohttp import ClientResponseError
 from airflow.exceptions import AirflowException
-try: 
+
+try:
     from airflow.models.connection import Connection
 except ImportError:
     from airflow.sdk import Connection
