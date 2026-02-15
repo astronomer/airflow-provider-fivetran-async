@@ -1,7 +1,7 @@
 name: Build and test
 on:
   push:
-    branches: ['main', 'miandreu:feature/airflow-3-support']
+    branches: ['main', 'feature/airflow-3-support']
   pull_request:
     branches: ['main']
   release:
