@@ -5,7 +5,10 @@ from functools import cached_property
 from typing import TYPE_CHECKING, Any, Optional
 
 from airflow.exceptions import AirflowException
-from airflow.sensors.base import BaseSensorOperator
+try:
+    from airflow.sensors.base import BaseSensorOperator
+except ImportError:
+    from airflow.providers.standard.sensors.base import BaseSensorOperator
 from airflow.utils import timezone
 
 if TYPE_CHECKING:

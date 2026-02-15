@@ -32,7 +32,23 @@ IGNORED_DAG_FILES = [
     "example_fivetran_resync.py",
 ]
 
-MIN_VER_DAG_FILE_VER: dict[str, list[str]] = {}
+# DAGs that require Airflow >= the specified version (excluded on older versions)
+MIN_VER_DAG_FILE_VER: dict[str, list[str]] = {
+    "3.0": [
+        "example_fivetran_v3.py",
+        "example_fivetran_xcom_v3.py",
+        "example_fivetran_without_connector_id_v3.py",
+    ],
+}
+
+# DAGs that require Airflow < the specified version (excluded on newer versions)
+MAX_VER_DAG_FILE_VER: dict[str, list[str]] = {
+    "3.0": [
+        "example_fivetran.py",
+        "example_fivetran_xcom.py",
+        "example_fivetran_without_connector_id.py",
+    ],
+}
 
 
 @provide_session
