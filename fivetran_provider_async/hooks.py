@@ -12,7 +12,10 @@ import pendulum
 import requests
 from aiohttp import ClientResponseError
 from airflow.exceptions import AirflowException
-from airflow.models.connection import Connection
+try: 
+    from airflow.models.connection import Connection
+except ImportError:
+    from airflow.sdk import Connection
 
 from fivetran_provider_async.version_compat import AIRFLOW_V_3_1_PLUS
 
