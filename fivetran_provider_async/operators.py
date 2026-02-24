@@ -6,7 +6,11 @@ from typing import TYPE_CHECKING, Any, Dict, Optional
 
 import pendulum
 from airflow.exceptions import AirflowException
-from airflow.models import BaseOperator, BaseOperatorLink
+
+try:
+    from airflow.models import BaseOperator, BaseOperatorLink
+except ImportError:
+    from airflow.sdk import BaseOperator, BaseOperatorLink
 
 if TYPE_CHECKING:
     from airflow.utils.context import Context
@@ -208,6 +212,10 @@ class FivetranOperator(BaseOperator):
             OwnershipJobFacet,
             OwnershipJobFacetOwners,
         )
+
+        # Return None if OpenLineage is not available
+        if OperatorLineage is None:
+            return None
 
         # Should likely use the sync hook here to ensure that OpenLineage data is
         # returned before the timeout.

@@ -1,12 +1,25 @@
 from datetime import datetime, timedelta
 
 from airflow import DAG
-from airflow.operators.python import BranchPythonOperator
-from airflow.providers.google.cloud.operators.bigquery import (
-    BigQueryExecuteQueryOperator,
-    BigQueryGetDataOperator,
-)
-from airflow.providers.ssh.operators.ssh import SSHOperator
+
+try:
+    from airflow.operators.python import BranchPythonOperator
+except ImportError:
+    from airflow.providers.standard.operators.python import BranchPythonOperator
+
+try:
+    from airflow.providers.google.cloud.operators.bigquery import (
+        BigQueryExecuteQueryOperator,
+        BigQueryGetDataOperator,
+    )
+except ImportError:
+    BigQueryExecuteQueryOperator = None
+    BigQueryGetDataOperator = None
+
+try:
+    from airflow.providers.ssh.operators.ssh import SSHOperator
+except ImportError:
+    SSHOperator = None
 
 from fivetran_provider_async.operators import FivetranOperator
 from fivetran_provider_async.sensors import FivetranSensor
@@ -55,71 +68,72 @@ def ml_branch(ds, **kwargs):
         return "get_predictions"
 
 
-default_args = {
-    "owner": "Airflow",
-    "start_date": datetime(2021, 4, 6),
-}
+if BigQueryExecuteQueryOperator and BigQueryGetDataOperator and SSHOperator:
+    default_args = {
+        "owner": "Airflow",
+        "start_date": datetime(2021, 4, 6),
+    }
 
-dag = DAG(
-    dag_id="example_fivetran_bqml",
-    default_args=default_args,
-    schedule_interval=timedelta(days=1),
-    catchup=False,
-)
-
-with dag:
-    linkedin_sync = FivetranOperator(
-        task_id="linkedin-sync",
-        fivetran_conn_id="fivetran_default",
-        connector_id="{{ var.value.linkedin_connector_id }}",
+    dag = DAG(
+        dag_id="example_fivetran_bqml",
+        default_args=default_args,
+        schedule_interval=timedelta(days=1),
+        catchup=False,
     )
 
-    linkedin_sensor = FivetranSensor(
-        task_id="linkedin-sensor",
-        fivetran_conn_id="fivetran_default",
-        connector_id="{{ var.value.linkedin_connector_id }}",
-        poke_interval=5,
-    )
+    with dag:
+        linkedin_sync = FivetranOperator(
+            task_id="linkedin-sync",
+            fivetran_conn_id="fivetran_default",
+            connector_id="{{ var.value.linkedin_connector_id }}",
+        )
 
-    twitter_sync = FivetranOperator(
-        task_id="twitter-sync",
-        fivetran_conn_id="fivetran_default",
-        connector_id="{{ var.value.twitter_connector_id }}",
-    )
+        linkedin_sensor = FivetranSensor(
+            task_id="linkedin-sensor",
+            fivetran_conn_id="fivetran_default",
+            connector_id="{{ var.value.linkedin_connector_id }}",
+            poke_interval=5,
+        )
 
-    twitter_sensor = FivetranSensor(
-        task_id="twitter-sensor",
-        fivetran_conn_id="fivetran_default",
-        connector_id="{{ var.value.twitter_connector_id }}",
-        poke_interval=5,
-    )
+        twitter_sync = FivetranOperator(
+            task_id="twitter-sync",
+            fivetran_conn_id="fivetran_default",
+            connector_id="{{ var.value.twitter_connector_id }}",
+        )
 
-    dbt_run = SSHOperator(
-        task_id="dbt_ad_reporting",
-        command="cd dbt_ad_reporting ; ~/.local/bin/dbt run -m +ad_reporting",
-        ssh_conn_id="dbtvm",
-    )
+        twitter_sensor = FivetranSensor(
+            task_id="twitter-sensor",
+            fivetran_conn_id="fivetran_default",
+            connector_id="{{ var.value.twitter_connector_id }}",
+            poke_interval=5,
+        )
 
-    ml_branch = BranchPythonOperator(task_id="ml_branch", python_callable=ml_branch, provide_context=True)
+        dbt_run = SSHOperator(
+            task_id="dbt_ad_reporting",
+            command="cd dbt_ad_reporting ; ~/.local/bin/dbt run -m +ad_reporting",
+            ssh_conn_id="dbtvm",
+        )
 
-    train_model = BigQueryExecuteQueryOperator(task_id="train_model", sql=TRAINING_QUERY, use_legacy_sql=False)
+        ml_branch = BranchPythonOperator(task_id="ml_branch", python_callable=ml_branch, provide_context=True)
 
-    get_preds = BigQueryExecuteQueryOperator(
-        task_id="get_predictions",
-        sql=SERVING_QUERY,
-        use_legacy_sql=False,
-        destination_dataset_table=DATASET_NAME + "." + DESTINATION_TABLE,
-        write_disposition="WRITE_APPEND",
-    )
+        train_model = BigQueryExecuteQueryOperator(task_id="train_model", sql=TRAINING_QUERY, use_legacy_sql=False)
 
-    print_preds = BigQueryGetDataOperator(
-        task_id="print_predictions", dataset_id=DATASET_NAME, table_id=DESTINATION_TABLE
-    )
+        get_preds = BigQueryExecuteQueryOperator(
+            task_id="get_predictions",
+            sql=SERVING_QUERY,
+            use_legacy_sql=False,
+            destination_dataset_table=DATASET_NAME + "." + DESTINATION_TABLE,
+            write_disposition="WRITE_APPEND",
+        )
 
-    linkedin_sync >> linkedin_sensor
-    twitter_sync >> twitter_sensor
+        print_preds = BigQueryGetDataOperator(
+            task_id="print_predictions", dataset_id=DATASET_NAME, table_id=DESTINATION_TABLE
+        )
 
-    [linkedin_sensor, twitter_sensor] >> dbt_run
+        linkedin_sync >> linkedin_sensor
+        twitter_sync >> twitter_sensor
 
-    dbt_run >> ml_branch >> [train_model, get_preds]
-    get_preds >> print_preds
+        [linkedin_sensor, twitter_sensor] >> dbt_run
+
+        dbt_run >> ml_branch >> [train_model, get_preds]
+        get_preds >> print_preds
