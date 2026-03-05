@@ -10,7 +10,6 @@
 
 - Make `openlineage-airflow` an optional dependency by @kaxil in https://github.com/astronomer/airflow-provider-fivetran-async/pull/207
 - Drop Python 3.9 support by @kaxil in https://github.com/astronomer/airflow-provider-fivetran-async/pull/208
-- Pre-commit hook updates in https://github.com/astronomer/airflow-provider-fivetran-async/pull/186, https://github.com/astronomer/airflow-provider-fivetran-async/pull/187, https://github.com/astronomer/airflow-provider-fivetran-async/pull/188, https://github.com/astronomer/airflow-provider-fivetran-async/pull/189, https://github.com/astronomer/airflow-provider-fivetran-async/pull/190, https://github.com/astronomer/airflow-provider-fivetran-async/pull/191, https://github.com/astronomer/airflow-provider-fivetran-async/pull/192, https://github.com/astronomer/airflow-provider-fivetran-async/pull/193, https://github.com/astronomer/airflow-provider-fivetran-async/pull/194, https://github.com/astronomer/airflow-provider-fivetran-async/pull/196, https://github.com/astronomer/airflow-provider-fivetran-async/pull/197, https://github.com/astronomer/airflow-provider-fivetran-async/pull/198, https://github.com/astronomer/airflow-provider-fivetran-async/pull/200, https://github.com/astronomer/airflow-provider-fivetran-async/pull/201, https://github.com/astronomer/airflow-provider-fivetran-async/pull/202, https://github.com/astronomer/airflow-provider-fivetran-async/pull/204 and https://github.com/astronomer/airflow-provider-fivetran-async/pull/205
 
 ## 2.2.0 (2025-07-17)
 
