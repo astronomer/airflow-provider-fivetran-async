@@ -50,7 +50,7 @@ tests = [
     "pytest-asyncio",
     "pytest-cov",
     "requests_mock",
-    "pre-commit",
+    "prek",
 ]
 
 ######################################
@@ -78,7 +78,7 @@ matrix.airflow.dependencies = [
 
 [tool.hatch.envs.tests.scripts]
 freeze = "pip freeze"
-static-check = " pre-commit run --files fivetran_provider_async/*"
+static-check = "prek run --files fivetran_provider_async/*"
 test = 'sh scripts/test/unit.sh'
 test-integration = 'sh scripts/test/integration.sh'
 test-integration-setup = 'sh scripts/test/integration-setup.sh'
