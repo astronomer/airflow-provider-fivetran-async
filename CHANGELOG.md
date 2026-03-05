@@ -6,7 +6,7 @@
 
 - Make `openlineage-airflow` an optional dependency by @kaxil in https://github.com/astronomer/airflow-provider-fivetran-async/pull/207
 - Drop Python 3.9 support by @kaxil in https://github.com/astronomer/airflow-provider-fivetran-async/pull/208
-- Add Python 3.13 classifier (CI testing pending Airflow 3.x support) by @kaxil in https://github.com/astronomer/airflow-provider-fivetran-async/pull/209
+- Add Python 3.13 and Apache Airflow 3.0 to CI matrix by @kaxil in https://github.com/astronomer/airflow-provider-fivetran-async/pull/209
 
 ## 2.2.0 (2025-07-17)
 
