@@ -124,14 +124,14 @@ def datasets(
 ):
     from fivetran_provider_async import Dataset, DataSourceDatasetFacet
 
-    datasets = []
+    result = []
 
     for table_name, table in schema["tables"].items():
         name = _get_openlineage_name(config, service, schema, table["name_in_destination"])
         namespace = _get_openlineage_namespace(config, service, connector_id)
         uri = f"{namespace}/{name}"
 
-        datasets.extend(
+        result.extend(
             [
                 Dataset(
                     namespace=namespace,
@@ -147,4 +147,4 @@ def datasets(
                 )
             ]
         )
-    return datasets
+    return result

@@ -99,10 +99,10 @@ The [pyproject. toml](https://github.com/astronomer/dag-factory/blob/main/pyproj
 
 ### Run unit tests
 
-To run unit tests using Python 3.10 and Airflow 2.5, use the following:
+To run unit tests using Python 3.10 and Airflow 2.9, use the following:
 
 ```bash
-hatch run tests.py3.10-2.5:test-cov
+hatch run tests.py3.10-2.9:test-cov
 ```
 
 It is also possible to run the tests using all the matrix combinations, by using:

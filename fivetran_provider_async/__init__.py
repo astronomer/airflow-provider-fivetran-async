@@ -5,22 +5,25 @@ import logging
 
 log = logging.getLogger(__name__)
 
+# OpenLineage support (Airflow 2.9+): requires apache-airflow-providers-openlineage.
+# Compat and openlineage.client facets; see airflow.providers.openlineage docs.
 try:
-    from openlineage.airflow.extractors.base import (  # type: ignore[import]
-        OperatorLineage,
+    from airflow.providers.openlineage.extractors import OperatorLineage  # type: ignore[import]
+    from airflow.providers.common.compat.openlineage.facet import (  # type: ignore[import]
+        Dataset,
+        ErrorMessageRunFacet,
+        SchemaDatasetFacet,
+        SchemaDatasetFacetFields,
     )
-    from openlineage.client.facet import (
+    from openlineage.client.facet import (  # type: ignore[import]
         DataSourceDatasetFacet,
         DocumentationJobFacet,
-        ErrorMessageRunFacet,
         OwnershipJobFacet,
         OwnershipJobFacetOwners,
-        SchemaDatasetFacet,
-        SchemaField,
     )
-    from openlineage.client.run import Dataset
+    SchemaField = SchemaDatasetFacetFields  # legacy name for operator_utils
 except ImportError:
-    logging.debug("openlineage-airflow python dependency is missing")
+    log.debug("apache-airflow-providers-openlineage not installed; OpenLineage facets unavailable")
 
 
 def get_provider_info():

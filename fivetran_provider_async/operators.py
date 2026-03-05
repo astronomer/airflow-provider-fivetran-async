@@ -199,7 +199,8 @@ class FivetranOperator(BaseOperator):
 
     def get_openlineage_facets_on_start(self):
         """
-        Default extractor method that OpenLineage will call on execute completion.
+        OpenLineage method called when the task reaches RUNNING state.
+        Returns lineage for all source and destination datasets across all schemas.
         """
         from fivetran_provider_async import (
             DocumentationJobFacet,
@@ -209,44 +210,56 @@ class FivetranOperator(BaseOperator):
             OwnershipJobFacetOwners,
         )
 
-        # Should likely use the sync hook here to ensure that OpenLineage data is
-        # returned before the timeout.
+        # Uses sync hook; multiple API calls may delay task start.
         hook = self.hook
-        connector_response = hook.get_connector(self.connector_id)
+        connector_id = self._connector_id
+        connector_response = hook.get_connector(connector_id)
         groups_response = hook.get_groups(connector_response["group_id"])
         destinations_response = hook.get_destinations(connector_response["group_id"])
-        schema_response = hook.get_connector_schemas(self.connector_id)
-        table_response = hook.get_metadata(self.connector_id, "tables")
-        column_response = hook.get_metadata(self.connector_id, "columns")
+        schema_response = hook.get_connector_schemas(connector_id)
+        table_response = hook.get_metadata(connector_id, "tables")
+        column_response = hook.get_metadata(connector_id, "columns")
 
+        inputs = []
+        outputs = []
         for schema in schema_response["schemas"].values():
-            inputs = datasets(
-                config=connector_response["config"],
-                service=connector_response["service"],
-                table_response=table_response,
-                column_response=column_response,
-                schema=schema,
-                connector_id=self.connector_id,
-                loc="source",
+            inputs.extend(
+                datasets(
+                    config=connector_response["config"],
+                    service=connector_response["service"],
+                    table_response=table_response,
+                    column_response=column_response,
+                    schema=schema,
+                    connector_id=connector_id,
+                    loc="source",
+                )
             )
-
-            outputs = datasets(
-                config=destinations_response["config"],
-                service=destinations_response["service"],
-                table_response=table_response,
-                column_response=column_response,
-                schema=schema,
-                connector_id=self.connector_id,
-                loc="destination",
+            outputs.extend(
+                datasets(
+                    config=destinations_response["config"],
+                    service=destinations_response["service"],
+                    table_response=table_response,
+                    column_response=column_response,
+                    schema=schema,
+                    connector_id=connector_id,
+                    loc="destination",
+                )
             )
 
         job_facets = {
             "documentation": DocumentationJobFacet(description=f"""
                 Fivetran run for service: {connector_response['service']}\n
                 Group Name: {groups_response["name"]}\n
-                Connector ID: {self.connector_id}
+                Connector ID: {connector_id}
                 """),
-            "ownership": OwnershipJobFacet(owners=[OwnershipJobFacetOwners(name=self.owner, type=self.email)]),
+            "ownership": OwnershipJobFacet(
+                owners=[
+                    OwnershipJobFacetOwners(
+                        name=getattr(self, "owner", "unknown"),
+                        type=getattr(self, "email", "unknown"),
+                    )
+                ]
+            ),
         }
 
         run_facets = {}
@@ -259,6 +272,7 @@ class FivetranOperator(BaseOperator):
         return OperatorLineage(inputs=inputs, outputs=outputs, job_facets=job_facets, run_facets=run_facets)
 
     def get_openlineage_facets_on_complete(self, task_instance):
+        """OpenLineage method called on SUCCESS; reuses same lineage as on start."""
         return self.get_openlineage_facets_on_start()
 
     def _sync(self, hook: FivetranHook):

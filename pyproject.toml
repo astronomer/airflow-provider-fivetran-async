@@ -29,14 +29,18 @@ classifiers = [
     "Typing :: Typed",
 ]
 dependencies = [
-    "apache-airflow>=2.4.0",
+    "apache-airflow>=2.9.0",
     "aiohttp",
     "asgiref",
     "requests",
-    "openlineage-airflow>=0.19.2",
 ]
 
 [project.optional-dependencies]
+# For OpenLineage integration (Airflow 2.9+).
+# Install with: pip install airflow-provider-fivetran-async[openlineage-provider]
+openlineage-provider = [
+    "apache-airflow-providers-openlineage>=1.0.0",
+]
 tests = [
     "mypy",
     "types-requests",
@@ -60,12 +64,7 @@ pre-install-commands = ["sh scripts/test/pre-install-airflow.sh {matrix:airflow}
 
 [[tool.hatch.envs.tests.matrix]]
 python = ["3.9", "3.10", "3.11", "3.12"]
-airflow = ["2.4", "2.5", "2.6", "2.7", "2.8", "2.9", "2.10"]
-
-[tool.hatch.envs.tests.overrides]
-matrix.airflow.dependencies = [
-    { value = "typing_extensions<4.6", if = ["2.6"] },
-]
+airflow = ["2.9", "2.10"]
 
 [tool.hatch.envs.tests.scripts]
 freeze = "pip freeze"
