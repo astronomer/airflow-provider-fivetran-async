@@ -33,10 +33,15 @@ dependencies = [
     "aiohttp",
     "asgiref",
     "requests",
-    "openlineage-airflow>=0.19.2",
 ]
 
 [project.optional-dependencies]
+openlineage = [
+    "openlineage-airflow>=0.19.2",
+]
+all = [
+    "openlineage-airflow>=0.19.2",
+]
 tests = [
     "mypy",
     "types-requests",
