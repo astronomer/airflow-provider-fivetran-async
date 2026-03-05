@@ -50,7 +50,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [ "3.10", "3.11", "3.12" ]
+        python-version: [ "3.10", "3.11", "3.12", "3.13" ]
         airflow-version: [ "2.4", "2.5", "2.6", "2.7", "2.8", "2.9", "2.10" ]
         exclude:
           - python-version: "3.11"
@@ -73,6 +73,19 @@ jobs:
             airflow-version: "2.7"
           - python-version: "3.12"
             airflow-version: "2.8"
+          # Python 3.13 is only tested with Apache Airflow >= 2.10.
+          - python-version: "3.13"
+            airflow-version: "2.4"
+          - python-version: "3.13"
+            airflow-version: "2.5"
+          - python-version: "3.13"
+            airflow-version: "2.6"
+          - python-version: "3.13"
+            airflow-version: "2.7"
+          - python-version: "3.13"
+            airflow-version: "2.8"
+          - python-version: "3.13"
+            airflow-version: "2.9"
     steps:
       - uses: actions/checkout@v4
         with:
@@ -116,13 +129,17 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [ "3.10", "3.11", "3.12" ]
+        python-version: [ "3.10", "3.11", "3.12", "3.13" ]
         # TODO: Enable tests for others version of Airflow
         # https://github.com/astronomer/airflow-provider-fivetran-async/issues/166
         airflow-version: [ "2.8", "2.9", "2.10" ]
         exclude:
           - python-version: "3.12"
             airflow-version: "2.8"
+          - python-version: "3.13"
+            airflow-version: "2.8"
+          - python-version: "3.13"
+            airflow-version: "2.9"
     steps:
       - uses: actions/checkout@v4
         with:
