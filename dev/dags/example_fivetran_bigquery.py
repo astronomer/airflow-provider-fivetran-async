@@ -24,7 +24,7 @@ with DAG(
     "example_fivetran_bigquery",
     default_args=default_args,
     description="",
-    schedule_interval=None,
+    schedule=None,
     catchup=False,
 ) as dag:
     """
