@@ -12,8 +12,12 @@ import pendulum
 import requests
 from aiohttp import ClientResponseError
 from airflow.exceptions import AirflowException
-from airflow.hooks.base import BaseHook
 from airflow.models.connection import Connection
+
+try:
+    from airflow.hooks.base import BaseHook
+except ImportError:
+    from airflow.providers.standard.hooks.base import BaseHook
 from airflow.utils.helpers import is_container
 from asgiref.sync import sync_to_async
 from requests import exceptions as requests_exceptions

@@ -209,6 +209,10 @@ class FivetranOperator(BaseOperator):
             OwnershipJobFacetOwners,
         )
 
+        # Return None if OpenLineage is not available
+        if OperatorLineage is None:
+            return None
+
         # Should likely use the sync hook here to ensure that OpenLineage data is
         # returned before the timeout.
         hook = self.hook

@@ -17,9 +17,11 @@ from sqlalchemy.orm.session import Session
 
 log = logging.getLogger(__name__)
 
+AIRFLOW_VERSION = Version(airflow.__version__)
+AIRFLOW_3_1_PLUS = AIRFLOW_VERSION >= Version("3.1.0")
+
 EXAMPLE_DAGS_DIR = Path(__file__).parent.parent.parent / "dev/dags"
 AIRFLOW_IGNORE_FILE = EXAMPLE_DAGS_DIR / ".airflowignore"
-AIRFLOW_VERSION = Version(airflow.__version__)
 IGNORED_DAG_FILES = [
     # Disabled due to infrastructure and credential challenges.
     # This DAG fetches data from LinkedIn and X (formerly Twitter),
@@ -94,12 +96,32 @@ def get_dag_ids() -> list[str]:
     return dag_bag.dag_ids
 
 
+@provide_session
+def serialize_dag_for_testing(dag, session: Session = NEW_SESSION):
+    """Serialize DAG for Airflow 3.1+ which requires serialization before dag.test()."""
+    if AIRFLOW_3_1_PLUS:
+        from airflow.models.dag import DagModel
+        from airflow.models.serialized_dag import SerializedDagModel
+
+        # Ensure DAG model exists
+        DagModel.get_dagmodel(dag.dag_id, session=session) or session.add(
+            DagModel(dag_id=dag.dag_id)
+        )
+        session.commit()
+        # Serialize the DAG
+        SerializedDagModel.write_dag(dag, session=session)
+        session.commit()
+
+
 @pytest.mark.integration
 @pytest.mark.parametrize("dag_id", get_dag_ids())
 def test_example_dag(session, dag_id: str):
     setup_variables(session)
     dag_bag = get_dag_bag()
     dag = dag_bag.get_dag(dag_id)
+
+    # Airflow 3.1+ requires DAGs to be serialized before dag.test() works
+    serialize_dag_for_testing(dag, session=session)
 
     dag_run = dag.test()
     if dag_run is not None:
