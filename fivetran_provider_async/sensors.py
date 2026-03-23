@@ -5,12 +5,21 @@ from functools import cached_property
 from typing import TYPE_CHECKING, Any, Optional
 
 from airflow.exceptions import AirflowException
-from airflow.sensors.base import BaseSensorOperator
+
+try:
+    from airflow.sdk.bases.sensor import BaseSensorOperator
+except ImportError:
+    from airflow.sensors.base import BaseSensorOperator
+
 from airflow.utils import timezone
 
 if TYPE_CHECKING:
     import pendulum
-    from airflow.utils.context import Context
+
+    try:
+        from airflow.sdk.definitions.context import Context
+    except ImportError:
+        from airflow.utils.context import Context  # type: ignore[attr-defined]
 
 from fivetran_provider_async.hooks import FivetranHook
 from fivetran_provider_async.triggers import FivetranTrigger
