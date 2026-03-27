@@ -167,8 +167,6 @@ class FivetranHook(BaseHook):
                         f"Response: {e.response.content.decode()}, " f"Status Code: {e.response.status_code}"
                     ) from e
                 self._log_request_error(attempt_num, str(e))
-            except requests.exceptions.ConnectionError as e:
-                self._log_request_error(attempt_num, str(e))
 
             if attempt_num == self.retry_limit:
                 raise AirflowException(f"API request to Fivetran failed {self.retry_limit} times." " Giving up.")
