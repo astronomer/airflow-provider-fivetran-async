@@ -2,7 +2,7 @@ name: Build and test
 on:
   push:
     branches: ['main', 'drop_lt_af2.9']
-  pull_request:
+  pull_request_target:
     branches: ['main']
   release:
     types: [ 'created' ]
@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   Authorize:
-    environment: ${{ github.event_name == 'pull_request' &&
+    environment: ${{ github.event_name == 'pull_request_target' &&
       github.event.pull_request.head.repo.full_name != github.repository &&
       'external' || 'internal' }}
     runs-on: ubuntu-latest
