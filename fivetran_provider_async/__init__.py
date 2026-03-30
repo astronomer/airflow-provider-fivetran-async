@@ -37,3 +37,6 @@ def get_provider_info():
         "extra-links": ["fivetran_provider_async.operators.RegistryLink"],
         "versions": [__version__],
     }
+
+
+# Testing CI
