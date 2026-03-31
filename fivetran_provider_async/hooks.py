@@ -205,6 +205,13 @@ class FivetranHook(BaseHook):
         resp = self._do_api_call("GET", endpoint)
         return resp["data"]
 
+    def test_connector(self, connector_id: str) -> dict[str, Any]:
+        if connector_id == "":
+            raise ValueError("No value specified for connector_id")
+        endpoint = self.api_path_connectors + connector_id + "/test"
+        resp = self._do_api_call("POST", endpoint)
+        return resp["data"]
+
     def get_connector_schemas(self, connector_id: str) -> dict[str, Any]:
         """
         Fetches schema information of the connector.
@@ -316,6 +323,10 @@ class FivetranHook(BaseHook):
         schema_name = connector_details["schema"]
         setup_state = connector_details["status"]["setup_state"]
         if setup_state != "connected":
+            connector_details = self.test_connector(connector_id)
+            setup_state = connector_details["status"]["setup_state"]
+
+        if setup_state != "connected":
             raise AirflowException(
                 f'Fivetran connector "{connector_id}" not correctly configured, '
                 f"status: {setup_state}\nPlease see: "
@@ -347,6 +358,7 @@ class FivetranHook(BaseHook):
             page in the Fivetran user interface.
         :param schedule_type: Fivetran connector schedule type
         """
+
         connector_details = self.check_connector(connector_id)
         if schedule_type not in {"manual", "auto"}:
             raise ValueError('schedule_type must be either "manual" or "auto"')
