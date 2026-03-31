@@ -209,7 +209,7 @@ class FivetranHook(BaseHook):
         if connector_id == "":
             raise ValueError("No value specified for connector_id")
         endpoint = self.api_path_connectors + connector_id + "/test"
-        resp = self._do_api_call("POST", endpoint)
+        resp = self._do_api_call("POST", endpoint, json={})
         return resp["data"]
 
     def get_connector_schemas(self, connector_id: str) -> dict[str, Any]:
