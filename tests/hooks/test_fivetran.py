@@ -1,3 +1,4 @@
+import copy
 import unittest
 from unittest import mock
 
@@ -860,3 +861,34 @@ class TestFivetranHook(unittest.TestCase):
         assert m.last_request.json() == payload
         assert m.last_request.method == "POST"
         assert result is not None
+
+
+    @requests_mock.mock()
+    def test_reconnect_connector(self, m):
+        payload = copy.deepcopy(MOCK_FIVETRAN_RESPONSE_PAYLOAD)
+        payload["data"]["status"]["setup_state"] = "broken"
+        m.get(
+            "https://api.fivetran.com/v1/connectors/interchangeable_revenge",
+            json=payload,
+        )
+        m.post(
+            "https://api.fivetran.com/v1/connectors/interchangeable_revenge/test",
+            json=payload,
+        )
+
+        hook = FivetranHook(
+            fivetran_conn_id="conn_fivetran",
+        )
+
+        with pytest.raises(AirflowException, match="not correctly configured, status: broken"):
+            hook.prep_connector(connector_id="interchangeable_revenge", schedule_type="manual")
+
+        m.reset_mock()
+        m.post(
+            "https://api.fivetran.com/v1/connectors/interchangeable_revenge/test",
+            json=MOCK_FIVETRAN_RESPONSE_PAYLOAD,
+        )
+
+        hook.prep_connector(connector_id="interchangeable_revenge", schedule_type="manual")
+        assert m.request_history[-2].path == "/v1/connectors/interchangeable_revenge"
+        assert m.request_history[-1].path == "/v1/connectors/interchangeable_revenge/test"
