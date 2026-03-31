@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Any, Dict
 import aiohttp
 import pendulum
 import requests
-from aiohttp import ClientResponseError, ClientConnectorError
+from aiohttp import ClientConnectorError, ClientResponseError
 from airflow.exceptions import AirflowException
 from airflow.hooks.base import BaseHook
 from airflow.models.connection import Connection

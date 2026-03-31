@@ -6,7 +6,7 @@ import multidict
 import pendulum
 import pytest
 import requests_mock
-from aiohttp import BasicAuth, ClientResponseError, RequestInfo, ClientConnectorError
+from aiohttp import BasicAuth, ClientConnectorError, ClientResponseError, RequestInfo
 from airflow.exceptions import AirflowException
 from airflow.utils.helpers import is_container
 
