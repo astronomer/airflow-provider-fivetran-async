@@ -322,16 +322,17 @@ class FivetranHook(BaseHook):
         service_name = connector_details["service"]
         schema_name = connector_details["schema"]
         setup_state = connector_details["status"]["setup_state"]
+
         if setup_state != "connected":
             connector_details = self.test_connector(connector_id)
             setup_state = connector_details["status"]["setup_state"]
-
-        if setup_state != "connected":
-            raise AirflowException(
-                f'Fivetran connector "{connector_id}" not correctly configured, '
-                f"status: {setup_state}\nPlease see: "
-                f"{self._connector_ui_url_setup(service_name, schema_name)}"
-            )
+            if setup_state != "connected":
+                raise AirflowException(
+                    f'Fivetran connector "{connector_id}" not correctly configured, '
+                    f"status: {setup_state}\nPlease see: "
+                    f"{self._connector_ui_url_setup(service_name, schema_name)}"
+                )
+            self.log.info("Connector %s passed test connection and is now connected", connector_id)
         self.log.info("Connector type: %s, connector schema: %s", service_name, schema_name)
         self.log.info("Connectors logs at %s", self._connector_ui_url_logs(service_name, schema_name))
         return connector_details
