@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Any, Dict
 import aiohttp
 import pendulum
 import requests
-from aiohttp import ClientResponseError
+from aiohttp import ClientConnectorError, ClientResponseError
 from airflow.exceptions import AirflowException
 from airflow.hooks.base import BaseHook
 from airflow.models.connection import Connection
@@ -166,7 +166,6 @@ class FivetranHook(BaseHook):
                     raise AirflowException(
                         f"Response: {e.response.content.decode()}, " f"Status Code: {e.response.status_code}"
                     ) from e
-
                 self._log_request_error(attempt_num, str(e))
 
             if attempt_num == self.retry_limit:
@@ -676,6 +675,8 @@ class FivetranHookAsync(FivetranHook):
                         # In this case, the user probably made a mistake.
                         # Don't retry.
                         return {"Response": {e.message}, "Status Code": {e.status}}
+                    self._log_request_error(attempt_num, str(e))
+                except ClientConnectorError as e:
                     self._log_request_error(attempt_num, str(e))
 
                 if attempt_num == self.retry_limit:

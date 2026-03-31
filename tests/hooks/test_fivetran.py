@@ -2,11 +2,12 @@ import copy
 import unittest
 from unittest import mock
 
+import aiohttp
 import multidict
 import pendulum
 import pytest
 import requests_mock
-from aiohttp import BasicAuth, ClientResponseError, RequestInfo
+from aiohttp import BasicAuth, ClientConnectorError, ClientResponseError, RequestInfo
 from airflow.exceptions import AirflowException
 from airflow.utils.helpers import is_container
 
@@ -669,6 +670,27 @@ class TestFivetranHookAsync:
         # Pass in auth kwarg of a different type (using a string for the test)
         kwargs = hook._prepare_api_call_kwargs_async("POST", "v1/connectors/test", auth="BadAuth")
         assert isinstance(kwargs["auth"], BasicAuth)
+
+    @pytest.mark.asyncio
+    @mock.patch("fivetran_provider_async.hooks.aiohttp.ClientSession")
+    @mock.patch("fivetran_provider_async.hooks.FivetranHookAsync.get_connection")
+    async def test_do_api_call_async_with_retry_on_connection_refused(self, mock_get_connection, mock_session):
+        """Tests that _do_api_call_async method raises exception for a retryable error"""
+        mock_session.return_value.__aenter__.return_value.request.side_effect = ClientConnectorError(
+            aiohttp.client_reqrep.ConnectionKey(host='api.fivetran.com', port=443, ssl=True, is_ssl=True, proxy=None, proxy_auth=None, proxy_headers_hash=None),
+            ConnectionRefusedError(61, "Connect call failed ('api.fivetran.com', 443)")
+        )
+
+        hook = FivetranHookAsync(fivetran_conn_id="conn_fivetran")
+
+        hook.fivetran_conn = mock_get_connection
+        hook.fivetran_conn.login = LOGIN
+        hook.fivetran_conn.password = PASSWORD
+
+        with pytest.raises(AirflowException) as exc:
+            await hook._do_api_call_async(("PATCH", "v1/connectors/test"))
+
+        assert str(exc.value) == "API requests to Fivetran failed 3 times. Giving up."
 
 
 # Mock the `conn_fivetran` Airflow connection (note the `@` after `API_SECRET`)
