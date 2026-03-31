@@ -1,4 +1,5 @@
 import unittest
+import copy
 from unittest import mock
 
 import multidict
@@ -423,17 +424,16 @@ class TestFivetranHookAsync:
         mock_previous_completed_at = pendulum.datetime(2021, 3, 21, 21, 55)
         hook = FivetranHookAsync(fivetran_conn_id="conn_fivetran")
 
-        # Set `failed_at` value so that failed_at > completed_after_time > succeeded_at
-        mock_fivetran_payload_sheets_modified = MOCK_FIVETRAN_RESPONSE_PAYLOAD_SHEETS.copy()
-        mock_fivetran_payload_sheets_modified["data"] = mock_fivetran_payload_sheets_modified["data"].copy()
-        mock_fivetran_payload_sheets_modified["data"]["failed_at"] = "2021-03-23T20:55:12.670390Z"
-        mock_fivetran_payload_sheets_modified["data"]["succeeded_at"] = "2021-03-19T20:55:12.670390Z"
+        mock_fivetran_payload_sheets_modified = copy.deepcopy(MOCK_FIVETRAN_RESPONSE_PAYLOAD_SHEETS)
+        mock_fivetran_payload_sheets_modified["data"]["failed_at"] = mock_previous_completed_at.add(hours=1).to_iso8601_string()
+        mock_fivetran_payload_sheets_modified["data"]["succeeded_at"] = mock_previous_completed_at.to_iso8601_string()
 
         mock_api_call_async_response.return_value = mock_fivetran_payload_sheets_modified
 
         with pytest.raises(AirflowException) as exc:
             await hook.get_sync_status_async(
-                connector_id="interchangeable_revenge", previous_completed_at=mock_previous_completed_at
+                connector_id="interchangeable_revenge",
+                previous_completed_at=mock_previous_completed_at,
             )
         assert "Fivetran sync for connector interchangeable_revenge failed" in str(exc.value)
 
@@ -449,10 +449,9 @@ class TestFivetranHookAsync:
         hook = FivetranHookAsync(fivetran_conn_id="conn_fivetran")
 
         # Set `failed_at` value so that completed_after_time > failed_at > succeeded_at
-        mock_fivetran_payload_sheets_modified = MOCK_FIVETRAN_RESPONSE_PAYLOAD_SHEETS.copy()
-        mock_fivetran_payload_sheets_modified["data"] = mock_fivetran_payload_sheets_modified["data"].copy()
-        mock_fivetran_payload_sheets_modified["data"]["failed_at"] = "2021-03-20T20:55:12.670390Z"
-        mock_fivetran_payload_sheets_modified["data"]["succeeded_at"] = "2021-03-19T20:55:12.670390Z"
+        mock_fivetran_payload_sheets_modified = copy.deepcopy(MOCK_FIVETRAN_RESPONSE_PAYLOAD_SHEETS)
+        mock_fivetran_payload_sheets_modified["data"]["failed_at"] = mock_completed_after_time.to_iso8601_string()
+        mock_fivetran_payload_sheets_modified["data"]["succeeded_at"] = mock_completed_after_time.subtract(hours=1).to_iso8601_string()
 
         mock_api_call_async_response.return_value = mock_fivetran_payload_sheets_modified
 
@@ -476,9 +475,9 @@ class TestFivetranHookAsync:
         hook = FivetranHookAsync(fivetran_conn_id="conn_fivetran")
 
         # Set `failed_at` value so that completed_after_time > failed_at > succeeded_at
-        mock_fivetran_payload_sheets_modified = MOCK_FIVETRAN_RESPONSE_PAYLOAD_SHEETS.copy()
-        mock_fivetran_payload_sheets_modified["data"] = mock_fivetran_payload_sheets_modified["data"].copy()
-        mock_fivetran_payload_sheets_modified["data"]["failed_at"] = "2021-03-23T20:59:12.670390Z"
+        mock_fivetran_payload_sheets_modified = copy.deepcopy(MOCK_FIVETRAN_RESPONSE_PAYLOAD_SHEETS)
+        mock_fivetran_payload_sheets_modified["data"]["failed_at"] = mock_completed_after_time.to_iso8601_string()
+        mock_fivetran_payload_sheets_modified["data"]["succeeded_at"] = mock_completed_after_time.subtract(hours=1).to_iso8601_string()
 
         mock_api_call_async_response.return_value = mock_fivetran_payload_sheets_modified
 
@@ -816,7 +815,26 @@ class TestFivetranHook(unittest.TestCase):
             fivetran_conn_id="conn_fivetran",
         )
         result = hook.start_fivetran_sync(connector_id="interchangeable_revenge")
-        assert result is not None
+        assert result == MOCK_FIVETRAN_RESPONSE_PAYLOAD["data"]["succeeded_at"]
+
+    @requests_mock.mock()
+    def test_start_fivetran_sync_previous_failed(self, m):
+        payload = copy.deepcopy(MOCK_FIVETRAN_RESPONSE_PAYLOAD)
+        payload["data"]["failed_at"] = pendulum.parse(payload["data"]["succeeded_at"]).add(hours=1).to_iso8601_string()
+
+        m.get(
+            "https://api.fivetran.com/v1/connectors/interchangeable_revenge",
+            json=payload,
+        )
+        m.post(
+            "https://api.fivetran.com/v1/connectors/interchangeable_revenge/force",
+            json=payload,
+        )
+        hook = FivetranHook(
+            fivetran_conn_id="conn_fivetran",
+        )
+        result = hook.start_fivetran_sync(connector_id="interchangeable_revenge")
+        assert result == payload["data"]["failed_at"]
 
     def test_prepare_api_call_kwargs_always_returns_tuple(self):
         """Tests to verify that given a valid fivetran_conn _prepare_api_call_kwargs always returns
