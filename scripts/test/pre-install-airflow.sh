@@ -1,5 +1,4 @@
 #!/bin/bash
-#!/usr/bin/env bash
 
 AIRFLOW_VERSION="$1"
 PYTHON_VERSION="$2"
