@@ -523,8 +523,8 @@ class FivetranHook(BaseHook):
 
         # The only way to tell if a sync failed is to check if its latest
         # failed_at value is greater than then last known "sync completed at" value.
-        if failed_at > completed_after_time > succeeded_at or (
-            completed_after_time > failed_at > succeeded_at and propagate_failures_forward
+        if failed_at > completed_after_time >= succeeded_at or (
+            completed_after_time >= failed_at > succeeded_at and propagate_failures_forward
         ):
             service_name = connector_details["service"]
             schema_name = connector_details["schema"]
