@@ -209,10 +209,13 @@ class FivetranOperator(BaseOperator):
         """
         Default extractor method that OpenLineage will call on execute completion.
         """
+        try:
+            from airflow.providers.openlineage.extractors.base import OperatorLineage
+        except ImportError:
+            from openlineage.airflow.extractors.base import OperatorLineage  # type: ignore[no-redef]
         from fivetran_provider_async import (
             DocumentationJobFacet,
             ErrorMessageRunFacet,
-            OperatorLineage,
             OwnershipJobFacet,
             OwnershipJobFacetOwners,
         )
