@@ -71,6 +71,13 @@ airflow = ["2.9", "2.10", "3.0"]
 python = ["3.13"]
 airflow = ["3.0"]
 
+[tool.hatch.envs.tests.overrides.matrix.airflow]
+extra-dependencies = [
+    {value = "apache-airflow>=2.9,<2.10",  if = ["2.9"]},
+    {value = "apache-airflow>=2.10,<2.11", if = ["2.10"]},
+    {value = "apache-airflow>=3.0,<3.1",   if = ["3.0"]},
+]
+
 [tool.hatch.envs.tests.scripts]
 freeze = "pip freeze"
 static-check = "prek run --files fivetran_provider_async/*"
