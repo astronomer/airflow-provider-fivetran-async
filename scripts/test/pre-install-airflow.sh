@@ -27,11 +27,11 @@ echo "Installing Airflow: ${INSTALL_AIRFLOW_VERSION}"
 pip install uv
 uv pip install "apache-airflow==${INSTALL_AIRFLOW_VERSION}"
 
-# Install OpenLineage provider
+# Install OpenLineage provider, pinning Airflow to avoid upgrades
 if [[ "$AIRFLOW_VERSION" == 2.* ]]; then
-  uv pip install "openlineage-airflow>=0.19.2"
+  uv pip install "openlineage-airflow>=0.19.2" "apache-airflow==${INSTALL_AIRFLOW_VERSION}"
 else
-  uv pip install apache-airflow-providers-openlineage
+  uv pip install apache-airflow-providers-openlineage "apache-airflow==${INSTALL_AIRFLOW_VERSION}"
 fi
 
 actual_airflow_version=$(airflow version 2>/dev/null | tail -1 | cut -d. -f1,2)
