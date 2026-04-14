@@ -29,7 +29,7 @@ classifiers = [
     "Typing :: Typed",
 ]
 dependencies = [
-    "apache-airflow>=2.4.0",
+    "apache-airflow>=2.9.0",
     "aiohttp",
     "asgiref",
     "requests",
