@@ -13,17 +13,26 @@ fi
 
 echo "${VIRTUAL_ENV}"
 
-CONSTRAINT_URL="https://raw.githubusercontent.com/apache/airflow/constraints-$AIRFLOW_VERSION.0/constraints-$PYTHON_VERSION.txt"
-curl -sSL $CONSTRAINT_URL -o /tmp/constraint.txt
-# Workaround to remove PyYAML constraint that will work on both Linux and MacOS
-sed '/PyYAML==/d' /tmp/constraint.txt > /tmp/constraint.txt.tmp
-mv /tmp/constraint.txt.tmp /tmp/constraint.txt
-# Install Airflow with constraints
+# Find the latest micro release for the desired Airflow minor version
+LATEST_AIRFLOW_VERSION=$(curl -s "https://pypi.org/pypi/apache-airflow/json" | \
+  python3 -c "import sys,json,re; d=json.load(sys.stdin); vs=[v for v in d['releases'] if v.startswith('${AIRFLOW_VERSION}.') and re.fullmatch(r'\d+\.\d+\.\d+', v) and not any(f.get('yanked') for f in d['releases'][v])]; vs.sort(key=lambda v:[int(x) for x in v.split('.')]); print(vs[-1])")
+echo "Latest Airflow ${AIRFLOW_VERSION}.x release: ${LATEST_AIRFLOW_VERSION}"
+
+# Install Airflow
 pip install uv
-uv pip install "apache-airflow==$AIRFLOW_VERSION" --constraint /tmp/constraint.txt
+uv pip install "apache-airflow==${LATEST_AIRFLOW_VERSION}"
 
 # cncf-kubernetes provider is bundled in Airflow 3.x
 if [[ "$AIRFLOW_VERSION" == 2.* ]]; then
-  pip install apache-airflow-providers-cncf-kubernetes --constraint /tmp/constraint.txt
+  pip install apache-airflow-providers-cncf-kubernetes
 fi
-rm /tmp/constraint.txt
+
+actual_airflow_version=$(airflow version 2>/dev/null | tail -1 | cut -d. -f1,2)
+desired_airflow_version=$(echo $AIRFLOW_VERSION | cut -d. -f1,2)
+
+if [ "$actual_airflow_version" = "$desired_airflow_version" ]; then
+    echo "Version is as expected: $desired_airflow_version"
+else
+    echo "ERROR: Expected Airflow $desired_airflow_version but got $actual_airflow_version"
+    exit 1
+fi
