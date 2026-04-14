@@ -16,4 +16,12 @@ fi
 rm -rf airflow.*
 pip freeze | grep airflow
 airflow db reset -y
-airflow db init || airflow db migrate
+
+AIRFLOW_MAJOR_VERSION=$(airflow version 2>/dev/null | tail -1 | cut -d. -f1)
+if [ "$AIRFLOW_MAJOR_VERSION" -ge 3 ]; then
+  echo "Detected Airflow 3.x. Running 'airflow db migrate'..."
+  airflow db migrate
+else
+  echo "Detected Airflow 2.x. Running 'airflow db init'..."
+  airflow db init
+fi
