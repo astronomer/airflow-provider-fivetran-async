@@ -58,8 +58,20 @@ tests = [
 ######################################
 
 [tool.hatch.envs.tests]
+# Do not install Airflow or OpenLineage dependencies here!
+# They are installed in the `pre-install-commands` to control the Airflow version
 dependencies = [
-    "airflow-provider-fivetran-async[tests,all]",
+    "aiohttp",
+    "asgiref",
+    "requests",
+    "mypy",
+    "types-requests",
+    "parameterized",
+    "pytest",
+    "pytest-asyncio",
+    "pytest-cov",
+    "requests_mock",
+    "prek",
 ]
 pre-install-commands = ["sh scripts/test/pre-install-airflow.sh {matrix:airflow} {matrix:python}"]
 
