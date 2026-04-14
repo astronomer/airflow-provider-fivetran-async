@@ -13,14 +13,19 @@ fi
 
 echo "${VIRTUAL_ENV}"
 
-# Find the latest micro release for the desired Airflow minor version
-LATEST_AIRFLOW_VERSION=$(curl -s "https://pypi.org/pypi/apache-airflow/json" | \
-  python3 -c "import sys,json,re; d=json.load(sys.stdin); vs=[v for v in d['releases'] if v.startswith('${AIRFLOW_VERSION}.') and re.fullmatch(r'\d+\.\d+\.\d+', v) and not any(f.get('yanked') for f in d['releases'][v])]; vs.sort(key=lambda v:[int(x) for x in v.split('.')]); print(vs[-1])")
-echo "Latest Airflow ${AIRFLOW_VERSION}.x release: ${LATEST_AIRFLOW_VERSION}"
+# Find the Airflow version to install
+# Pin 3.0 to 3.0.0 due to dag.test() regression in later 3.0.x task-sdk releases
+if [ "$AIRFLOW_VERSION" = "3.0" ]; then
+  INSTALL_AIRFLOW_VERSION="3.0.0"
+else
+  INSTALL_AIRFLOW_VERSION=$(curl -s "https://pypi.org/pypi/apache-airflow/json" | \
+    python3 -c "import sys,json,re; d=json.load(sys.stdin); vs=[v for v in d['releases'] if v.startswith('${AIRFLOW_VERSION}.') and re.fullmatch(r'\d+\.\d+\.\d+', v) and not any(f.get('yanked') for f in d['releases'][v])]; vs.sort(key=lambda v:[int(x) for x in v.split('.')]); print(vs[-1])")
+fi
+echo "Installing Airflow: ${INSTALL_AIRFLOW_VERSION}"
 
 # Install Airflow
 pip install uv
-uv pip install "apache-airflow==${LATEST_AIRFLOW_VERSION}"
+uv pip install "apache-airflow==${INSTALL_AIRFLOW_VERSION}"
 
 # cncf-kubernetes provider is bundled in Airflow 3.x
 if [[ "$AIRFLOW_VERSION" == 2.* ]]; then
