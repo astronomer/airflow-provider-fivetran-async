@@ -6,7 +6,7 @@ import logging
 log = logging.getLogger(__name__)
 
 try:
-    from airflow.providers.openlineage.extractors.base import OperatorLineage # type: ignore[import]
+    from airflow.providers.openlineage.extractors.base import OperatorLineage  # type: ignore[import]
 except ImportError:
     try:
         from openlineage.airflow.extractors.base import OperatorLineage  # type: ignore[no-redef]
