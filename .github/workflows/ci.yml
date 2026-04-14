@@ -1,11 +1,7 @@
 name: Build and test
 on:
   push:
-<<<<<<< HEAD
-    branches: ['main']
-=======
     branches: ['main', 'add-airflow-3.2-support']
->>>>>>> 8494df2 (Run CI on working branch)
   pull_request_target:
     branches: ['main']
   release:
