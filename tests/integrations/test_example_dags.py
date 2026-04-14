@@ -7,7 +7,12 @@ from pathlib import Path
 
 import airflow
 import pytest
-from airflow.models.dagbag import DagBag
+
+try:
+    from airflow.dag_processing import DagBag
+except ImportError:
+    from airflow.models.dagbag import DagBag
+
 from airflow.models.variable import Variable
 from airflow.utils.db import create_default_connections
 from airflow.utils.session import NEW_SESSION, provide_session

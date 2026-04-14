@@ -6,10 +6,18 @@ from typing import TYPE_CHECKING, Any, Dict, Optional
 
 import pendulum
 from airflow.exceptions import AirflowException
-from airflow.models import BaseOperator, BaseOperatorLink
+
+try:
+    from airflow.sdk.bases.operator import BaseOperator
+    from airflow.sdk.bases.operatorlink import BaseOperatorLink
+except ImportError:
+    from airflow.models import BaseOperator, BaseOperatorLink
 
 if TYPE_CHECKING:
-    from airflow.utils.context import Context
+    try:
+        from airflow.sdk.definitions.context import Context
+    except ImportError:
+        from airflow.utils.context import Context  # type: ignore[attr-defined]
 
 from fivetran_provider_async import __version__
 from fivetran_provider_async.hooks import FivetranHook
@@ -22,7 +30,7 @@ class RegistryLink(BaseOperatorLink):
 
     name = "Astronomer Registry"
 
-    def get_link(self, operator, dttm):
+    def get_link(self, operator, dttm=None, *, ti_key=None):
         """Get link to registry page."""
 
         return (
