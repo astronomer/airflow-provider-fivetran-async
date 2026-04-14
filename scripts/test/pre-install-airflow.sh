@@ -27,9 +27,11 @@ echo "Installing Airflow: ${INSTALL_AIRFLOW_VERSION}"
 pip install uv
 uv pip install "apache-airflow==${INSTALL_AIRFLOW_VERSION}"
 
-# cncf-kubernetes provider is bundled in Airflow 3.x
+# Install OpenLineage provider
 if [[ "$AIRFLOW_VERSION" == 2.* ]]; then
-  uv pip install apache-airflow-providers-cncf-kubernetes
+  uv pip install "openlineage-airflow>=0.19.2"
+else
+  uv pip install apache-airflow-providers-openlineage
 fi
 
 actual_airflow_version=$(airflow version 2>/dev/null | tail -1 | cut -d. -f1,2)
