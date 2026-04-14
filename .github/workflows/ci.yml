@@ -1,7 +1,7 @@
 name: Build and test
 on:
   push:
-    branches: ['main', 'add-airflow-3.1-support.9']
+    branches: ['main', 'add-airflow-3.1-support']
   pull_request_target:
     branches: ['main']
   release:
