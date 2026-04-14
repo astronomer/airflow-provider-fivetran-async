@@ -73,7 +73,7 @@ def test_fivetran_trigger_serialization():
 
 
 @pytest.mark.asyncio
-@mock.patch("fivetran_provider_async.hooks.FivetranHookAsync.is_synced_after_target_time_async")
+@mock.patch("fivetran_provider_async.hooks.FivetranHookAsync.get_sync_status_async")
 @mock.patch("fivetran_provider_async.hooks.FivetranHookAsync._do_api_call_async")
 async def test_fivetran_trigger_completed(mock_api_call_async_response, mock_get_sync_status_async):
     """Tests if success event is returned by the FivetranTrigger"""
@@ -102,7 +102,7 @@ async def test_fivetran_trigger_completed(mock_api_call_async_response, mock_get
 
 
 @pytest.mark.asyncio
-@mock.patch("fivetran_provider_async.hooks.FivetranHookAsync.is_synced_after_target_time_async")
+@mock.patch("fivetran_provider_async.hooks.FivetranHookAsync.get_sync_status_async")
 @mock.patch("fivetran_provider_async.hooks.FivetranHookAsync._do_api_call_async")
 async def test_fivetran_trigger_pending(mock_api_call_async_response, mock_get_sync_status_async):
     """Tests that event is not returned by the FivetranTrigger when sync is still in pending state"""
@@ -122,7 +122,7 @@ async def test_fivetran_trigger_pending(mock_api_call_async_response, mock_get_s
 
 
 @pytest.mark.asyncio
-@mock.patch("fivetran_provider_async.hooks.FivetranHookAsync.is_synced_after_target_time_async")
+@mock.patch("fivetran_provider_async.hooks.FivetranHookAsync.get_sync_status_async")
 @mock.patch("fivetran_provider_async.hooks.FivetranHookAsync._do_api_call_async")
 async def test_fivetran_trigger_failed(mock_api_call_async_response, mock_get_sync_status_async):
     """Tests if error event is returned by the FivetranTrigger in case of sync error"""
@@ -141,7 +141,7 @@ async def test_fivetran_trigger_failed(mock_api_call_async_response, mock_get_sy
 
 
 @pytest.mark.asyncio
-@mock.patch("fivetran_provider_async.hooks.FivetranHookAsync.is_synced_after_target_time_async")
+@mock.patch("fivetran_provider_async.hooks.FivetranHookAsync.get_sync_status_async")
 @mock.patch("fivetran_provider_async.hooks.FivetranHookAsync._do_api_call_async")
 async def test_fivetran_trigger_exception(mock_api_call_async_response, mock_get_sync_status_async):
     """Tests if error event is returned by the FivetranTrigger in case of exception"""
