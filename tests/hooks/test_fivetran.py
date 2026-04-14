@@ -394,8 +394,10 @@ class TestFivetranHookAsync:
     )
     @mock.patch("fivetran_provider_async.hooks.FivetranHookAsync._do_api_call_async")
     @mock.patch("fivetran_provider_async.hooks.FivetranHookAsync.start_fivetran_sync")
+    @mock.patch("fivetran_provider_async.hooks.time.sleep")
     async def test_fivetran_hook_get_sync_status_async_with_reschedule_for_and_schedule_type_manual(
         self,
+        mock_sleep,
         mock_start_fivetran_sync,
         mock_api_call_async_response,
         mock_previous_completed_at,
