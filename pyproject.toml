@@ -58,9 +58,21 @@ tests = [
 ######################################
 
 [tool.hatch.envs.tests]
+# Do not install Airflow dependencies here!
+# We need to use constraints and we're doing this in the `pre-install-commands`
 dependencies = [
-    "airflow-provider-fivetran-async[tests,all]",
-    "apache-airflow~={matrix:airflow}.0",
+    "aiohttp",
+    "asgiref",
+    "requests",
+    "openlineage-airflow>=0.19.2",
+    "mypy",
+    "types-requests",
+    "parameterized",
+    "pytest",
+    "pytest-asyncio",
+    "pytest-cov",
+    "requests_mock",
+    "prek",
 ]
 pre-install-commands = ["sh scripts/test/pre-install-airflow.sh {matrix:airflow} {matrix:python}"]
 

@@ -24,7 +24,7 @@ uv pip install "apache-airflow==${LATEST_AIRFLOW_VERSION}"
 
 # cncf-kubernetes provider is bundled in Airflow 3.x
 if [[ "$AIRFLOW_VERSION" == 2.* ]]; then
-  pip install apache-airflow-providers-cncf-kubernetes
+  uv pip install apache-airflow-providers-cncf-kubernetes
 fi
 
 actual_airflow_version=$(airflow version 2>/dev/null | tail -1 | cut -d. -f1,2)
