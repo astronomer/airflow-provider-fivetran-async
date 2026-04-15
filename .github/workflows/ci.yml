@@ -1,7 +1,7 @@
 name: Build and test
 on:
   push:
-    branches: ['main']
+    branches: ['main', 'python3.14']
   pull_request_target:
     branches: ['main']
   release:
