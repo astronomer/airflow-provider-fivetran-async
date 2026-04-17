@@ -1,5 +1,30 @@
 # Changelog
 
+## 2.4.0 (2026-04-17)
+
+### Breaking Changes
+
+- Drop support for Apache Airflow < 2.9 in dependencies and docs by @pankajastro in https://github.com/astronomer/airflow-provider-fivetran-async/pull/228
+
+### Bug Fixes
+
+- Fix imports for Airflow 3 compatibility by @pankajastro in https://github.com/astronomer/airflow-provider-fivetran-async/pull/214
+- Retry on `ClientConnectionError` by @johnhoran in https://github.com/astronomer/airflow-provider-fivetran-async/pull/220
+- Fix failure logic by @johnhoran in https://github.com/astronomer/airflow-provider-fivetran-async/pull/223
+- Retry on broken connector by @johnhoran in https://github.com/astronomer/airflow-provider-fivetran-async/pull/224
+
+### Others
+
+- Add Apache Airflow 3.1 to test matrix by @pankajastro in https://github.com/astronomer/airflow-provider-fivetran-async/pull/229
+- Add Apache Airflow 3.2 to test matrix by @pankajastro in https://github.com/astronomer/airflow-provider-fivetran-async/pull/230
+- Add Python 3.14 to the test CI matrix by @pankajastro in https://github.com/astronomer/airflow-provider-fivetran-async/pull/232
+- Replace pre-commit with prek by @kaxil in https://github.com/astronomer/airflow-provider-fivetran-async/pull/211
+- Drop support for Apache Airflow < 2.9 by @pankajastro in https://github.com/astronomer/airflow-provider-fivetran-async/pull/213
+- Use `pull_request_target` to allow secrets access on fork PRs by @pankajkoti in https://github.com/astronomer/airflow-provider-fivetran-async/pull/222
+- Reduce unit tests runtime from 134s to 13s by @tatiana in https://github.com/astronomer/airflow-provider-fivetran-async/pull/225
+- Fix installed Airflow version in test jobs by @tatiana in https://github.com/astronomer/airflow-provider-fivetran-async/pull/226
+- Fix the contributing docs by @pankajastro in https://github.com/astronomer/airflow-provider-fivetran-async/pull/232
+
 ## 2.3.0 (2026-03-05)
 
 ### Others
