@@ -25,7 +25,6 @@
 - Fix installed Airflow version in test jobs by @tatiana in https://github.com/astronomer/airflow-provider-fivetran-async/pull/226
 - Fix the contributing docs by @pankajastro in https://github.com/astronomer/airflow-provider-fivetran-async/pull/232
 
-
 ## 2.3.0 (2026-03-05)
 
 ### Others
