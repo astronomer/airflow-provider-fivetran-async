@@ -933,3 +933,67 @@ class TestFivetranHook(unittest.TestCase):
         hook.prep_connector(connector_id="interchangeable_revenge", schedule_type="manual")
         assert m.request_history[-2].path == "/v1/connectors/interchangeable_revenge"
         assert m.request_history[-1].path == "/v1/connectors/interchangeable_revenge/test"
+
+    @requests_mock.mock()
+    def test_check_connector_recovers_broken_with_reconnect_on_broken(self, m):
+        broken = copy.deepcopy(MOCK_FIVETRAN_RESPONSE_PAYLOAD)
+        broken["data"]["status"]["setup_state"] = "broken"
+        connected = copy.deepcopy(MOCK_FIVETRAN_RESPONSE_PAYLOAD)
+        # GET order: check_connector initial, start_fivetran_sync, check_connector re-check
+        m.get(
+            "https://api.fivetran.com/v1/connectors/interchangeable_revenge",
+            [{"json": broken}, {"json": broken}, {"json": connected}],
+        )
+        m.post(
+            "https://api.fivetran.com/v1/connectors/interchangeable_revenge/test",
+            json=broken,
+        )
+        m.post(
+            "https://api.fivetran.com/v1/connectors/interchangeable_revenge/force",
+            json={"code": "Success"},
+        )
+
+        hook = FivetranHook(fivetran_conn_id="conn_fivetran")
+        result = hook.check_connector(connector_id="interchangeable_revenge", reconnect_on_broken=True)
+
+        assert result["status"]["setup_state"] == "connected"
+        assert any(req.path == "/v1/connectors/interchangeable_revenge/force" for req in m.request_history)
+
+    @requests_mock.mock()
+    def test_check_connector_reconnect_still_broken_raises(self, m):
+        broken = copy.deepcopy(MOCK_FIVETRAN_RESPONSE_PAYLOAD)
+        broken["data"]["status"]["setup_state"] = "broken"
+        m.get(
+            "https://api.fivetran.com/v1/connectors/interchangeable_revenge",
+            json=broken,
+        )
+        m.post(
+            "https://api.fivetran.com/v1/connectors/interchangeable_revenge/test",
+            json=broken,
+        )
+        m.post(
+            "https://api.fivetran.com/v1/connectors/interchangeable_revenge/force",
+            json={"code": "Success"},
+        )
+
+        hook = FivetranHook(fivetran_conn_id="conn_fivetran")
+        with pytest.raises(AirflowException, match="still broken after a resync was triggered"):
+            hook.check_connector(connector_id="interchangeable_revenge", reconnect_on_broken=True)
+
+    @requests_mock.mock()
+    def test_check_connector_incomplete_not_recovered(self, m):
+        incomplete = copy.deepcopy(MOCK_FIVETRAN_RESPONSE_PAYLOAD)
+        incomplete["data"]["status"]["setup_state"] = "incomplete"
+        m.get(
+            "https://api.fivetran.com/v1/connectors/interchangeable_revenge",
+            json=incomplete,
+        )
+        m.post(
+            "https://api.fivetran.com/v1/connectors/interchangeable_revenge/test",
+            json=incomplete,
+        )
+
+        hook = FivetranHook(fivetran_conn_id="conn_fivetran")
+        with pytest.raises(AirflowException, match="not correctly configured, status: incomplete"):
+            hook.check_connector(connector_id="interchangeable_revenge", reconnect_on_broken=True)
+        assert all(not req.path.endswith("/force") for req in m.request_history)

@@ -64,6 +64,10 @@ class FivetranOperator(BaseOperator):
             number of seconds to wait before restarting the sync.
     :param deferrable: Run operator in deferrable mode. Default is True.
     :param wait_for_completion: Wait for Fivetran sync to complete to finish the task.
+    :param reconnect_on_broken: If True, when the connector's setup state is "broken"
+        at the start of the task, trigger a force sync to clear the broken state
+        instead of failing. Only the "broken" state is recovered this way; genuine
+        misconfiguration still fails the task. Default is False.
     """
 
     operator_extra_links = (RegistryLink(),)
@@ -84,6 +88,7 @@ class FivetranOperator(BaseOperator):
         reschedule_wait_time: int = 0,
         deferrable: bool = True,
         wait_for_completion: bool = True,
+        reconnect_on_broken: bool = False,
         **kwargs,
     ) -> None:
         self.connector_id = connector_id
@@ -110,12 +115,13 @@ class FivetranOperator(BaseOperator):
         self.reschedule_wait_time = reschedule_wait_time
         self.wait_for_completion = wait_for_completion
         self.deferrable = deferrable
+        self.reconnect_on_broken = reconnect_on_broken
         super().__init__(**kwargs)
 
     def execute(self, context: Context) -> None | str:
         """Start the sync using synchronous hook"""
         hook = self.hook
-        hook.prep_connector(self._connector_id, self.schedule_type)
+        hook.prep_connector(self._connector_id, self.schedule_type, reconnect_on_broken=self.reconnect_on_broken)
         last_sync = self._sync(hook)
 
         if not self.wait_for_completion:
