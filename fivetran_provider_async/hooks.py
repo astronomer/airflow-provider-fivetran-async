@@ -314,13 +314,20 @@ class FivetranHook(BaseHook):
 
         return connector.get("id", "")
 
-    def check_connector(self, connector_id: str) -> dict[str, Any]:
+    def check_connector(self, connector_id: str, reconnect_on_broken: bool = False) -> dict[str, Any]:
         """
         Ensures connector configuration has been completed successfully and is in
             a functional state.
 
         :param connector_id: Fivetran connector_id, found in connector settings
             page in the Fivetran user interface.
+        :param reconnect_on_broken: If True and the connector's ``setup_state`` is
+            ``"broken"`` after a connection test, trigger a force sync to clear the
+            broken state (this is what the "Sync" button in the Fivetran UI does)
+            and re-check. A connection test alone does not run a sync, so it cannot
+            clear a state that only a full sync against every source endpoint can
+            reset. Only ``"broken"`` is recovered this way; genuine misconfiguration
+            (e.g. ``"incomplete"``) still raises.
         :return: API call response
         """
         connector_details = self.get_connector(connector_id)
@@ -331,7 +338,22 @@ class FivetranHook(BaseHook):
         if setup_state != "connected":
             connector_details = self.test_connector(connector_id)
             setup_state = connector_details["status"]["setup_state"]
-            if setup_state != "connected":
+            if setup_state == "broken" and reconnect_on_broken:
+                self.log.warning(
+                    "Connector %s is in a broken state; triggering a force sync to clear it",
+                    connector_id,
+                )
+                self.start_fivetran_sync(connector_id)
+                connector_details = self.get_connector(connector_id)
+                setup_state = connector_details["status"]["setup_state"]
+                if setup_state != "connected":
+                    raise AirflowException(
+                        f'Fivetran connector "{connector_id}" is still broken after a resync was '
+                        f"triggered to recover it; status: {setup_state}. The resync is now running, "
+                        f"so retrying this task may succeed once it clears. Please see: "
+                        f"{self._connector_ui_url_setup(service_name, schema_name)}"
+                    )
+            elif setup_state != "connected":
                 raise AirflowException(
                     f'Fivetran connector "{connector_id}" not correctly configured, '
                     f"status: {setup_state}\nPlease see: "
@@ -355,7 +377,7 @@ class FivetranHook(BaseHook):
         endpoint = self.api_path_connectors + connector_id
         return self._do_api_call("PATCH", endpoint, json={"schedule_type": schedule_type})
 
-    def prep_connector(self, connector_id: str, schedule_type: str) -> None:
+    def prep_connector(self, connector_id: str, schedule_type: str, reconnect_on_broken: bool = False) -> None:
         """
         Prepare the connector to run in Airflow by checking that it exists and is a good state,
             then update connector sync schedule type if changed.
@@ -363,9 +385,12 @@ class FivetranHook(BaseHook):
         :param connector_id: Fivetran connector_id, found in connector settings
             page in the Fivetran user interface.
         :param schedule_type: Fivetran connector schedule type
+        :param reconnect_on_broken: If True, attempt to recover a connector whose
+            ``setup_state`` is ``"broken"`` by triggering a force sync. See
+            :meth:`check_connector`.
         """
 
-        connector_details = self.check_connector(connector_id)
+        connector_details = self.check_connector(connector_id, reconnect_on_broken=reconnect_on_broken)
         if schedule_type not in {"manual", "auto"}:
             raise ValueError('schedule_type must be either "manual" or "auto"')
         if connector_details["schedule_type"] != schedule_type:
