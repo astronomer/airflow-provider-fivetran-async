@@ -23,6 +23,7 @@ jobs:
       github.event.pull_request.head.repo.full_name != github.repository &&
       'external' || 'internal' }}
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     permissions:
       contents: read
     steps:
@@ -31,6 +32,7 @@ jobs:
   Run-Integration-Tests:
     needs: Authorize
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: read
     strategy:
@@ -62,7 +64,12 @@ jobs:
           persist-credentials: false
           allow-unsafe-pr-checkout: true
 
-      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      # Restore-only: this job runs on pull_request_target with fork code (allow-unsafe-pr-checkout
+      # above), so it must never *save* a cache entry built from untrusted code — a poisoned entry
+      # would then be silently restored into a later trusted (push-to-main) run. Saving happens in
+      # a separate step below, gated to push events only.
+      - id: cache-restore
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: |
             ~/.cache/pip
@@ -99,6 +106,17 @@ jobs:
           path: .coverage
           include-hidden-files: true
 
+      # Only save on push (trusted, no fork code) so a fork PR run can never write a poisoned
+      # cache entry that a later trusted run would restore.
+      - name: Save cache
+        if: github.event_name == 'push'
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: |
+            ~/.cache/pip
+            .local/share/hatch/
+          key: ${{ steps.cache-restore.outputs.cache-primary-key }}
+
   Publish-Package:
     if: github.event_name == 'release'
     name: Build and publish Python 🐍 distributions 📦 to PyPI
@@ -106,6 +124,7 @@ jobs:
       - Run-Integration-Tests
       - Authorize
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     environment:
       name: pypi
       url: https://pypi.org/p/airflow-provider-fivetran-async
