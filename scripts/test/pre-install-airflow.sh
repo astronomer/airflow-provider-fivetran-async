@@ -23,15 +23,21 @@ else
 fi
 echo "Installing Airflow: ${INSTALL_AIRFLOW_VERSION}"
 
+# Use Airflow's own published constraints so transitive deps (e.g. cadwyn) resolve to the
+# versions that release was actually tested against, instead of drifting to whatever is newest
+# on install day. Without this, an unrelated major bump upstream (e.g. cadwyn 6.x -> 7.x) can
+# silently break dag.test() on a previously-green Airflow version.
+CONSTRAINTS_URL="https://raw.githubusercontent.com/apache/airflow/constraints-${INSTALL_AIRFLOW_VERSION}/constraints-${PYTHON_VERSION}.txt"
+
 # Install Airflow
 pip install uv
-uv pip install "apache-airflow==${INSTALL_AIRFLOW_VERSION}"
+uv pip install --constraint "${CONSTRAINTS_URL}" "apache-airflow==${INSTALL_AIRFLOW_VERSION}"
 
 # Install OpenLineage provider, pinning Airflow to avoid upgrades
 if [[ "$AIRFLOW_VERSION" == 2.* ]]; then
-  uv pip install "openlineage-airflow>=0.19.2" "apache-airflow==${INSTALL_AIRFLOW_VERSION}"
+  uv pip install --constraint "${CONSTRAINTS_URL}" "openlineage-airflow>=0.19.2" "apache-airflow==${INSTALL_AIRFLOW_VERSION}"
 else
-  uv pip install apache-airflow-providers-openlineage "apache-airflow==${INSTALL_AIRFLOW_VERSION}"
+  uv pip install --constraint "${CONSTRAINTS_URL}" apache-airflow-providers-openlineage "apache-airflow==${INSTALL_AIRFLOW_VERSION}"
 fi
 
 actual_airflow_version=$(airflow version 2>/dev/null | tail -1 | cut -d. -f1,2)
