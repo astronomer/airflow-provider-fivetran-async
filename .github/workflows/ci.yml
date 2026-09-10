@@ -2,11 +2,11 @@ name: Build and test
 on:
   push:
     branches: ['main']
-  # Only jobs that need secrets (Run-Integration-Tests) or that only ever run on release/push
-  # (Publish-Package) live here. They run on pull_request_target so fork PRs get access to the
-  # FIVETRAN_DEFAULT secret, gated behind the Authorize job's `external` environment approval.
-  # Jobs that need no secrets (Static-Check, Run-Unit-Tests) run under the plain `pull_request`
-  # trigger in test-unprivileged.yml instead, without that approval gate.
+  # pull_request_target (not pull_request) so fork PRs can reach the FIVETRAN_DEFAULT secret in
+  # Run-Integration-Tests. Every job's checkout is gated behind the Authorize job's `external`
+  # environment approval for fork PRs, and each opts in explicitly via allow-unsafe-pr-checkout
+  # (required since actions/checkout v4.4.0 refuses fork checkouts here by default -- see
+  # https://github.blog/changelog/2026-06-18-safer-pull_request_target-defaults-for-github-actions-checkout/).
   pull_request_target: # zizmor: ignore[dangerous-triggers]
     branches: ['main']
   release:
@@ -28,6 +28,100 @@ jobs:
       contents: read
     steps:
       - run: true
+
+  Static-Check:
+    needs: Authorize
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.ref }}
+          persist-credentials: false
+          allow-unsafe-pr-checkout: true
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.11"
+          architecture: "x64"
+
+      - run: pip3 install "hatch>=1.14.2"
+      - run: hatch run tests.py3.11-2.10:static-check
+
+  Run-Unit-Tests:
+    needs: Authorize
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [ "3.10", "3.11", "3.12", "3.13", "3.14" ]
+        airflow-version: [ "2.9", "2.10", "3.0", "3.1", "3.2" ]
+        exclude:
+          # Python 3.13 is only supported by Apache Airflow >= 3.0.
+          - python-version: "3.13"
+            airflow-version: "2.9"
+          - python-version: "3.13"
+            airflow-version: "2.10"
+          # Python 3.14 is only supported by Apache Airflow >= 3.2.
+          - python-version: "3.14"
+            airflow-version: "2.9"
+          - python-version: "3.14"
+            airflow-version: "2.10"
+          - python-version: "3.14"
+            airflow-version: "3.0"
+          - python-version: "3.14"
+            airflow-version: "3.1"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.ref }}
+          persist-credentials: false
+          allow-unsafe-pr-checkout: true
+
+      # Restore-only -- see the matching comment on Run-Integration-Tests' cache step below.
+      - id: cache-restore
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: |
+            ~/.cache/pip
+            .local/share/hatch/
+          key: unit-${{ runner.os }}-${{ matrix.python-version }}-${{ matrix.airflow-version }}-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('fivetran_provider_async/__init__.py') }}
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install packages and dependencies
+        run: |
+          python -m pip install uv
+          uv pip install --system "hatch>=1.14.2"
+          hatch -e tests.py${{ matrix.python-version }}-${{ matrix.airflow-version }} run pip freeze
+
+      - name: Test Airflow ${{ matrix.airflow-version }} and Python ${{ matrix.python-version }}
+        run: |
+          hatch run tests.py${{ matrix.python-version }}-${{ matrix.airflow-version }}:test
+
+      - name: Upload coverage to Github
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: coverage-unit-test-${{ matrix.python-version }}-${{ matrix.airflow-version }}
+          path: .coverage
+          include-hidden-files: true
+
+      - name: Save cache
+        if: github.event_name == 'push'
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: |
+            ~/.cache/pip
+            .local/share/hatch/
+          key: ${{ steps.cache-restore.outputs.cache-primary-key }}
 
   Run-Integration-Tests:
     needs: Authorize
@@ -65,9 +159,10 @@ jobs:
           allow-unsafe-pr-checkout: true
 
       # Restore-only: this job runs on pull_request_target with fork code (allow-unsafe-pr-checkout
-      # above), so it must never *save* a cache entry built from untrusted code — a poisoned entry
+      # above), so it must never *save* a cache entry built from untrusted code -- a poisoned entry
       # would then be silently restored into a later trusted (push-to-main) run. Saving happens in
-      # a separate step below, gated to push events only.
+      # a separate step below, gated to push events only. Same reasoning applies to every cache
+      # step in this file.
       - id: cache-restore
         uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
@@ -121,6 +216,8 @@ jobs:
     if: github.event_name == 'release'
     name: Build and publish Python 🐍 distributions 📦 to PyPI
     needs:
+      - Static-Check
+      - Run-Unit-Tests
       - Run-Integration-Tests
       - Authorize
     runs-on: ubuntu-latest
