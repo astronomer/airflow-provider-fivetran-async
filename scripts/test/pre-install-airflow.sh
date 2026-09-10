@@ -1,8 +1,5 @@
 #!/bin/sh
-# pyproject.toml invokes this as `sh scripts/test/pre-install-airflow.sh ...`, which is dash on
-# ubuntu-latest -- this shebang is documentation only, but keep it truthful and this script POSIX
-# (no `[[ ]]`, arrays, etc.). integration.sh / integration-setup.sh are invoked as `./...`, so their
-# bash shebang is genuine and unrelated to this one.
+# pyproject.toml invokes this via `sh`, which is dash on ubuntu-latest -- keep it POSIX (no `[[ ]]`).
 set -e
 
 AIRFLOW_VERSION="$1"
@@ -28,37 +25,26 @@ else
 fi
 echo "Installing Airflow: ${INSTALL_AIRFLOW_VERSION}"
 
-# Use Airflow's own published constraints so transitive deps (e.g. cadwyn) resolve to the
-# versions that release was actually tested against, instead of drifting to whatever is newest
-# on install day. Without this, an unrelated major bump upstream (e.g. cadwyn 6.x -> 7.x) can
+# Pin transitive deps (e.g. cadwyn) to what this Airflow release was actually tested against,
+# instead of whatever's newest on install day -- an unrelated upstream major bump can otherwise
 # silently break dag.test() on a previously-green Airflow version.
 CONSTRAINTS_URL="https://raw.githubusercontent.com/apache/airflow/constraints-${INSTALL_AIRFLOW_VERSION}/constraints-${PYTHON_VERSION}.txt"
 
 # Install Airflow
 pip install uv
-# Some constraints files don't actually match what the pinned release supports for a given
-# Python version (e.g. constraints-3.0.0/constraints-3.13.txt pins termcolor==2.5.0, but
-# apache-airflow-core==3.0.0 requires termcolor>=3.0.0 -- Airflow 3.0.0 never shipped Python
-# 3.13 support, so that file is an untested artifact). Fall back to an unconstrained install
-# rather than failing outright in that case -- but say so loudly: this silently drops every pin
-# the --constraint flag exists for (e.g. cadwyn back to whatever's newest), for ANY reason the
-# constrained install failed, not just the known 3.0.0/py3.13 mismatch (a constraints- tag missing
-# for a newly-published Airflow patch, or for a Python version added to the matrix later, would
-# hit this same fallback and land in the same unpinned hole without a green run ever showing it).
+# Some constraints files don't match what the release actually supports for a given Python
+# version (e.g. constraints-3.0.0/constraints-3.13.txt requires termcolor<3.0, which conflicts
+# with apache-airflow-core==3.0.0 itself -- Airflow 3.0.0 never shipped Python 3.13 support).
+# Fall back to unconstrained rather than fail outright, but warn loudly: this drops every pin
+# --constraint exists for, for any failure reason, not just this one known case.
 if ! uv pip install --constraint "${CONSTRAINTS_URL}" "apache-airflow==${INSTALL_AIRFLOW_VERSION}"; then
   echo "::warning::Constrained install failed for apache-airflow==${INSTALL_AIRFLOW_VERSION} / Python ${PYTHON_VERSION} (constraints file may not match this Python version, or may not exist yet); falling back to an unconstrained install, which reintroduces unpinned transitive deps for this lane"
   uv pip install "apache-airflow==${INSTALL_AIRFLOW_VERSION}"
 fi
 
-# Install OpenLineage provider, pinning Airflow to avoid upgrades.
-# pyproject.toml invokes this script as `sh ...`, which is dash (not bash) on ubuntu-latest and
-# ignores the shebang above, so this must be POSIX sh -- no `[[ ]]`.
-#
-# No --constraint here: this provider declares its own supported openlineage-airflow range in
-# pyproject.toml, and Airflow's constraints file would drag the openlineage stack down to
-# whatever it happened to pin (e.g. apache-airflow-providers-openlineage 2.17.0 instead of
-# 2.20.1 on 3.2.2), silently narrowing what CI actually covers. The cadwyn pin from the
-# apache-airflow install above already stands: uv won't touch an already-satisfied dependency.
+# No --constraint here: this provider declares its own openlineage-airflow range in pyproject.toml,
+# and Airflow's constraints would drag that stack down to whatever it happened to pin. The cadwyn
+# pin above still holds -- uv won't touch an already-satisfied dependency.
 case "$AIRFLOW_VERSION" in
   2.*)
     uv pip install "openlineage-airflow>=0.19.2" "apache-airflow==${INSTALL_AIRFLOW_VERSION}"
