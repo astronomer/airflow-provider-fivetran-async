@@ -2,11 +2,8 @@ name: Build and test
 on:
   push:
     branches: ['main']
-  # pull_request_target (not pull_request) so fork PRs can reach the FIVETRAN_DEFAULT secret in
-  # Run-Integration-Tests. Every job's checkout is gated behind the Authorize job's `external`
-  # environment approval for fork PRs, and each opts in explicitly via allow-unsafe-pr-checkout
-  # (required since actions/checkout v4.4.0 refuses fork checkouts here by default -- see
-  # https://github.blog/changelog/2026-06-18-safer-pull_request_target-defaults-for-github-actions-checkout/).
+  # pull_request_target so fork PRs can reach the FIVETRAN_DEFAULT secret in Run-Integration-Tests,
+  # gated behind Authorize's `external` environment approval.
   pull_request_target: # zizmor: ignore[dangerous-triggers]
     branches: ['main']
   release:
@@ -83,7 +80,7 @@ jobs:
           persist-credentials: false
           allow-unsafe-pr-checkout: true
 
-      # Restore-only -- see the matching comment on Run-Integration-Tests' cache step below.
+      # Restore-only; save is gated to push events below -- fork code must never write the cache.
       - id: cache-restore
         uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
@@ -158,11 +155,7 @@ jobs:
           persist-credentials: false
           allow-unsafe-pr-checkout: true
 
-      # Restore-only: this job runs on pull_request_target with fork code (allow-unsafe-pr-checkout
-      # above), so it must never *save* a cache entry built from untrusted code -- a poisoned entry
-      # would then be silently restored into a later trusted (push-to-main) run. Saving happens in
-      # a separate step below, gated to push events only. Same reasoning applies to every cache
-      # step in this file.
+      # Restore-only; save is gated to push events below -- fork code must never write the cache.
       - id: cache-restore
         uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
@@ -201,8 +194,6 @@ jobs:
           path: .coverage
           include-hidden-files: true
 
-      # Only save on push (trusted, no fork code) so a fork PR run can never write a poisoned
-      # cache entry that a later trusted run would restore.
       - name: Save cache
         if: github.event_name == 'push'
         uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
