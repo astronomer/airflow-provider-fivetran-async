@@ -1,7 +1,7 @@
 name: Build and test
 on:
   push:
-    branches: ['main', 'ci-cache-fixes'] # TEMP: testing cache changes before merge, revert before merging
+    branches: ['main']
   # pull_request_target so fork PRs can reach the FIVETRAN_DEFAULT secret in Run-Integration-Tests,
   # gated behind Authorize's `external` environment approval.
   pull_request_target: # zizmor: ignore[dangerous-triggers]
