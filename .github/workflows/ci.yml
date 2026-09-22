@@ -86,7 +86,7 @@ jobs:
         with:
           path: |
             ~/.cache/pip
-            .local/share/hatch/
+            ~/.local/share/hatch/
           key: unit-${{ runner.os }}-${{ matrix.python-version }}-${{ matrix.airflow-version }}-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('fivetran_provider_async/__init__.py') }}
 
       - name: Set up Python ${{ matrix.python-version }}
@@ -112,12 +112,12 @@ jobs:
           include-hidden-files: true
 
       - name: Save cache
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' && steps.cache-restore.outputs.cache-hit != 'true'
         uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: |
             ~/.cache/pip
-            .local/share/hatch/
+            ~/.local/share/hatch/
           key: ${{ steps.cache-restore.outputs.cache-primary-key }}
 
   Run-Integration-Tests:
@@ -161,7 +161,7 @@ jobs:
         with:
           path: |
             ~/.cache/pip
-            .local/share/hatch/
+            ~/.local/share/hatch/
           key: integration-${{ runner.os }}-${{ matrix.python-version }}-${{ matrix.airflow-version }}-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('fivetran_provider_async/__init__.py') }}
 
       - name: Set up Python ${{ matrix.python-version }}
@@ -195,12 +195,12 @@ jobs:
           include-hidden-files: true
 
       - name: Save cache
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' && steps.cache-restore.outputs.cache-hit != 'true'
         uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: |
             ~/.cache/pip
-            .local/share/hatch/
+            ~/.local/share/hatch/
           key: ${{ steps.cache-restore.outputs.cache-primary-key }}
 
   Publish-Package:
