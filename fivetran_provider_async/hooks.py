@@ -142,7 +142,7 @@ class FivetranHook(BaseHook):
                 DeprecationWarning,
                 stacklevel=2,
             )
-            method, endpoint = method  # type: ignore[misc]
+            method, endpoint = method  # type: ignore[misc, str-unpack]
         elif endpoint is None:
             raise TypeError(
                 f"{self.__class__.__name__}._do_api_call() missing 1 required" f" positional argument: 'endpoint'"
@@ -669,7 +669,7 @@ class FivetranHookAsync(FivetranHook):
                 DeprecationWarning,
                 stacklevel=2,
             )
-            method, endpoint = method  # type: ignore[misc]
+            method, endpoint = method  # type: ignore[misc, str-unpack]
         elif endpoint is None:
             raise TypeError(
                 f"{self.__class__.__name__}._do_api_call_async() missing 1 required" f" positional argument: 'endpoint'"
