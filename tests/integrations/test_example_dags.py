@@ -42,7 +42,7 @@ MIN_VER_DAG_FILE_VER: dict[str, list[str]] = {}
 
 @provide_session
 def get_session(session=None):
-    create_default_connections(session)
+    create_default_connections(session=session)
     return session
 
 
