@@ -99,10 +99,10 @@ The [pyproject. toml](https://github.com/astronomer/dag-factory/blob/main/pyproj
 
 ### Run unit tests
 
-To run unit tests using Python 3.11 and Airflow 2.9, use the following:
+To run unit tests using Python 3.11 and Airflow 2.11, use the following:
 
 ```bash
-hatch run tests.py3.11-2.9:test
+hatch run tests.py3.11-2.11:test
 ```
 
 It is also possible to run the tests using all the matrix combinations, by using:
@@ -127,7 +127,7 @@ pre-commit run --all-files
 Pre-commit runs several static checks, including Black and Ruff. It is also possible to run them using ``hatch``:
 
 ```bash
-hatch run tests.py3.11-2.9:static-check
+hatch run tests.py3.11-2.11:static-check
 ```
 
 ## Releasing
