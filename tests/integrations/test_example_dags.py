@@ -42,7 +42,7 @@ MIN_VER_DAG_FILE_VER: dict[str, list[str]] = {}
 
 @provide_session
 def get_session(session=None):
-    create_default_connections(session)
+    create_default_connections(session=session)
     return session
 
 
@@ -70,6 +70,18 @@ def setup_variables(session: Session = NEW_SESSION):
             log.info("Variable %s already exists.", var_key)
 
 
+def make_dag_bag(*args, **kwargs) -> DagBag:
+    """Construct a ``DagBag``, dropping ``include_examples`` on Airflow >= 3.3.
+
+    Airflow 3.3 removed the ``include_examples`` kwarg from ``DagBag``; example loading is now gated by
+    ``[core] load_examples``. Pointing ``dag_folder`` at a directory still loads only that directory.
+    """
+    # Compare the release tuple, not the Version: a pre-release sorts below its final release (PEP 440).
+    if AIRFLOW_VERSION.release[:2] >= (3, 3):
+        kwargs.pop("include_examples", None)
+    return DagBag(*args, **kwargs)
+
+
 @cache
 def get_dag_bag() -> DagBag:
     """Create a DagBag by adding the files that are not supported to .airflowignore"""
@@ -87,7 +99,7 @@ def get_dag_bag() -> DagBag:
     # Print the contents of the .airflowignore file, and build the DagBag
     print(".airflowignore contents: ")
     print(AIRFLOW_IGNORE_FILE.read_text())
-    db = DagBag(EXAMPLE_DAGS_DIR, include_examples=False)
+    db = make_dag_bag(EXAMPLE_DAGS_DIR, include_examples=False)
 
     assert db.dags
     assert not db.import_errors
